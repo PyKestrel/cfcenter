@@ -155,7 +155,6 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            install-community.sh
-            install-enterprise.sh
+            install.sh
             docker-compose.community.yml
             docker-compose.enterprise.yml

@@ -34,19 +34,15 @@
 
 ## Quick Start
 
-### Community Edition (Free)
-
 ```bash
-curl -fsSL https://CFCenter.io/install/community | sudo bash
+git clone https://github.com/pykestrel/cfcenter.git /opt/cfcenter
+cd /opt/cfcenter
+sudo ./install.sh install
 ```
 
-### Enterprise Edition
+The script auto-detects your OS, installs Docker/Git if needed, builds the image, and starts the container.
 
-```bash
-curl -fsSL https://CFCenter.io/install/enterprise | sudo bash -s -- --token YOUR_TOKEN
-```
-
-[Get your Enterprise license](https://CFCenter.io/pricing)
+Open `http://YOUR_SERVER_IP:3000` when complete.
 
 ---
 
@@ -290,61 +286,55 @@ Generate professional PDF reports with AI-powered insights (Ollama, OpenAI, Anth
 
 ## Installation
 
-### Docker (Recommended)
+See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions, options, and troubleshooting.
 
-**Community:**
 ```bash
-curl -fsSL https://CFCenter.io/install/community | sudo bash
+# Fresh install
+sudo ./install.sh install
+
+# Update after code changes
+sudo ./install.sh update
+
+# Check status
+sudo ./install.sh status
 ```
-
-**Enterprise:**
-```bash
-curl -fsSL https://CFCenter.io/install/enterprise | sudo bash -s -- --token YOUR_TOKEN
-```
-
-### With Nginx (Optional)
-
-Example nginx configurations are provided in the [`nginx/`](nginx/) directory:
-
-- `CFCenter.conf` — Generic template with HTTP/HTTPS
-- `CFCenter-standalone.conf` — Self-signed SSL example
-- `CFCenter-locations.conf` — Location blocks (includable snippet)
 
 ## Configuration
 
 After installation, CFCenter runs at `http://your-server:3000`.
 
-Configuration files are located in `/opt/CFCenter/`:
+Configuration files are located in `/opt/cfcenter/`:
 - `.env` — Environment variables
 - `config/orchestrator.yaml` — Backend configuration (Enterprise only)
 
 ## Management Commands
 
 ```bash
-cd /opt/CFCenter
+cd /opt/cfcenter
+
+# Update to latest
+sudo ./install.sh update
 
 # View logs
-docker compose logs -f
+docker logs -f cfcenter-frontend
 
-# Stop services
-docker compose down
+# Stop / Start
+docker stop cfcenter-frontend
+docker start cfcenter-frontend
 
-# Update to latest version
-docker compose pull && docker compose up -d
-
-# Restart services
-docker compose restart
+# Check status
+sudo ./install.sh status
 ```
 
 ## License
 
 - **Community Edition**: Free for personal and commercial use
-- **Enterprise Edition**: Commercial license required — [CFCenter.io/pricing](https://CFCenter.io/pricing)
+- **Enterprise Edition**: Commercial license required — [cfcenter.io/pricing](https://cfcenter.io/pricing)
 
 ## Support
 
-- Community: [GitHub Issues](https://github.com/adminsyspro/CFCenter-ui/issues)
-- Enterprise Support: [support@CFCenter.io](mailto:support@CFCenter.io)
+- Community: [GitHub Issues](https://github.com/pykestrel/cfcenter/issues)
+- Enterprise Support: [support@cfcenter.io](mailto:support@cfcenter.io)
 
 ---
 

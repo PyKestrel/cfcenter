@@ -118,7 +118,7 @@ EXPOSE 3000
 # Environment variables (can be overridden)
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV DATABASE_URL="file:/app/data/proxcenter.db"
+ENV DATABASE_URL="file:/app/data/cfcenter.db"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
