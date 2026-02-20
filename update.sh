@@ -67,6 +67,10 @@ echo "[4/4] Recreating container..."
 docker stop "$RUNNING_CONTAINER"
 docker rm "$RUNNING_CONTAINER"
 
+# Migrate db filename if needed (proxcenter.db -> cfcenter.db)
+docker run --rm -v "$DATA_VOLUME":/app/data alpine sh -c \
+  '[ -f /app/data/proxcenter.db ] && mv /app/data/proxcenter.db /app/data/cfcenter.db && echo "  [migrate] Renamed proxcenter.db -> cfcenter.db" || true'
+
 docker run -d --name "$NEW_CONTAINER" \
   -p 3000:3000 \
   -e NODE_ENV=production \
