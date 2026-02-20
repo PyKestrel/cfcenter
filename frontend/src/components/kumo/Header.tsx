@@ -24,6 +24,7 @@ import { usePageTitle } from '@/contexts/PageTitleContext'
 import { useLicense, Features } from '@/contexts/LicenseContext'
 import { useActiveAlerts, useDRSRecommendations, useVersionCheck, useOrchestratorHealth } from '@/hooks/useNavbarNotifications'
 import { VERSION } from '@/config/version'
+import LanguageSwitcher from '@components/LanguageSwitcher'
 
 // Get initials from name/email
 const getInitials = (name?: string | null, email?: string | null): string => {
@@ -148,6 +149,9 @@ export default function Header() {
             </span>
           </Tooltip>
         )}
+
+        {/* Language switcher */}
+        <LanguageSwitcher />
 
         {/* Dark mode toggle */}
         <Tooltip content={isDark ? t('common.lightMode') : t('common.darkMode')}>
