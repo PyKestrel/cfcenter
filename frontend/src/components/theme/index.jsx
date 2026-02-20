@@ -83,29 +83,29 @@ const getGlobalThemeStyles = (globalTheme, mode, customBorderRadius, blurIntensi
   return {
     ':root': {
       // Density
-      '--proxcenter-density': densityValue,
+      '--CFCenter-density': densityValue,
 
       // Transitions  
-      '--proxcenter-transition-duration': transitions.duration,
-      '--proxcenter-transition-easing': transitions.easing,
+      '--CFCenter-transition-duration': transitions.duration,
+      '--CFCenter-transition-easing': transitions.easing,
 
       // Card styles
-      '--proxcenter-card-radius': `${cardRadius}px`,
-      '--proxcenter-card-shadow': isLightMode 
+      '--CFCenter-card-radius': `${cardRadius}px`,
+      '--CFCenter-card-shadow': isLightMode 
         ? '0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)' 
         : themeStyles.card.boxShadow,
-      '--proxcenter-card-backdrop': effectiveBlur,
-      '--proxcenter-card-border': themeStyles.card.border,
+      '--CFCenter-card-backdrop': effectiveBlur,
+      '--CFCenter-card-border': themeStyles.card.border,
 
       // Button styles
-      '--proxcenter-button-radius': `${buttonRadius}px`,
+      '--CFCenter-button-radius': `${buttonRadius}px`,
 
       // Input styles
-      '--proxcenter-input-radius': `${inputRadius}px`,
+      '--CFCenter-input-radius': `${inputRadius}px`,
 
       // Typography
-      '--proxcenter-font-size': `${baseFontSize}px`,
-      '--proxcenter-ui-scale': scale,
+      '--CFCenter-font-size': `${baseFontSize}px`,
+      '--CFCenter-ui-scale': scale,
 
       // Theme-specific CSS vars
       ...cssOverrides
@@ -215,8 +215,8 @@ const getGlobalThemeStyles = (globalTheme, mode, customBorderRadius, blurIntensi
     
     // Apply card styles globally - mais PAS aux cartes qui ont un style inline ou une classe spécifique
     '.MuiCard-root:not([style*="background"]):not(.no-theme-override)': {
-      borderRadius: 'var(--proxcenter-card-radius) !important',
-      boxShadow: 'var(--proxcenter-card-shadow) !important',
+      borderRadius: 'var(--CFCenter-card-radius) !important',
+      boxShadow: 'var(--CFCenter-card-shadow) !important',
       backdropFilter: !isLightMode && effectiveBlur !== 'none' 
         ? `${effectiveBlur} !important` 
         : undefined,
@@ -226,22 +226,22 @@ const getGlobalThemeStyles = (globalTheme, mode, customBorderRadius, blurIntensi
       border: themeStyles.card.border !== 'none' 
         ? `${themeStyles.card.border} !important` 
         : undefined,
-      transition: `all var(--proxcenter-transition-duration) var(--proxcenter-transition-easing) !important`
+      transition: `all var(--CFCenter-transition-duration) var(--CFCenter-transition-easing) !important`
     },
 
     // Cartes avec style inline - seulement le radius et transition
     '.MuiCard-root[style*="background"]': {
-      borderRadius: 'var(--proxcenter-card-radius) !important',
-      transition: `all var(--proxcenter-transition-duration) var(--proxcenter-transition-easing) !important`
+      borderRadius: 'var(--CFCenter-card-radius) !important',
+      transition: `all var(--CFCenter-transition-duration) var(--CFCenter-transition-easing) !important`
     },
 
     // Apply button styles
     '.MuiButton-root': {
-      borderRadius: 'var(--proxcenter-button-radius) !important',
+      borderRadius: 'var(--CFCenter-button-radius) !important',
       textTransform: `${themeStyles.button.textTransform} !important`,
       fontWeight: `${themeStyles.button.fontWeight} !important`,
       letterSpacing: themeStyles.button.letterSpacing || 'normal',
-      transition: `all var(--proxcenter-transition-duration) var(--proxcenter-transition-easing) !important`,
+      transition: `all var(--CFCenter-transition-duration) var(--CFCenter-transition-easing) !important`,
       ...(themeStyles.button.boxShadow && !isLightMode && {
         boxShadow: themeStyles.button.boxShadow
       })
@@ -249,8 +249,8 @@ const getGlobalThemeStyles = (globalTheme, mode, customBorderRadius, blurIntensi
 
     // Apply input styles
     '.MuiOutlinedInput-root, .MuiFilledInput-root': {
-      borderRadius: 'var(--proxcenter-input-radius) !important',
-      transition: `all var(--proxcenter-transition-duration) var(--proxcenter-transition-easing) !important`,
+      borderRadius: 'var(--CFCenter-input-radius) !important',
+      transition: `all var(--CFCenter-transition-duration) var(--CFCenter-transition-easing) !important`,
       ...(themeStyles.input.boxShadow && !isLightMode && {
         boxShadow: themeStyles.input.boxShadow
       }),
@@ -261,13 +261,13 @@ const getGlobalThemeStyles = (globalTheme, mode, customBorderRadius, blurIntensi
 
     // Chip styles
     '.MuiChip-root': {
-      borderRadius: `calc(var(--proxcenter-button-radius) * 2) !important`,
-      transition: `all var(--proxcenter-transition-duration) var(--proxcenter-transition-easing) !important`
+      borderRadius: `calc(var(--CFCenter-button-radius) * 2) !important`,
+      transition: `all var(--CFCenter-transition-duration) var(--CFCenter-transition-easing) !important`
     },
 
     // Dialog styles
     '.MuiDialog-paper': {
-      borderRadius: 'var(--proxcenter-card-radius) !important',
+      borderRadius: 'var(--CFCenter-card-radius) !important',
       backdropFilter: !isLightMode && effectiveBlur !== 'none' 
         ? effectiveBlur 
         : undefined,
@@ -278,26 +278,26 @@ const getGlobalThemeStyles = (globalTheme, mode, customBorderRadius, blurIntensi
 
     // Menu styles
     '.MuiMenu-paper, .MuiPopover-paper': {
-      borderRadius: 'var(--proxcenter-card-radius) !important',
+      borderRadius: 'var(--CFCenter-card-radius) !important',
       backdropFilter: !isLightMode && effectiveBlur !== 'none' 
         ? effectiveBlur 
         : undefined,
-      boxShadow: 'var(--proxcenter-card-shadow) !important'
+      boxShadow: 'var(--CFCenter-card-shadow) !important'
     },
 
     // Tab styles
     '.MuiTab-root': {
-      transition: `all var(--proxcenter-transition-duration) var(--proxcenter-transition-easing) !important`
+      transition: `all var(--CFCenter-transition-duration) var(--CFCenter-transition-easing) !important`
     },
 
     // Tooltip
     '.MuiTooltip-tooltip': {
-      borderRadius: `calc(var(--proxcenter-card-radius) / 2) !important`
+      borderRadius: `calc(var(--CFCenter-card-radius) / 2) !important`
     },
 
     // Alert
     '.MuiAlert-root': {
-      borderRadius: 'var(--proxcenter-card-radius) !important'
+      borderRadius: 'var(--CFCenter-card-radius) !important'
     },
 
     // Apply font override for terminal theme
@@ -1607,10 +1607,10 @@ const CustomThemeProvider = props => {
 
         // Cards with custom inline background - preserve their colors but add tinted border
         '.MuiCard-root[style*="background"]': {
-          borderRadius: 'var(--proxcenter-card-radius, 12px) !important'
+          borderRadius: 'var(--CFCenter-card-radius, 12px) !important'
         },
         '.MuiCard-root[style*="linear-gradient"]': {
-          borderRadius: 'var(--proxcenter-card-radius, 12px) !important'
+          borderRadius: 'var(--CFCenter-card-radius, 12px) !important'
         },
 
         // Dialogs

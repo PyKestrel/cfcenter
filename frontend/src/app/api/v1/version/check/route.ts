@@ -37,7 +37,7 @@ export async function GET() {
       {
         headers: {
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'ProxCenter'
+          'User-Agent': 'CFCenter'
         },
         next: { revalidate: 3600 } // Cache for 1 hour
       }

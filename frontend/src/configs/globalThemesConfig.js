@@ -1,5 +1,5 @@
 /**
- * ProxCenter Global Themes Configuration
+ * CFCenter Global Themes Configuration
  * 
  * Each theme defines a complete visual style including:
  * - Card styles (shadows, borders, backdrop effects)

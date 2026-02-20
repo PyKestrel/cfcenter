@@ -2,9 +2,9 @@
 set -e
 
 # ============================================
-# ProxCenter Community Installation Script
+# CFCenter Community Installation Script
 # ============================================
-# Usage: curl -fsSL https://get.proxcenter.io/community | sudo bash
+# Usage: curl -fsSL https://get.CFCenter.io/community | sudo bash
 # ============================================
 
 # Colors for output
@@ -16,9 +16,9 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-INSTALL_DIR="/opt/proxcenter"
-COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/proxcenter-ui/main/docker-compose.community.yml"
-FRONTEND_IMAGE="ghcr.io/adminsyspro/proxcenter-frontend:latest"
+INSTALL_DIR="/opt/CFCenter"
+COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/CFCenter-ui/main/docker-compose.community.yml"
+FRONTEND_IMAGE="ghcr.io/adminsyspro/CFCenter-frontend:latest"
 
 # ============================================
 # Helper Functions
@@ -137,11 +137,11 @@ install_docker() {
 }
 
 # ============================================
-# Setup ProxCenter
+# Setup CFCenter
 # ============================================
 
-setup_proxcenter() {
-    log_info "Setting up ProxCenter Community..."
+setup_CFCenter() {
+    log_info "Setting up CFCenter Community..."
 
     # Create install directory
     mkdir -p "$INSTALL_DIR"
@@ -164,7 +164,7 @@ setup_proxcenter() {
 
     # Create .env file
     cat > "$INSTALL_DIR/.env" << EOF
-# ProxCenter Community Edition
+# CFCenter Community Edition
 # Generated on $(date)
 
 APP_SECRET=$APP_SECRET
@@ -187,20 +187,20 @@ start_services() {
     docker compose pull
 
     log_info "Initializing database..."
-    docker volume create proxcenter_data 2>/dev/null || true
+    docker volume create CFCenter_data 2>/dev/null || true
 
     # Initialize data directory (bypass entrypoint to avoid starting servers)
     docker run --rm --user root --entrypoint "" \
-        -v proxcenter_data:/app/data \
+        -v CFCenter_data:/app/data \
         "$FRONTEND_IMAGE" \
         sh -c "mkdir -p /app/data && chown -R 1001:1001 /app/data"
 
     # Schema init + migrations are handled by docker-entrypoint.sh on startup
 
-    log_info "Starting ProxCenter..."
+    log_info "Starting CFCenter..."
     docker compose up -d
 
-    log_success "ProxCenter started"
+    log_success "CFCenter started"
 }
 
 # ============================================
@@ -225,7 +225,7 @@ wait_and_finish() {
 
     echo ""
     echo -e "${GREEN}============================================${NC}"
-    echo -e "${GREEN}   ProxCenter Community is ready!${NC}"
+    echo -e "${GREEN}   CFCenter Community is ready!${NC}"
     echo -e "${GREEN}============================================${NC}"
     echo ""
     echo -e "Open: ${CYAN}http://$SERVER_IP:3000${NC}"
@@ -243,7 +243,7 @@ wait_and_finish() {
     echo "  - AI Insights"
     echo "  - And more..."
     echo ""
-    echo -e "Learn more: ${CYAN}https://proxcenter.io/pricing${NC}"
+    echo -e "Learn more: ${CYAN}https://CFCenter.io/pricing${NC}"
     echo ""
     echo "Commands:"
     echo "  cd $INSTALL_DIR && docker compose logs -f   # View logs"
@@ -266,7 +266,7 @@ main() {
     install_docker
 
     echo ""
-    setup_proxcenter
+    setup_CFCenter
 
     echo ""
     start_services

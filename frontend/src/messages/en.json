@@ -124,7 +124,7 @@
     "synced": "Synced {time}"
   },
   "auth": {
-    "welcomeTitle": "Welcome to ProxCenter",
+    "welcomeTitle": "Welcome to CFCenter",
     "loginSubtitle": "Sign in to access your infrastructure",
     "loginMethod": "Login method",
     "localAccount": "Local account",
@@ -1163,11 +1163,11 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Account settings",
-    "welcome": "Welcome to ProxCenter",
+    "welcome": "Welcome to CFCenter",
     "welcomeSubtitle": "Configure your first Proxmox connection",
     "onboardingTitle": "Initial setup required",
-    "onboardingMessage": "To start using ProxCenter, please add at least one connection to a Proxmox VE or PBS server.",
-    "licenseManagement": "Manage your ProxCenter license to access advanced features.",
+    "onboardingMessage": "To start using CFCenter, please add at least one connection to a Proxmox VE or PBS server.",
+    "licenseManagement": "Manage your CFCenter license to access advanced features.",
     "freeLicense": "Free license with limited features",
     "includedFeatures": "Included features:",
     "advancedReports": "Advanced reports",
@@ -1207,7 +1207,7 @@
     "serverSpecs": "Server Specifications",
     "saveChanges": "Save changes",
     "appearance": "Appearance",
-    "appearanceDesc": "Customize the overall appearance of ProxCenter. Changes are saved automatically.",
+    "appearanceDesc": "Customize the overall appearance of CFCenter. Changes are saved automatically.",
     "displayMode": "Display mode",
     "light": "Light",
     "dark": "Dark",
@@ -1288,7 +1288,7 @@
     "viewPricing": "View pricing",
     "aiConfigDescription": "Configure the AI assistant to interact with your infrastructure using natural language.",
     "enableAiAssistant": "Enable AI assistant",
-    "enableAiAssistantDesc": "Allows interacting with ProxCenter using natural language",
+    "enableAiAssistantDesc": "Allows interacting with CFCenter using natural language",
     "llmProvider": "LLM Provider",
     "providerLabel": "Provider",
     "ollamaLocalOption": "Ollama (Local / On-Premise)",
@@ -1757,7 +1757,7 @@
     "configRequired": "Go to <b>Settings → Artificial Intelligence</b> to configure it.",
     "clearConversation": "Clear conversation",
     "welcomeTitle": "Hello! 👋",
-    "welcomeMessage": "I'm your ProxCenter AI assistant.<br />Ask me questions about your infrastructure.",
+    "welcomeMessage": "I'm your CFCenter AI assistant.<br />Ask me questions about your infrastructure.",
     "suggestions": "Suggestions",
     "askQuestion": "Ask your question...",
     "aiNotEnabled": "AI not enabled",
@@ -2326,7 +2326,7 @@
     "errorOccurred": "An error occurred",
     "unexpectedError": "An unexpected error occurred.",
     "unexpectedErrorRetry": "An unexpected error occurred. Please try again.",
-    "metaTitle": "404 - Page not found | ProxCenter",
+    "metaTitle": "404 - Page not found | CFCenter",
     "metaDescription": "The page you are looking for does not exist."
   },
   "vmIsolation": {
@@ -2410,7 +2410,7 @@
     "confirmPasswordLabel": "Confirm password",
     "createAccount": "Create administrator account",
     "creating": "Creating...",
-    "adminRightsInfo": "This account will have full administrator rights on ProxCenter."
+    "adminRightsInfo": "This account will have full administrator rights on CFCenter."
   },
   "bulkActions": {
     "startAllVms": "Start all VMs",
@@ -2972,8 +2972,8 @@
     "ruleRequired": "Rule required",
     "ruleRequiredDesc": "Blocks migrations if impossible to respect",
     "haConflictTitle": "PVE 9 native affinity rules detected",
-    "haConflictPve9": "{rules} native affinity rule(s) detected. Native PVE 9 affinity rules may conflict with ProxCenter DRS placement decisions.",
-    "haConflictHint": "Consider disabling Proxmox native affinity rules if you want ProxCenter DRS to fully manage placement.",
+    "haConflictPve9": "{rules} native affinity rule(s) detected. Native PVE 9 affinity rules may conflict with CFCenter DRS placement decisions.",
+    "haConflictHint": "Consider disabling Proxmox native affinity rules if you want CFCenter DRS to fully manage placement.",
     "cpuLabel": "CPU",
     "ramLabel": "RAM",
     "vmsLabel": "VMs",
@@ -3277,8 +3277,8 @@
       "lavenderDesc": "Soft purple tint"
     },
     "loginBackground": {
-      "default": "Classic ProxCenter gradient",
-      "proxcenterWarm": "Orange and warm tones",
+      "default": "Classic CFCenter gradient",
+      "cfcenterWarm": "Orange and warm tones",
       "datacenter": "Deep technical blue",
       "midnight": "Starry night",
       "aurora": "Northern lights",
@@ -3298,7 +3298,7 @@
     },
     "bgCategories": {
       "all": "All",
-      "brand": "ProxCenter",
+      "brand": "CFCenter",
       "tech": "Tech",
       "design": "Design",
       "nature": "Nature",
@@ -3328,7 +3328,7 @@
   },
   "aboutPage": {
     "title": "About",
-    "subtitle": "ProxCenter - Centralized Proxmox management",
+    "subtitle": "CFCenter - Centralized Proxmox management",
     "description": "Centralized management solution for multi-cluster Proxmox VE environments.",
     "copyright": "© 2025 - All rights reserved"
   },
@@ -3686,7 +3686,7 @@
     "allReleases": "All releases",
     "copyright": "All rights reserved.",
     "updateNotification": "New version available",
-    "updateNotificationBody": "ProxCenter {version} is available. Click to update."
+    "updateNotificationBody": "CFCenter {version} is available. Click to update."
   },
   "snapshotsTab": {
     "title": "Snapshots",
@@ -3833,7 +3833,7 @@
     "vlan": "VLAN",
     "noVlan": "No VLAN",
     "bridge": "Bridge",
-    "proxcenterRoot": "ProxCenter",
+    "cfcenterRoot": "CFCenter",
     "totalClusters": "Total Clusters",
     "infraView": "Infrastructure",
     "networkView": "Network (VLAN)",

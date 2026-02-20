@@ -897,7 +897,7 @@ function LicenseTab() {
           {isLicensed && maxNodes > 0 && nodeStatus?.exceeded && (
             <Alert severity='warning' sx={{ mt: 2 }}
               action={
-                <Button size='small' color='warning' href='https://proxcenter.io/account/subscribe' target='_blank' startIcon={<i className='ri-shopping-cart-line' />}>
+                <Button size='small' color='warning' href='https://CFCenter.io/account/subscribe' target='_blank' startIcon={<i className='ri-shopping-cart-line' />}>
                   {t('settings.upgradeNodes')}
                 </Button>
               }
@@ -970,7 +970,7 @@ function LicenseTab() {
               <Button
                 variant='contained'
                 size='small'
-                href='https://proxcenter.io/pricing'
+                href='https://CFCenter.io/pricing'
                 target='_blank'
                 startIcon={<i className='ri-external-link-line' />}
               >
@@ -993,7 +993,7 @@ function LicenseTab() {
               <Button
                 variant='outlined'
                 size='small'
-                href='https://proxcenter.io/account/subscribe'
+                href='https://CFCenter.io/account/subscribe'
                 target='_blank'
                 startIcon={<i className='ri-shopping-cart-line' />}
               >
@@ -1082,7 +1082,7 @@ function LicenseTab() {
             </Button>
 
             <Typography variant='caption' sx={{ display: 'block', mt: 2, opacity: 0.6 }}>
-              {t('settings.needLicense')} <a href='https://proxcenter.io/pricing' target='_blank' rel='noopener noreferrer' style={{ color: '#e57000' }}>{t('settings.viewPricing')}</a>
+              {t('settings.needLicense')} <a href='https://CFCenter.io/pricing' target='_blank' rel='noopener noreferrer' style={{ color: '#e57000' }}>{t('settings.viewPricing')}</a>
             </Typography>
           </CardContent>
         </Card>

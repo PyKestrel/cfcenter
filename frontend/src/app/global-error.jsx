@@ -13,7 +13,7 @@ function getLocale() {
   return match?.[1] === 'en' ? 'en' : 'fr'
 }
 
-// Logo SVG ProxCenter (inline car on ne peut pas utiliser les composants normaux ici)
+// Logo SVG CFCenter (inline car on ne peut pas utiliser les composants normaux ici)
 const LogoIcon = ({ size = 60 }) => {
   const height = (size * 170) / 220
 
@@ -162,7 +162,7 @@ export default function GlobalError({ error, reset }) {
               fontSize: '0.75rem',
             }}
           >
-            ProxCenter — Proxmox Management Platform
+            CFCenter — Proxmox Management Platform
           </p>
         </div>
       </body>

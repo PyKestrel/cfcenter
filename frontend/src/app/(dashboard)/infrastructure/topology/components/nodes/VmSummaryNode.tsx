@@ -39,7 +39,7 @@ function VmSummaryNodeComponent({ data }: NodeProps) {
       <Handle type='target' position={Position.Top} style={{ background: '#999' }} />
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <img src='/images/proxcenter-logo.svg' alt='' width={13} height={13} style={{ flexShrink: 0, opacity: 0.5 }} />
+        <img src='/images/CFCenter-logo.svg' alt='' width={13} height={13} style={{ flexShrink: 0, opacity: 0.5 }} />
         <Typography variant='caption' fontWeight={600} sx={{ fontSize: '0.75rem' }}>
           {t('vmCount', { count: d.total })}
         </Typography>

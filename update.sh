@@ -1,17 +1,17 @@
 #!/bin/bash
 # ============================================
-# ProxCenter Update Script
+# CFCenter Update Script
 # Run this on the remote server after pushing code changes.
 # Usage: ./update.sh
 # ============================================
 
 set -e
 
-CONTAINER_NAME="proxcenter-frontend"
-IMAGE_NAME="proxcenter-frontend:dev"
+CONTAINER_NAME="CFCenter-frontend"
+IMAGE_NAME="CFCenter-frontend:dev"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "=== ProxCenter Update ==="
+echo "=== CFCenter Update ==="
 echo "Repo: $REPO_DIR"
 echo ""
 
@@ -47,11 +47,11 @@ docker rm "$CONTAINER_NAME"
 docker run -d --name "$CONTAINER_NAME" \
   -p 3000:3000 \
   -e NODE_ENV=production \
-  -e DATABASE_URL=file:/app/data/proxcenter.db \
+  -e DATABASE_URL=file:/app/data/CFCenter.db \
   -e APP_SECRET="$APP_SECRET" \
   -e NEXTAUTH_SECRET="$NEXTAUTH_SECRET" \
   -e NEXTAUTH_URL="$NEXTAUTH_URL" \
-  -v proxcenter_data:/app/data \
+  -v CFCenter_data:/app/data \
   --restart unless-stopped \
   "$IMAGE_NAME"
 

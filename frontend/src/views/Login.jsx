@@ -124,7 +124,7 @@ export default function LoginPage() {
           <Button fullWidth variant='contained' type='submit' disabled={loading} sx={{ py: 1.5 }}>{loading ? t('auth.loggingIn') : t('auth.login')}</Button>
         </form>
         <Divider sx={{ my: 3 }} />
-        <Typography variant='caption' sx={{ display: 'block', textAlign: 'center', opacity: 0.5 }}>ProxCenter - {t('auth.appSubtitle')}</Typography>
+        <Typography variant='caption' sx={{ display: 'block', textAlign: 'center', opacity: 0.5 }}>CFCenter - {t('auth.appSubtitle')}</Typography>
       </Box>
     </LoginBackground>
   )

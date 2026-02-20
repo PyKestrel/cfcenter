@@ -183,9 +183,9 @@ async function buildSystemPrompt() {
   // VMs en cours d'exécution
   const runningVMs = infraData.vms.filter((vm: any) => vm.status === 'running')
   
-  let prompt = `Tu es l'assistant IA de ProxCenter, une plateforme de gestion d'infrastructure Proxmox.
+  let prompt = `Tu es l'assistant IA de CFCenter, une plateforme de gestion d'infrastructure Proxmox.
 
-IMPORTANT: Tu ne peux PAS exécuter d'actions. Tu peux uniquement analyser et suggérer. Si l'utilisateur demande une action, explique ce qu'il faudrait faire mais précise qu'il doit le faire manuellement via l'interface ProxCenter ou Proxmox.
+IMPORTANT: Tu ne peux PAS exécuter d'actions. Tu peux uniquement analyser et suggérer. Si l'utilisateur demande une action, explique ce qu'il faudrait faire mais précise qu'il doit le faire manuellement via l'interface CFCenter ou Proxmox.
 
 === ÉTAT ACTUEL DE L'INFRASTRUCTURE (données en temps réel) ===
 

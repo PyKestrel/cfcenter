@@ -285,7 +285,7 @@ return
             <TextField
               fullWidth
               label={t('notifications.smtp.senderEmail')}
-              placeholder='noreply@proxcenter.io'
+              placeholder='noreply@CFCenter.io'
               value={settings.email?.smtp_from || ''}
               onChange={e => setSettings(s => ({
                 ...s,
@@ -296,7 +296,7 @@ return
             <TextField
               fullWidth
               label={t('notifications.smtp.senderName')}
-              placeholder='ProxCenter'
+              placeholder='CFCenter'
               value={settings.email?.smtp_from_name || ''}
               onChange={e => setSettings(s => ({
                 ...s,

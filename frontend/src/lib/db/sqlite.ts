@@ -13,7 +13,7 @@ export function getDb() {
 
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
-  const file = path.join(dir, "proxcenter.db")
+  const file = path.join(dir, "CFCenter.db")
 
   db = new Database(file)
 

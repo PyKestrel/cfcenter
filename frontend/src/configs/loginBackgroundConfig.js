@@ -1,5 +1,5 @@
 /**
- * ProxCenter Login Background Configuration
+ * CFCenter Login Background Configuration
  * 
  * Presets for login page backgrounds including gradients,
  * animated effects, and theme-matched options.
@@ -15,9 +15,9 @@ export const gradientPresets = [
     category: 'brand'
   },
   {
-    id: 'proxcenter-warm',
-    name: 'ProxCenter Warm',
-    descriptionKey: 'themes.loginBackground.proxcenterWarm',
+    id: 'CFCenter-warm',
+    name: 'CFCenter Warm',
+    descriptionKey: 'themes.loginBackground.CFCenterWarm',
     gradient: 'linear-gradient(135deg, #1a1a2e 0%, #2d1810 50%, #0f0a06 100%)',
     category: 'brand'
   },

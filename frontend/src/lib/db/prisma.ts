@@ -5,7 +5,7 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
 function getDatabaseUrl() {
   // Default to local path for build time, overridden at runtime by env var
-  return process.env.DATABASE_URL || "file:./data/proxcenter.db"
+  return process.env.DATABASE_URL || "file:./data/CFCenter.db"
 }
 
 export const prisma =

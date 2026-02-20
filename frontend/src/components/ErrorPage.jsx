@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Box, Button, Typography, useTheme, alpha } from '@mui/material'
 import { useTranslations } from 'next-intl'
 
-// Logo SVG ProxCenter
+// Logo SVG CFCenter
 const LogoIcon = ({ size = 60, accentColor = '#F29221' }) => {
   const height = (size * 170) / 220
 
@@ -182,7 +182,7 @@ export default function ErrorPage({
           color: 'text.disabled',
         }}
       >
-        ProxCenter — Proxmox Management Platform
+        CFCenter — Proxmox Management Platform
       </Typography>
     </Box>
   )

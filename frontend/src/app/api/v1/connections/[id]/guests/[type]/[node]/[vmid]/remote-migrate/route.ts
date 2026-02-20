@@ -13,7 +13,7 @@ export const runtime = "nodejs"
  * Utilise l'API Proxmox: POST /nodes/{node}/qemu/{vmid}/remote_migrate
  * 
  * Body params:
- * - targetConnectionId: string - ID de la connexion cible dans ProxCenter
+ * - targetConnectionId: string - ID de la connexion cible dans CFCenter
  * - targetNode: string - Nom du nœud cible sur le cluster distant
  * - targetVmid?: number - VMID sur le cluster cible (optionnel, garde le même par défaut)
  * - targetStorage: string - Stockage cible sur le cluster distant

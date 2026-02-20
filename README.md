@@ -2,11 +2,11 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="docs/logo.svg">
-    <img src="docs/logo.svg" alt="ProxCenter Logo" width="120">
+    <img src="docs/logo.svg" alt="CFCenter Logo" width="120">
   </picture>
 </p>
 
-<h1 align="center">ProxCenter</h1>
+<h1 align="center">CFCenter</h1>
 
 <p align="center">
   <strong>Enterprise-grade management platform for Proxmox Virtual Environment</strong>
@@ -24,7 +24,7 @@
 
 ## Overview
 
-**ProxCenter** provides a modern, unified web interface for monitoring, managing, and optimizing your Proxmox virtualization infrastructure. Manage multiple clusters, automate workload balancing, and gain deep insights into your infrastructure.
+**CFCenter** provides a modern, unified web interface for monitoring, managing, and optimizing your Proxmox virtualization infrastructure. Manage multiple clusters, automate workload balancing, and gain deep insights into your infrastructure.
 
 <p align="center">
   <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="100%">
@@ -37,16 +37,16 @@
 ### Community Edition (Free)
 
 ```bash
-curl -fsSL https://proxcenter.io/install/community | sudo bash
+curl -fsSL https://CFCenter.io/install/community | sudo bash
 ```
 
 ### Enterprise Edition
 
 ```bash
-curl -fsSL https://proxcenter.io/install/enterprise | sudo bash -s -- --token YOUR_TOKEN
+curl -fsSL https://CFCenter.io/install/enterprise | sudo bash -s -- --token YOUR_TOKEN
 ```
 
-[Get your Enterprise license](https://proxcenter.io/pricing)
+[Get your Enterprise license](https://CFCenter.io/pricing)
 
 ---
 
@@ -294,34 +294,34 @@ Generate professional PDF reports with AI-powered insights (Ollama, OpenAI, Anth
 
 **Community:**
 ```bash
-curl -fsSL https://proxcenter.io/install/community | sudo bash
+curl -fsSL https://CFCenter.io/install/community | sudo bash
 ```
 
 **Enterprise:**
 ```bash
-curl -fsSL https://proxcenter.io/install/enterprise | sudo bash -s -- --token YOUR_TOKEN
+curl -fsSL https://CFCenter.io/install/enterprise | sudo bash -s -- --token YOUR_TOKEN
 ```
 
 ### With Nginx (Optional)
 
 Example nginx configurations are provided in the [`nginx/`](nginx/) directory:
 
-- `proxcenter.conf` — Generic template with HTTP/HTTPS
-- `proxcenter-standalone.conf` — Self-signed SSL example
-- `proxcenter-locations.conf` — Location blocks (includable snippet)
+- `CFCenter.conf` — Generic template with HTTP/HTTPS
+- `CFCenter-standalone.conf` — Self-signed SSL example
+- `CFCenter-locations.conf` — Location blocks (includable snippet)
 
 ## Configuration
 
-After installation, ProxCenter runs at `http://your-server:3000`.
+After installation, CFCenter runs at `http://your-server:3000`.
 
-Configuration files are located in `/opt/proxcenter/`:
+Configuration files are located in `/opt/CFCenter/`:
 - `.env` — Environment variables
 - `config/orchestrator.yaml` — Backend configuration (Enterprise only)
 
 ## Management Commands
 
 ```bash
-cd /opt/proxcenter
+cd /opt/CFCenter
 
 # View logs
 docker compose logs -f
@@ -339,12 +339,12 @@ docker compose restart
 ## License
 
 - **Community Edition**: Free for personal and commercial use
-- **Enterprise Edition**: Commercial license required — [proxcenter.io/pricing](https://proxcenter.io/pricing)
+- **Enterprise Edition**: Commercial license required — [CFCenter.io/pricing](https://CFCenter.io/pricing)
 
 ## Support
 
-- Community: [GitHub Issues](https://github.com/adminsyspro/proxcenter-ui/issues)
-- Enterprise Support: [support@proxcenter.io](mailto:support@proxcenter.io)
+- Community: [GitHub Issues](https://github.com/adminsyspro/CFCenter-ui/issues)
+- Enterprise Support: [support@CFCenter.io](mailto:support@CFCenter.io)
 
 ---
 
@@ -352,8 +352,8 @@ docker compose restart
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="docs/logo.svg">
-    <img src="docs/logo.svg" alt="ProxCenter" width="40">
+    <img src="docs/logo.svg" alt="CFCenter" width="40">
   </picture>
   <br>
-  <strong>ProxCenter</strong> — Enterprise Proxmox Management Made Simple
+  <strong>CFCenter</strong> — Enterprise Proxmox Management Made Simple
 </p>

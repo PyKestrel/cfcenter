@@ -1,12 +1,12 @@
 name: "Feature Request"
-description: "Suggest a new feature or improvement for ProxCenter"
+description: "Suggest a new feature or improvement for CFCenter"
 title: "[Feature]: "
 labels: ["feature-request", "enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to suggest a feature! Your ideas help make ProxCenter better for everyone.
+        Thanks for taking the time to suggest a feature! Your ideas help make CFCenter better for everyone.
 
   - type: textarea
     id: description
@@ -31,7 +31,7 @@ body:
     attributes:
       label: Proposed Solution
       description: How do you envision this feature working?
-      placeholder: "It would be great if ProxCenter could..."
+      placeholder: "It would be great if CFCenter could..."
     validations:
       required: false
 
@@ -48,7 +48,7 @@ body:
     id: category
     attributes:
       label: Category
-      description: Which area of ProxCenter does this relate to?
+      description: Which area of CFCenter does this relate to?
       options:
         - Infrastructure Management
         - Automation

@@ -10,7 +10,7 @@ export const runtime = "nodejs"
  * GET /api/v1/pbs-storages
  * 
  * Retourne la liste des storages PBS configurés sur les PVE, avec le mapping
- * vers les connexions PBS de ProxCenter.
+ * vers les connexions PBS de CFCenter.
  * 
  * Cela permet de savoir quel PVE peut accéder à quel PBS, et avec quel nom de storage.
  * 
@@ -24,7 +24,7 @@ export const runtime = "nodejs"
  *       pbsServer: "192.168.1.10:8007", // Serveur PBS configuré
  *       pbsDatastore: "vm-backups",    // Datastore sur le PBS
  *       pbsFingerprint: "...",
- *       pbsId: "pbs-1",                // ID de la connexion PBS dans ProxCenter (si trouvé)
+ *       pbsId: "pbs-1",                // ID de la connexion PBS dans CFCenter (si trouvé)
  *       pbsName: "PBS Principal",      // Nom de la connexion PBS (si trouvé)
  *       nodes: ["pve1", "pve2"],       // Nodes PVE où ce storage est disponible
  *     }
@@ -94,7 +94,7 @@ export async function GET() {
             // Ignorer les erreurs de récupération des nodes
           }
 
-          // Essayer de matcher avec une connexion PBS de ProxCenter
+          // Essayer de matcher avec une connexion PBS de CFCenter
           const pbsServer = storage.server || ''
           const normalizedPbsUrl = normalizeUrl(`https://${pbsServer}`)
           const matchedPbs = pbsByUrl.get(normalizedPbsUrl)
@@ -108,7 +108,7 @@ export async function GET() {
             pbsFingerprint: storage.fingerprint || null,
             pbsUsername: storage.username || null,
 
-            // Matching avec ProxCenter
+            // Matching avec CFCenter
             pbsId: matchedPbs?.id || null,
             pbsName: matchedPbs?.name || null,
 

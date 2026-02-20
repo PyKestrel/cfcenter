@@ -12,7 +12,7 @@ import type {
   VlanContainerNodeData,
   VlanContainerVm,
   TagGroupNodeData,
-  ProxCenterNodeData,
+  CFCenterNodeData,
   NodeStatus,
 } from '../types'
 import type { NetworkMap } from '../hooks/useTopologyNetworks'
@@ -165,9 +165,9 @@ function buildNetworkView(
     clusterVlanMap.set(conn.id, buckets)
   }
 
-  // ProxCenter root
-  const proxcenterData: ProxCenterNodeData = {
-    label: 'ProxCenter',
+  // CFCenter root
+  const CFCenterData: CFCenterNodeData = {
+    label: 'CFCenter',
     clusterCount: clusters.length,
     totalNodes: grandTotalNodes,
     totalVms: grandTotalVms,
@@ -176,10 +176,10 @@ function buildNetworkView(
   }
 
   nodes.push({
-    id: 'proxcenter',
-    type: 'proxcenter',
+    id: 'CFCenter',
+    type: 'CFCenter',
     position: { x: 0, y: 0 },
-    data: proxcenterData,
+    data: CFCenterData,
   })
 
   // Cluster nodes + VLAN containers per cluster
@@ -236,8 +236,8 @@ function buildNetworkView(
     })
 
     edges.push({
-      id: `e-proxcenter-${clusterId}`,
-      source: 'proxcenter',
+      id: `e-CFCenter-${clusterId}`,
+      source: 'CFCenter',
       target: clusterId,
       type: 'smoothstep',
       animated: true,
@@ -321,7 +321,7 @@ function buildInfraView(
     ? data.clusters.filter((c) => c.id === filters.connectionId)
     : data.clusters
 
-  // Aggregate totals for ProxCenter root node
+  // Aggregate totals for CFCenter root node
   let grandTotalNodes = 0
   let grandTotalVms = 0
 
@@ -597,9 +597,9 @@ function buildInfraView(
     }
   }
 
-  // ProxCenter root node — always at top, connecting to all clusters/standalone nodes
-  const proxcenterData: ProxCenterNodeData = {
-    label: 'ProxCenter',
+  // CFCenter root node — always at top, connecting to all clusters/standalone nodes
+  const CFCenterData: CFCenterNodeData = {
+    label: 'CFCenter',
     clusterCount: clusters.length,
     totalNodes: grandTotalNodes,
     totalVms: grandTotalVms,
@@ -608,18 +608,18 @@ function buildInfraView(
   }
 
   nodes.push({
-    id: 'proxcenter',
-    type: 'proxcenter',
+    id: 'CFCenter',
+    type: 'CFCenter',
     position: { x: 0, y: 0 },
-    data: proxcenterData,
+    data: CFCenterData,
   })
 
   for (const conn of clusters) {
     const clusterId = `cluster-${conn.id}`
 
     edges.push({
-      id: `e-proxcenter-${clusterId}`,
-      source: 'proxcenter',
+      id: `e-CFCenter-${clusterId}`,
+      source: 'CFCenter',
       target: clusterId,
       type: 'smoothstep',
       animated: true,

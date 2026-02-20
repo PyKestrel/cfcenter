@@ -100,7 +100,7 @@ export default function Header() {
           </span>
         )}
         <div className="flex flex-col">
-          <h1>{pageTitle || 'ProxCenter'}</h1>
+          <h1>{pageTitle || 'CFCenter'}</h1>
           {pageSubtitle && <span className="subtitle">{pageSubtitle}</span>}
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function Header() {
                   </button>
                 </div>
                 <div className="px-3 py-1.5 border-t text-[10px]" style={{ borderColor: 'var(--pc-border-subtle)', color: 'var(--pc-text-muted)' }}>
-                  ProxCenter v{VERSION}
+                  CFCenter v{VERSION}
                 </div>
               </div>
             </>

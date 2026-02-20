@@ -124,7 +124,7 @@
     "synced": "Synchronisé {time}"
   },
   "auth": {
-    "welcomeTitle": "Bienvenue sur ProxCenter",
+    "welcomeTitle": "Bienvenue sur CFCenter",
     "loginSubtitle": "Connectez-vous pour accéder à votre infrastructure",
     "loginMethod": "Méthode de connexion",
     "localAccount": "Compte local",
@@ -1168,11 +1168,11 @@
   "settings": {
     "title": "Paramètres",
     "subtitle": "Paramètres du compte",
-    "welcome": "Bienvenue sur ProxCenter",
+    "welcome": "Bienvenue sur CFCenter",
     "welcomeSubtitle": "Configurez votre première connexion Proxmox",
     "onboardingTitle": "Configuration initiale requise",
-    "onboardingMessage": "Pour commencer à utiliser ProxCenter, veuillez ajouter au moins une connexion à un serveur Proxmox VE ou PBS.",
-    "licenseManagement": "Gérez votre licence ProxCenter pour accéder aux fonctionnalités avancées.",
+    "onboardingMessage": "Pour commencer à utiliser CFCenter, veuillez ajouter au moins une connexion à un serveur Proxmox VE ou PBS.",
+    "licenseManagement": "Gérez votre licence CFCenter pour accéder aux fonctionnalités avancées.",
     "freeLicense": "Licence gratuite avec fonctionnalités limitées",
     "includedFeatures": "Fonctionnalités incluses :",
     "advancedReports": "Rapports avancés",
@@ -1212,7 +1212,7 @@
     "serverSpecs": "Spécifications Serveurs",
     "saveChanges": "Enregistrer les modifications",
     "appearance": "Apparence",
-    "appearanceDesc": "Personnalisez l'apparence globale de ProxCenter. Les modifications sont enregistrées automatiquement.",
+    "appearanceDesc": "Personnalisez l'apparence globale de CFCenter. Les modifications sont enregistrées automatiquement.",
     "displayMode": "Mode d'affichage",
     "light": "Clair",
     "dark": "Sombre",
@@ -1293,7 +1293,7 @@
     "viewPricing": "Voir les tarifs",
     "aiConfigDescription": "Configurez l'assistant IA pour interagir avec votre infrastructure en langage naturel.",
     "enableAiAssistant": "Activer l'assistant IA",
-    "enableAiAssistantDesc": "Permet d'interagir avec ProxCenter en langage naturel",
+    "enableAiAssistantDesc": "Permet d'interagir avec CFCenter en langage naturel",
     "llmProvider": "Fournisseur LLM",
     "providerLabel": "Fournisseur",
     "ollamaLocalOption": "Ollama (Local / On-Premise)",
@@ -1762,7 +1762,7 @@
     "configRequired": "Allez dans <b>Paramètres → Intelligence Artificielle</b> pour le configurer.",
     "clearConversation": "Effacer la conversation",
     "welcomeTitle": "Bonjour ! 👋",
-    "welcomeMessage": "Je suis votre assistant IA ProxCenter.<br />Posez-moi des questions sur votre infrastructure.",
+    "welcomeMessage": "Je suis votre assistant IA CFCenter.<br />Posez-moi des questions sur votre infrastructure.",
     "suggestions": "Suggestions",
     "askQuestion": "Posez votre question...",
     "aiNotEnabled": "IA non activée",
@@ -2331,7 +2331,7 @@
     "errorOccurred": "Une erreur s'est produite",
     "unexpectedError": "Une erreur inattendue s'est produite.",
     "unexpectedErrorRetry": "Une erreur inattendue s'est produite. Veuillez réessayer.",
-    "metaTitle": "404 - Page introuvable | ProxCenter",
+    "metaTitle": "404 - Page introuvable | CFCenter",
     "metaDescription": "La page que vous recherchez n'existe pas."
   },
   "vmIsolation": {
@@ -2415,7 +2415,7 @@
     "confirmPasswordLabel": "Confirmer le mot de passe",
     "createAccount": "Créer le compte administrateur",
     "creating": "Création...",
-    "adminRightsInfo": "Ce compte aura les droits administrateur complets sur ProxCenter."
+    "adminRightsInfo": "Ce compte aura les droits administrateur complets sur CFCenter."
   },
   "bulkActions": {
     "startAllVms": "Démarrer toutes les VMs",
@@ -2977,8 +2977,8 @@
     "ruleRequired": "Règle obligatoire",
     "ruleRequiredDesc": "Bloque les migrations si impossible à respecter",
     "haConflictTitle": "Règles d'affinité natives PVE 9 détectées",
-    "haConflictPve9": "{rules} règle(s) d'affinité native(s) détectée(s). Les règles d'affinité natives PVE 9 peuvent entrer en conflit avec les décisions de placement du DRS ProxCenter.",
-    "haConflictHint": "Envisagez de désactiver les règles d'affinité natives de Proxmox si vous souhaitez que le DRS ProxCenter gère entièrement le placement.",
+    "haConflictPve9": "{rules} règle(s) d'affinité native(s) détectée(s). Les règles d'affinité natives PVE 9 peuvent entrer en conflit avec les décisions de placement du DRS CFCenter.",
+    "haConflictHint": "Envisagez de désactiver les règles d'affinité natives de Proxmox si vous souhaitez que le DRS CFCenter gère entièrement le placement.",
     "cpuLabel": "CPU",
     "ramLabel": "RAM",
     "vmsLabel": "VMs",
@@ -3282,8 +3282,8 @@
       "lavenderDesc": "Teinte violette douce"
     },
     "loginBackground": {
-      "default": "Gradient ProxCenter classique",
-      "proxcenterWarm": "Orange et tons chauds",
+      "default": "Gradient CFCenter classique",
+      "cfcenterWarm": "Orange et tons chauds",
       "datacenter": "Bleu profond technique",
       "midnight": "Nuit étoilée",
       "aurora": "Aurore boréale",
@@ -3303,7 +3303,7 @@
     },
     "bgCategories": {
       "all": "Tous",
-      "brand": "ProxCenter",
+      "brand": "CFCenter",
       "tech": "Tech",
       "design": "Design",
       "nature": "Nature",
@@ -3572,7 +3572,7 @@
   },
   "aboutPage": {
     "title": "À propos",
-    "subtitle": "ProxCenter - Gestion centralisée Proxmox",
+    "subtitle": "CFCenter - Gestion centralisée Proxmox",
     "description": "Solution de gestion centralisée pour environnements Proxmox VE multi-clusters.",
     "copyright": "© 2025 - Tous droits réservés"
   },
@@ -3692,7 +3692,7 @@
     "allReleases": "Toutes les releases",
     "copyright": "Tous droits réservés.",
     "updateNotification": "Nouvelle version disponible",
-    "updateNotificationBody": "ProxCenter {version} est disponible. Cliquez pour mettre à jour."
+    "updateNotificationBody": "CFCenter {version} est disponible. Cliquez pour mettre à jour."
   },
   "snapshotsTab": {
     "title": "Snapshots",
@@ -3839,7 +3839,7 @@
     "vlan": "VLAN",
     "noVlan": "Sans VLAN",
     "bridge": "Bridge",
-    "proxcenterRoot": "ProxCenter",
+    "cfcenterRoot": "CFCenter",
     "totalClusters": "Clusters totaux",
     "infraView": "Infrastructure",
     "networkView": "Réseau (VLAN)",

@@ -174,7 +174,7 @@ async function buildSystemPrompt() {
   const stoppedVMs = infraData.vms.filter((vm: any) => vm.status !== 'running')
   const runningVMs = infraData.vms.filter((vm: any) => vm.status === 'running')
   
-  let prompt = `Tu es l'assistant IA de ProxCenter, une plateforme de gestion d'infrastructure Proxmox.
+  let prompt = `Tu es l'assistant IA de CFCenter, une plateforme de gestion d'infrastructure Proxmox.
 
 IMPORTANT: Tu ne peux PAS exécuter d'actions. Tu peux uniquement analyser et suggérer.
 

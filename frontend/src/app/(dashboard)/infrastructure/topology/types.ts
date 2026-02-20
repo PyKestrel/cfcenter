@@ -148,7 +148,7 @@ export interface VlanContainerNodeData {
   height: number
 }
 
-export interface ProxCenterNodeData {
+export interface CFCenterNodeData {
   [key: string]: unknown
   label: string
   clusterCount: number
@@ -167,4 +167,4 @@ export type SelectedNodeInfo =
   | { type: 'vlanGroup'; data: VlanGroupNodeData }
   | { type: 'tagGroup'; data: TagGroupNodeData }
   | { type: 'vlanContainer'; data: VlanContainerNodeData }
-  | { type: 'proxcenter'; data: ProxCenterNodeData }
+  | { type: 'CFCenter'; data: CFCenterNodeData }

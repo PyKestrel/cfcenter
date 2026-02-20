@@ -23,7 +23,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Noms des thèmes pour l'affichage
 const themeNames = {
-  'primary-1': { name: 'PROXCENTER', icon: 'proxmox-logo' },
+  'primary-1': { name: 'CFCenter', icon: 'proxmox-logo' },
   'primary-2': { name: 'Ocean', icon: 'ri-water-flash-fill' },
   'primary-3': { name: 'Cherry', icon: 'ri-heart-fill' },
   'primary-4': { name: 'Sunrise', icon: 'ri-sun-fill' },
@@ -37,8 +37,8 @@ const themeNames = {
   'primary-12': { name: 'Mint', icon: 'ri-seedling-fill' },
 }
 
-// Composant logo Proxcenter SVG (même style que la sidebar)
-const ProxcenterLogo = ({ size = 14, color = '#F29221' }) => {
+// Composant logo CFCenter SVG (même style que la sidebar)
+const CFCenterLogo = ({ size = 14, color = '#F29221' }) => {
   const height = (size * 170) / 220
 
   
@@ -64,10 +64,10 @@ return (
   )
 }
 
-// Fonction pour rendre l'icône (soit Proxcenter logo, soit Remix Icon)
+// Fonction pour rendre l'icône (soit CFCenter logo, soit Remix Icon)
 const ThemeIcon = ({ icon, size = 14, color }) => {
   if (icon === 'proxmox-logo') {
-    return <ProxcenterLogo size={size} color={color} />
+    return <CFCenterLogo size={size} color={color} />
   }
 
   

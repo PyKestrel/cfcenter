@@ -2,9 +2,9 @@
 set -e
 
 # ============================================
-# ProxCenter Enterprise Installation Script
+# CFCenter Enterprise Installation Script
 # ============================================
-# Usage: curl -fsSL https://get.proxcenter.io/enterprise | sudo bash -s -- --token YOUR_GHCR_TOKEN
+# Usage: curl -fsSL https://get.CFCenter.io/enterprise | sudo bash -s -- --token YOUR_GHCR_TOKEN
 # ============================================
 
 # Colors for output
@@ -16,12 +16,12 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-INSTALL_DIR="/opt/proxcenter"
-COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/proxcenter-ui/main/docker-compose.enterprise.yml"
+INSTALL_DIR="/opt/CFCenter"
+COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/CFCenter-ui/main/docker-compose.enterprise.yml"
 REGISTRY="ghcr.io"
 REGISTRY_USER="adminsyspro"
-FRONTEND_IMAGE="ghcr.io/adminsyspro/proxcenter-frontend:latest"
-ORCHESTRATOR_IMAGE="ghcr.io/adminsyspro/proxcenter-orchestrator:latest"
+FRONTEND_IMAGE="ghcr.io/adminsyspro/CFCenter-frontend:latest"
+ORCHESTRATOR_IMAGE="ghcr.io/adminsyspro/CFCenter-orchestrator:latest"
 
 # ============================================
 # Helper Functions
@@ -71,7 +71,7 @@ show_usage() {
     echo "  --version <tag>    Specific version to install (default: latest)"
     echo "  --help             Show this help message"
     echo ""
-    echo "Get your token at: https://proxcenter.io/account/tokens"
+    echo "Get your token at: https://CFCenter.io/account/tokens"
     exit 1
 }
 
@@ -210,11 +210,11 @@ authenticate_ghcr() {
 }
 
 # ============================================
-# Setup ProxCenter
+# Setup CFCenter
 # ============================================
 
-setup_proxcenter() {
-    log_info "Setting up ProxCenter Enterprise..."
+setup_CFCenter() {
+    log_info "Setting up CFCenter Enterprise..."
 
     # Create install directory
     mkdir -p "$INSTALL_DIR"
@@ -238,7 +238,7 @@ setup_proxcenter() {
 
     # Create .env file
     cat > "$INSTALL_DIR/.env" << EOF
-# ProxCenter Enterprise Edition
+# CFCenter Enterprise Edition
 # Generated on $(date)
 
 # Docker Registry
@@ -261,7 +261,7 @@ EOF
 
     # Create orchestrator config
     cat > "$INSTALL_DIR/config/orchestrator.yaml" << EOF
-# ProxCenter Orchestrator Configuration
+# CFCenter Orchestrator Configuration
 # Generated on $(date)
 
 server:
@@ -272,7 +272,7 @@ database:
   path: /app/data/orchestrator.db
 
 proxmox:
-  proxcenter_db_path: /app/shared_data/proxcenter.db
+  CFCenter_db_path: /app/shared_data/CFCenter.db
 
 license:
   key: "${LICENSE_KEY:-}"
@@ -298,26 +298,26 @@ start_services() {
     docker compose pull
 
     log_info "Initializing database..."
-    docker volume create proxcenter_data 2>/dev/null || true
+    docker volume create CFCenter_data 2>/dev/null || true
     docker volume create orchestrator_data 2>/dev/null || true
 
     # Initialize data directory
     docker run --rm --user root \
-        -v proxcenter_data:/app/data \
+        -v CFCenter_data:/app/data \
         "$FRONTEND_IMAGE" \
         sh -c "mkdir -p /app/data && chown -R 1001:1001 /app/data"
 
     # Run migrations
     docker run --rm \
-        -v proxcenter_data:/app/data \
-        -e DATABASE_URL="file:/app/data/proxcenter.db" \
+        -v CFCenter_data:/app/data \
+        -e DATABASE_URL="file:/app/data/CFCenter.db" \
         "$FRONTEND_IMAGE" \
         sh -c "prisma db push --schema /app/prisma/schema.migrate.prisma --accept-data-loss --skip-generate" 2>/dev/null || true
 
-    log_info "Starting ProxCenter Enterprise..."
+    log_info "Starting CFCenter Enterprise..."
     docker compose up -d
 
-    log_success "ProxCenter Enterprise started"
+    log_success "CFCenter Enterprise started"
 }
 
 # ============================================
@@ -355,7 +355,7 @@ wait_and_finish() {
 
     echo ""
     echo -e "${GREEN}============================================${NC}"
-    echo -e "${GREEN}   ProxCenter Enterprise is ready!${NC}"
+    echo -e "${GREEN}   CFCenter Enterprise is ready!${NC}"
     echo -e "${GREEN}============================================${NC}"
     echo ""
     echo -e "Open: ${CYAN}http://$SERVER_IP:3000${NC}"
@@ -381,7 +381,7 @@ wait_and_finish() {
     echo "  cd $INSTALL_DIR && docker compose down      # Stop"
     echo "  cd $INSTALL_DIR && docker compose pull      # Update"
     echo ""
-    echo "Support: support@proxcenter.io"
+    echo "Support: support@CFCenter.io"
     echo ""
 }
 
@@ -403,7 +403,7 @@ main() {
     authenticate_ghcr
 
     echo ""
-    setup_proxcenter
+    setup_CFCenter
 
     echo ""
     start_services

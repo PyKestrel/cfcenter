@@ -5,7 +5,7 @@
  *   2. Adds missing columns without data loss (additive migrations only)
  */
 
-const DB_PATH = (process.env.DATABASE_URL || 'file:/app/data/proxcenter.db').replace('file:', '')
+const DB_PATH = (process.env.DATABASE_URL || 'file:/app/data/CFCenter.db').replace('file:', '')
 
 try {
   const Database = require('better-sqlite3')

@@ -1,12 +1,12 @@
 # ============================================
-# ProxCenter Dev Override
+# CFCenter Dev Override
 # Build frontend from local source instead of pulling image
 # Usage: docker compose -f docker-compose.community.yml -f docker-compose.dev.yml up -d
 # ============================================
 
 services:
   frontend:
-    image: proxcenter-frontend:dev
+    image: CFCenter-frontend:dev
     build:
       context: ./frontend
       dockerfile: Dockerfile

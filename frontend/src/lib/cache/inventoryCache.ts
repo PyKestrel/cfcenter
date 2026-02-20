@@ -43,7 +43,7 @@ const FRESH_TTL_MS = 2 * 60 * 1_000 // 2 minutes
 const STALE_TTL_MS = 15 * 60 * 1_000 // 15 minutes
 
 // Use globalThis to survive Next.js hot-reload in development
-const CACHE_KEY = '__proxcenter_inventory_cache__' as const
+const CACHE_KEY = '__CFCenter_inventory_cache__' as const
 
 function getCache(): CacheEntry | null {
   return (globalThis as any)[CACHE_KEY] ?? null

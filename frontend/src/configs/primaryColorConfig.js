@@ -1,7 +1,7 @@
 // Primary color config object
-// Ordered: PROXCENTER first, then grouped by hue (warm → red → purple → blue → green)
+// Ordered: CFCenter first, then grouped by hue (warm → red → purple → blue → green)
 const primaryColorConfig = [
-  // ── PROXCENTER (brand) ──
+  // ── CFCenter (brand) ──
   {
     name: 'primary-1',
     light: '#F2A54A',

@@ -30,7 +30,7 @@ const LogoText = styled.span`
       : 'opacity: 1; margin-inline-start: 10px;'}
 `
 
-// Logo SVG ProxCenter - seulement les formes (accent et blanc)
+// Logo SVG CFCenter - seulement les formes (accent et blanc)
 const LogoIcon = ({ size = 28, accentColor = '#F29221' }) => {
   // Calculer la hauteur proportionnelle (ratio original: 220x170)
   const height = (size * 170) / 220

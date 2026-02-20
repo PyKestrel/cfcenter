@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ProxCenter Unified Server
+ * CFCenter Unified Server
  *
  * Single entry point serving both Next.js HTTP and WebSocket proxy on port 3000.
  * This eliminates the need for a separate ws-proxy process on port 3001 and
@@ -147,7 +147,7 @@ ${c.orange}${c.bold} ██████╗ ██╗  ██╗ █████�
  ██╔═══╝  ██╔██╗ ██║
  ██║     ██╔╝ ██╗╚██████╗
  ╚═╝     ╚═╝  ╚═╝ ╚═════╝${c.reset}
- ${c.bold}ProxCenter${c.reset} ${c.dim}v${appVersion}${c.reset} ${c.dim}—${c.reset} ${c.white}${edition} Edition${c.reset}
+ ${c.bold}CFCenter${c.reset} ${c.dim}v${appVersion}${c.reset} ${c.dim}—${c.reset} ${c.white}${edition} Edition${c.reset}
 
  ${c.dim}Unified server on port ${PORT}${c.reset}
  ${c.dim}├─${c.reset} HTTP + WebSocket  ${c.white}http://${hostname}:${PORT}${c.reset}  ${c.green}✓${c.reset}

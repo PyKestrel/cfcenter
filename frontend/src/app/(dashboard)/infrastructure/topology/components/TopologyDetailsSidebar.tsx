@@ -17,7 +17,7 @@ import type {
   VlanGroupNodeData,
   VlanContainerNodeData,
   TagGroupNodeData,
-  ProxCenterNodeData,
+  CFCenterNodeData,
   InventoryCluster,
   InventoryGuest,
 } from '../types'
@@ -814,10 +814,10 @@ function TagGroupDetails({ data }: { data: TagGroupNodeData }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* ProxCenter root node details                                       */
+/* CFCenter root node details                                       */
 /* ------------------------------------------------------------------ */
 
-function ProxCenterDetails({ data }: { data: ProxCenterNodeData }) {
+function CFCenterDetails({ data }: { data: CFCenterNodeData }) {
   const t = useTranslations('topology')
 
   return (
@@ -931,11 +931,11 @@ export default function TopologyDetailsSidebar({ node, onClose, connections }: T
         {node.type === 'vlanGroup' && <VlanGroupDetails data={node.data as VlanGroupNodeData} />}
         {node.type === 'vlanContainer' && <VlanContainerDetails data={node.data as VlanContainerNodeData} />}
         {node.type === 'tagGroup' && <TagGroupDetails data={node.data as TagGroupNodeData} />}
-        {node.type === 'proxcenter' && <ProxCenterDetails data={node.data as ProxCenterNodeData} />}
+        {node.type === 'CFCenter' && <CFCenterDetails data={node.data as CFCenterNodeData} />}
       </Box>
 
       {/* Footer */}
-      {node.type !== 'proxcenter' && node.type !== 'vlanGroup' && node.type !== 'vlanContainer' && node.type !== 'tagGroup' && (
+      {node.type !== 'CFCenter' && node.type !== 'vlanGroup' && node.type !== 'vlanContainer' && node.type !== 'tagGroup' && (
         <>
           <Divider />
           <Box sx={{ px: 2, py: 1.5 }}>

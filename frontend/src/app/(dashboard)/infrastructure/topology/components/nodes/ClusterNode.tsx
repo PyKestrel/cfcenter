@@ -36,7 +36,7 @@ function ClusterNodeComponent({ data }: NodeProps) {
       <Handle type='target' position={Position.Top} style={{ background: '#666' }} />
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-        <img src='/images/proxcenter-logo.svg' alt='' width={18} height={18} style={{ flexShrink: 0 }} />
+        <img src='/images/CFCenter-logo.svg' alt='' width={18} height={18} style={{ flexShrink: 0 }} />
         <Typography variant='body2' fontWeight={700} noWrap sx={{ flex: 1 }}>
           {d.label}
         </Typography>

@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only the latest released version of ProxCenter receives security updates.
+Only the latest released version of CFCenter receives security updates.
 
 | Version | Supported          |
 |---------|--------------------|
@@ -13,9 +13,9 @@ Only the latest released version of ProxCenter receives security updates.
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-If you discover a security vulnerability in ProxCenter, please report it responsibly by emailing:
+If you discover a security vulnerability in CFCenter, please report it responsibly by emailing:
 
-**security@proxcenter.io**
+**security@CFCenter.io**
 
 Include as much detail as possible:
 
@@ -46,8 +46,8 @@ We ask that you do not publicly disclose the vulnerability until a fix has been 
 
 This policy covers:
 
-- ProxCenter dashboard (frontend)
-- ProxCenter API (backend)
+- CFCenter dashboard (frontend)
+- CFCenter API (backend)
 - Authentication and authorization mechanisms
 
 Out of scope:
@@ -57,4 +57,4 @@ Out of scope:
 
 ## Recognition
 
-We appreciate security researchers who help keep ProxCenter and its users safe. With your permission, we will acknowledge your contribution in the release notes.
+We appreciate security researchers who help keep CFCenter and its users safe. With your permission, we will acknowledge your contribution in the release notes.

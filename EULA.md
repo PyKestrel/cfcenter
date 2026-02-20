@@ -1,4 +1,4 @@
-# ProxCenter Enterprise Edition
+# CFCenter Enterprise Edition
 # End User License Agreement (EULA)
 
 **Effective Date:** February 2026
@@ -8,8 +8,8 @@
 
 ## 1. DEFINITIONS
 
-- **"Software"** means ProxCenter Enterprise Edition, including all updates, patches, and associated documentation provided by AdminSysPro.
-- **"Licensor"** means AdminSysPro, the publisher of ProxCenter.
+- **"Software"** means CFCenter Enterprise Edition, including all updates, patches, and associated documentation provided by AdminSysPro.
+- **"Licensor"** means AdminSysPro, the publisher of CFCenter.
 - **"Licensee"** or **"You"** means the individual or legal entity that has purchased a valid license to use the Software.
 - **"License Key"** means the unique activation key provided by Licensor upon purchase, required to enable Enterprise features.
 - **"Node"** means a single Proxmox VE or Proxmox Backup Server host managed by the Software.
@@ -101,8 +101,8 @@ This Agreement shall be governed by and construed in accordance with the laws of
 
 For any questions regarding this Agreement:
 
-- **Website:** https://proxcenter.io
-- **Email:** contact@proxcenter.io
+- **Website:** https://CFCenter.io
+- **Email:** contact@CFCenter.io
 
 ---
 

@@ -343,7 +343,7 @@ export default function LdapConfigTab() {
             </li>
             <li>
               <Typography variant='body2'>
-                <strong>Bind DN :</strong> <code>CN=Service ProxCenter,OU=Services,DC=votredomaine,DC=com</code>
+                <strong>Bind DN :</strong> <code>CN=Service CFCenter,OU=Services,DC=votredomaine,DC=com</code>
               </Typography>
             </li>
             <li>

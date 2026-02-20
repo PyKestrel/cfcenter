@@ -6,7 +6,7 @@ import { Handle, Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 import { Box, Typography, useTheme } from '@mui/material'
 
-import type { ProxCenterNodeData } from '../../types'
+import type { CFCenterNodeData } from '../../types'
 
 // Inline LogoIcon SVG (from Logo.jsx) to avoid nav-dependent imports
 function LogoIcon({ size = 28, accentColor = '#F29221' }: { size?: number; accentColor?: string }) {
@@ -26,8 +26,8 @@ function LogoIcon({ size = 28, accentColor = '#F29221' }: { size?: number; accen
   )
 }
 
-function ProxCenterNodeComponent({ data }: NodeProps) {
-  const d = data as unknown as ProxCenterNodeData
+function CFCenterNodeComponent({ data }: NodeProps) {
+  const d = data as unknown as CFCenterNodeData
   const theme = useTheme()
   const primaryColor = theme.palette.primary.main
 
@@ -76,4 +76,4 @@ function ProxCenterNodeComponent({ data }: NodeProps) {
   )
 }
 
-export const ProxCenterNode = memo(ProxCenterNodeComponent)
+export const CFCenterNode = memo(CFCenterNodeComponent)

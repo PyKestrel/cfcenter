@@ -217,7 +217,7 @@ const NavbarContent = () => {
     id: 'version-update',
     message: t('about.newVersionAvailable', { version: updateInfo.latestVersion }),
     severity: 'info',
-    source: 'ProxCenter',
+    source: 'CFCenter',
     isUpdateNotif: true,
     releaseUrl: updateInfo.releaseUrl
   } : null
@@ -938,7 +938,7 @@ return () => window.removeEventListener('keydown', onKeyDown)
                           size='small'
                           onClick={(e) => {
                             e.stopPropagation()
-                            window.open('https://proxcenter.io/account/subscribe', '_blank')
+                            window.open('https://CFCenter.io/account/subscribe', '_blank')
                           }}
                           sx={{
                             opacity: 0.7,

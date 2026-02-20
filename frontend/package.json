@@ -1,10 +1,10 @@
 {
-  "name": "proxcenter",
+  "name": "CFCenter",
   "version": "1.2.0",
   "license": "Commercial",
   "private": true,
   "scripts": {
-    "predev": "DATABASE_URL=file:./data/proxcenter.db prisma db push",
+    "predev": "DATABASE_URL=file:./data/CFCenter.db prisma db push",
     "dev": "concurrently \"next dev --turbopack\" \"node ws-proxy.js\"",
     "build": "next build",
     "start": "concurrently \"next start\" \"node ws-proxy.js\"",

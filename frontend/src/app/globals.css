@@ -9,7 +9,7 @@
 @plugin 'tailwindcss-logical';
 
 /* ============================================================
-   ProxCenter Design Tokens (Cloudflare Dashboard style)
+   CFCenter Design Tokens (Cloudflare Dashboard style)
    ============================================================ */
 :root {
   /* Layout */
@@ -131,7 +131,7 @@ ul:not([class]) {
 }
 
 /* ============================================================
-   ProxCenter Layout Shell
+   CFCenter Layout Shell
    ============================================================ */
 .pc-layout {
   display: flex;
@@ -420,7 +420,7 @@ ul:not([class]) {
 }
 
 /* ============================================================
-   Kumo Component Overrides for ProxCenter
+   Kumo Component Overrides for CFCenter
    ============================================================ */
 
 /* Cards — CF Surface style */

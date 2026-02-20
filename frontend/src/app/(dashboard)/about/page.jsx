@@ -23,7 +23,7 @@ return () => setPageInfo('', '', '')
       <Card variant='outlined'>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <Typography variant='h4' sx={{ fontWeight: 800 }}>ProxCenter</Typography>
+            <Typography variant='h4' sx={{ fontWeight: 800 }}>CFCenter</Typography>
             <Chip label='v1.0.0' color='primary' size='small' />
           </Box>
           <Typography variant='body1' sx={{ mb: 2, opacity: 0.8 }}>

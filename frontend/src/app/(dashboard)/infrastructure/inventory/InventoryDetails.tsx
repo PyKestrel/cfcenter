@@ -4272,7 +4272,7 @@ return vm?.isCluster ?? false
                   color: 'text.secondary'
                 }}
               >
-                ProxCenter
+                CFCenter
               </Typography>
             </Box>
             <Typography 

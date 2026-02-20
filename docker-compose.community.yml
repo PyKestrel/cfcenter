@@ -1,5 +1,5 @@
 # ============================================
-# ProxCenter Community Edition
+# CFCenter Community Edition
 # Frontend only - No orchestrator required
 # ============================================
 
@@ -8,23 +8,23 @@ services:
   # Frontend (Next.js + WebSocket Proxy)
   # ========================================
   frontend:
-    image: ghcr.io/adminsyspro/proxcenter-frontend:${VERSION:-latest}
-    container_name: proxcenter-frontend
+    image: ghcr.io/adminsyspro/CFCenter-frontend:${VERSION:-latest}
+    container_name: CFCenter-frontend
     restart: unless-stopped
     ports:
       - "3000:3000"  # Unified HTTP + WebSocket
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:/app/data/proxcenter.db
+      - DATABASE_URL=file:/app/data/CFCenter.db
       - APP_SECRET=${APP_SECRET}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - APP_URL=${APP_URL:-http://localhost:3000}
       # No ORCHESTRATOR_URL = Community mode
     volumes:
-      - proxcenter_data:/app/data
+      - CFCenter_data:/app/data
     networks:
-      - proxcenter
+      - CFCenter
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s
@@ -36,13 +36,13 @@ services:
 # Networks
 # ========================================
 networks:
-  proxcenter:
+  CFCenter:
     driver: bridge
-    name: proxcenter
+    name: CFCenter
 
 # ========================================
 # Volumes
 # ========================================
 volumes:
-  proxcenter_data:
-    name: proxcenter_data
+  CFCenter_data:
+    name: CFCenter_data

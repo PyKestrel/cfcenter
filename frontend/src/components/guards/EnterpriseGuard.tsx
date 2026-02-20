@@ -140,12 +140,12 @@ export default function EnterpriseGuard({
           <Typography variant='caption' sx={{ display: 'block', mt: 3, opacity: 0.5 }}>
             {t('license.contactSales')}:{' '}
             <a
-              href='https://proxcenter.io/pricing'
+              href='https://CFCenter.io/pricing'
               target='_blank'
               rel='noopener noreferrer'
               style={{ color: 'inherit' }}
             >
-              proxcenter.io/pricing
+              CFCenter.io/pricing
             </a>
           </Typography>
         </CardContent>
