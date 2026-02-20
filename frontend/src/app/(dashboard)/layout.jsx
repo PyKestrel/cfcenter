@@ -7,6 +7,7 @@ import Sidebar from '@components/kumo/Sidebar'
 import Header from '@components/kumo/Header'
 import OnboardingGuard from '@components/OnboardingGuard'
 import TasksFooter from '@components/TasksFooter'
+import PageTransitionWrapper from '@components/motion/PageTransitionWrapper'
 
 const Layout = async props => {
   const { children } = props
@@ -19,7 +20,9 @@ const Layout = async props => {
         <div className='pc-main'>
           <Header />
           <main className='pc-content'>
-            <OnboardingGuard>{children}</OnboardingGuard>
+            <OnboardingGuard>
+              <PageTransitionWrapper>{children}</PageTransitionWrapper>
+            </OnboardingGuard>
           </main>
           <TasksFooter />
         </div>

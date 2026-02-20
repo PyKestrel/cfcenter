@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Box, Button, Typography, useTheme, alpha } from '@mui/material'
 import { useTranslations } from 'next-intl'
+import { motion } from 'motion/react'
 
 // Logo SVG CFCenter
 const LogoIcon = ({ size = 60, accentColor = '#F29221' }) => {
@@ -66,124 +67,167 @@ export default function ErrorPage({
       }}
     >
       {/* Logo */}
-      <Box sx={{ mb: 4 }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, type: 'spring', stiffness: 200, damping: 15 }}
+        style={{ marginBottom: 32 }}
+      >
         <LogoIcon size={80} accentColor={theme.palette.primary.main} />
-      </Box>
+      </motion.div>
 
       {/* Code d'erreur */}
-      <Typography
-        variant="h1"
-        sx={{
-          fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-          fontWeight: 800,
-          lineHeight: 1,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          mb: 2,
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
       >
-        {code}
-      </Typography>
+        <Typography
+          variant="h1"
+          sx={{
+            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            fontWeight: 800,
+            lineHeight: 1,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 2,
+          }}
+        >
+          {code}
+        </Typography>
+      </motion.div>
 
       {/* Icône */}
-      <Box
-        sx={{
-          width: 80,
-          height: 80,
-          borderRadius: '50%',
-          bgcolor: alpha(theme.palette.primary.main, 0.1),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 3,
-        }}
+      <motion.div
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.3, type: 'spring', stiffness: 260, damping: 20 }}
       >
-        <i
-          className={icon}
-          style={{
-            fontSize: 40,
-            color: theme.palette.primary.main,
+        <Box
+          sx={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            bgcolor: alpha(theme.palette.primary.main, 0.1),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 3,
           }}
-        />
-      </Box>
+        >
+          <i
+            className={icon}
+            style={{
+              fontSize: 40,
+              color: theme.palette.primary.main,
+            }}
+          />
+        </Box>
+      </motion.div>
 
       {/* Titre */}
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 700,
-          mb: 1.5,
-          color: 'text.primary',
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
       >
-        {displayTitle}
-      </Typography>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            mb: 1.5,
+            color: 'text.primary',
+          }}
+        >
+          {displayTitle}
+        </Typography>
+      </motion.div>
 
       {/* Description */}
-      <Typography
-        variant="body1"
-        sx={{
-          color: 'text.secondary',
-          maxWidth: 480,
-          mb: 4,
-          lineHeight: 1.6,
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.5, ease: 'easeOut' }}
       >
-        {displayDescription}
-      </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            color: 'text.secondary',
+            maxWidth: 480,
+            mb: 4,
+            lineHeight: 1.6,
+          }}
+        >
+          {displayDescription}
+        </Typography>
+      </motion.div>
 
       {/* Boutons */}
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.6, ease: 'easeOut' }}
+        style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}
+      >
         {showHomeButton && (
-          <Button
-            component={Link}
-            href="/home"
-            variant="contained"
-            size="large"
-            startIcon={<i className="ri-home-4-line" />}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-            }}
-          >
-            {t('backToHome')}
-          </Button>
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+            <Button
+              component={Link}
+              href="/home"
+              variant="contained"
+              size="large"
+              startIcon={<i className="ri-home-4-line" />}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              {t('backToHome')}
+            </Button>
+          </motion.div>
         )}
         {showRetryButton && onRetry && (
-          <Button
-            onClick={onRetry}
-            variant="outlined"
-            size="large"
-            startIcon={<i className="ri-refresh-line" />}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-            }}
-          >
-            {t('retry')}
-          </Button>
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+            <Button
+              onClick={onRetry}
+              variant="outlined"
+              size="large"
+              startIcon={<i className="ri-refresh-line" />}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              {t('retry')}
+            </Button>
+          </motion.div>
         )}
-      </Box>
+      </motion.div>
 
       {/* Footer */}
-      <Typography
-        variant="caption"
-        sx={{
-          position: 'absolute',
-          bottom: 24,
-          color: 'text.disabled',
-        }}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+        style={{ position: 'absolute', bottom: 24 }}
       >
-        CFCenter — Proxmox Management Platform
-      </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'text.disabled',
+          }}
+        >
+          CFCenter — Proxmox Management Platform
+        </Typography>
+      </motion.div>
     </Box>
   )
 }
