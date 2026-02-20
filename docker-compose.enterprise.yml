@@ -8,23 +8,23 @@ services:
   # Frontend (Next.js + WebSocket Proxy)
   # ========================================
   frontend:
-    image: ghcr.io/adminsyspro/CFCenter-frontend:${VERSION:-latest}
-    container_name: CFCenter-frontend
+    image: ghcr.io/adminsyspro/cfcenter-frontend:${VERSION:-latest}
+    container_name: cfcenter-frontend
     restart: unless-stopped
     ports:
       - "3000:3000"  # Unified HTTP + WebSocket
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:/app/data/CFCenter.db
+      - DATABASE_URL=file:/app/data/cfcenter.db
       - APP_SECRET=${APP_SECRET}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - APP_URL=${APP_URL:-http://localhost:3000}
       - ORCHESTRATOR_URL=http://orchestrator:8080
     volumes:
-      - CFCenter_data:/app/data
+      - cfcenter_data:/app/data
     networks:
-      - CFCenter
+      - cfcenter
     depends_on:
       orchestrator:
         condition: service_healthy
@@ -39,8 +39,8 @@ services:
   # Orchestrator (Go Backend)
   # ========================================
   orchestrator:
-    image: ghcr.io/adminsyspro/CFCenter-orchestrator:${VERSION:-latest}
-    container_name: CFCenter-orchestrator
+    image: ghcr.io/adminsyspro/cfcenter-orchestrator:${VERSION:-latest}
+    container_name: cfcenter-orchestrator
     restart: unless-stopped
     environment:
       - APP_SECRET=${APP_SECRET}
@@ -49,10 +49,10 @@ services:
       - LOG_FORMAT=json
     volumes:
       - orchestrator_data:/app/data
-      - CFCenter_data:/app/shared_data:ro
+      - cfcenter_data:/app/shared_data:ro
       - ./config/orchestrator.yaml:/app/config.yaml:ro
     networks:
-      - CFCenter
+      - cfcenter
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/api/v1/health"]
       interval: 30s
@@ -64,15 +64,15 @@ services:
 # Networks
 # ========================================
 networks:
-  CFCenter:
+  cfcenter:
     driver: bridge
-    name: CFCenter
+    name: cfcenter
 
 # ========================================
 # Volumes
 # ========================================
 volumes:
-  CFCenter_data:
-    name: CFCenter_data
+  cfcenter_data:
+    name: cfcenter_data
   orchestrator_data:
     name: orchestrator_data

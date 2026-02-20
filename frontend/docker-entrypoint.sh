@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-DB_PATH="${DATABASE_URL:-file:/app/data/CFCenter.db}"
+DB_PATH="${DATABASE_URL:-file:/app/data/cfcenter.db}"
 DB_FILE=$(echo "$DB_PATH" | sed 's|^file:||')
 DB_DIR=$(dirname "$DB_FILE")
 

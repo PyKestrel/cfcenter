@@ -18,8 +18,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/CFCenter-frontend
-  ORCHESTRATOR_IMAGE: ghcr.io/${{ github.repository_owner }}/CFCenter-orchestrator
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/cfcenter-frontend
+  ORCHESTRATOR_IMAGE: ghcr.io/${{ github.repository_owner }}/cfcenter-orchestrator
 
 jobs:
   # ========================================
@@ -78,7 +78,7 @@ jobs:
           curl -sS -X PATCH \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/user/packages/container/CFCenter-frontend \
+            https://api.github.com/user/packages/container/cfcenter-frontend \
             -d '{"visibility":"public"}'
 
   # ========================================
@@ -97,7 +97,7 @@ jobs:
       - name: Checkout backend repo
         uses: actions/checkout@v6
         with:
-          repository: adminsyspro/CFCenter-backend
+          repository: adminsyspro/cfcenter-backend
           path: backend
           token: ${{ secrets.ORCHESTRATOR_PAT }}
 

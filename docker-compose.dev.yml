@@ -6,7 +6,7 @@
 
 services:
   frontend:
-    image: CFCenter-frontend:dev
+    image: cfcenter-frontend:dev
     build:
       context: ./frontend
       dockerfile: Dockerfile

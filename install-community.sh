@@ -16,9 +16,9 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-INSTALL_DIR="/opt/CFCenter"
-COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/CFCenter-ui/main/docker-compose.community.yml"
-FRONTEND_IMAGE="ghcr.io/adminsyspro/CFCenter-frontend:latest"
+INSTALL_DIR="/opt/cfcenter"
+COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/cfcenter-ui/main/docker-compose.community.yml"
+FRONTEND_IMAGE="ghcr.io/adminsyspro/cfcenter-frontend:latest"
 
 # ============================================
 # Helper Functions
@@ -140,7 +140,7 @@ install_docker() {
 # Setup CFCenter
 # ============================================
 
-setup_CFCenter() {
+setup_cfcenter() {
     log_info "Setting up CFCenter Community..."
 
     # Create install directory
@@ -187,11 +187,11 @@ start_services() {
     docker compose pull
 
     log_info "Initializing database..."
-    docker volume create CFCenter_data 2>/dev/null || true
+    docker volume create cfcenter_data 2>/dev/null || true
 
     # Initialize data directory (bypass entrypoint to avoid starting servers)
     docker run --rm --user root --entrypoint "" \
-        -v CFCenter_data:/app/data \
+        -v cfcenter_data:/app/data \
         "$FRONTEND_IMAGE" \
         sh -c "mkdir -p /app/data && chown -R 1001:1001 /app/data"
 
@@ -266,7 +266,7 @@ main() {
     install_docker
 
     echo ""
-    setup_CFCenter
+    setup_cfcenter
 
     echo ""
     start_services

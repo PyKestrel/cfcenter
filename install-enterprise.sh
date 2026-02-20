@@ -16,12 +16,12 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-INSTALL_DIR="/opt/CFCenter"
-COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/CFCenter-ui/main/docker-compose.enterprise.yml"
+INSTALL_DIR="/opt/cfcenter"
+COMPOSE_URL="https://raw.githubusercontent.com/adminsyspro/cfcenter-ui/main/docker-compose.enterprise.yml"
 REGISTRY="ghcr.io"
 REGISTRY_USER="adminsyspro"
-FRONTEND_IMAGE="ghcr.io/adminsyspro/CFCenter-frontend:latest"
-ORCHESTRATOR_IMAGE="ghcr.io/adminsyspro/CFCenter-orchestrator:latest"
+FRONTEND_IMAGE="ghcr.io/adminsyspro/cfcenter-frontend:latest"
+ORCHESTRATOR_IMAGE="ghcr.io/adminsyspro/cfcenter-orchestrator:latest"
 
 # ============================================
 # Helper Functions
@@ -213,7 +213,7 @@ authenticate_ghcr() {
 # Setup CFCenter
 # ============================================
 
-setup_CFCenter() {
+setup_cfcenter() {
     log_info "Setting up CFCenter Enterprise..."
 
     # Create install directory
@@ -272,7 +272,7 @@ database:
   path: /app/data/orchestrator.db
 
 proxmox:
-  CFCenter_db_path: /app/shared_data/CFCenter.db
+  cfcenter_db_path: /app/shared_data/cfcenter.db
 
 license:
   key: "${LICENSE_KEY:-}"
@@ -298,19 +298,19 @@ start_services() {
     docker compose pull
 
     log_info "Initializing database..."
-    docker volume create CFCenter_data 2>/dev/null || true
+    docker volume create cfcenter_data 2>/dev/null || true
     docker volume create orchestrator_data 2>/dev/null || true
 
     # Initialize data directory
     docker run --rm --user root \
-        -v CFCenter_data:/app/data \
+        -v cfcenter_data:/app/data \
         "$FRONTEND_IMAGE" \
         sh -c "mkdir -p /app/data && chown -R 1001:1001 /app/data"
 
     # Run migrations
     docker run --rm \
-        -v CFCenter_data:/app/data \
-        -e DATABASE_URL="file:/app/data/CFCenter.db" \
+        -v cfcenter_data:/app/data \
+        -e DATABASE_URL="file:/app/data/cfcenter.db" \
         "$FRONTEND_IMAGE" \
         sh -c "prisma db push --schema /app/prisma/schema.migrate.prisma --accept-data-loss --skip-generate" 2>/dev/null || true
 
@@ -403,7 +403,7 @@ main() {
     authenticate_ghcr
 
     echo ""
-    setup_CFCenter
+    setup_cfcenter
 
     echo ""
     start_services
