@@ -111,7 +111,7 @@ export default function Header() {
         {isEnterprise && (
           <Tooltip content={orchestratorHealthy ? t('common.healthy') : t('common.unhealthy')}>
             <span
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
+              className="flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
               style={{ color: orchestratorHealthy ? 'var(--pc-success)' : 'var(--pc-error)' }}
             >
               {orchestratorHealthy ? <CheckCircle size={18} weight="fill" /> : <Warning size={18} weight="fill" />}
@@ -123,7 +123,7 @@ export default function Header() {
         {hasUpdate && (
           <Tooltip content={`${t('common.updateAvailable')}: ${latestVersion}`}>
             <span
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
+              className="flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
               style={{ color: 'var(--pc-info)' }}
             >
               <ArrowsClockwise size={18} weight="bold" />
@@ -135,7 +135,7 @@ export default function Header() {
         {isEnterprise && (
           <Tooltip content={`${totalAlerts} ${t('navigation.alerts')}`}>
             <span
-              className="relative flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
+              className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
               style={{ color: 'var(--pc-text-secondary)' }}
               onClick={() => router.push('/operations/alerts')}
             >
@@ -152,7 +152,7 @@ export default function Header() {
         {/* Dark mode toggle */}
         <Tooltip content={isDark ? t('common.lightMode') : t('common.darkMode')}>
           <span
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
+            className="flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
             style={{ color: 'var(--pc-text-secondary)' }}
             onClick={toggleDarkMode}
           >
@@ -163,10 +163,10 @@ export default function Header() {
         {/* User menu */}
         <div className="relative">
           <button
-            className="flex items-center gap-2 px-2 py-1 rounded-lg transition-colors hover:bg-[var(--pc-border-subtle)]"
+            className="flex items-center gap-2 px-2 py-1.5 ml-1 rounded-full transition-colors hover:bg-[var(--pc-border-subtle)]"
             onClick={() => setUserMenuOpen(!userMenuOpen)}
           >
-            <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold text-white" style={{ background: 'var(--pc-primary)' }}>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-semibold text-white" style={{ background: 'var(--pc-primary)' }}>
               {initials}
             </div>
             <CaretDown size={12} style={{ color: 'var(--pc-text-muted)' }} />
@@ -176,7 +176,7 @@ export default function Header() {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
               <div
-                className="absolute right-0 top-full mt-1 z-50 min-w-[200px] rounded-lg border shadow-lg"
+                className="absolute right-0 top-full mt-2 z-50 min-w-[220px] rounded-lg border shadow-lg"
                 style={{
                   background: 'var(--pc-bg-elevated)',
                   borderColor: 'var(--pc-border)',

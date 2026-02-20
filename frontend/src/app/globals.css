@@ -9,13 +9,13 @@
 @plugin 'tailwindcss-logical';
 
 /* ============================================================
-   ProxCenter Design Tokens (Kumo-compatible)
+   ProxCenter Design Tokens (Cloudflare Dashboard style)
    ============================================================ */
 :root {
   /* Layout */
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 68px;
-  --header-height: 48px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 56px;
+  --header-height: 56px;
   --footer-height: 36px;
 
   /* Z-index */
@@ -26,62 +26,66 @@
   --z-modal: 60;
 
   /* Spacing */
-  --layout-padding: 16px;
+  --layout-padding: 24px;
 
-  /* Colors - Cloudflare/ProxCenter palette */
+  /* Brand colors */
   --pc-primary: #f6821f;
   --pc-primary-hover: #e07318;
-  --pc-primary-light: rgba(246, 130, 31, 0.12);
+  --pc-primary-light: rgba(246, 130, 31, 0.08);
   --pc-secondary: #6b7280;
-  --pc-success: #22c55e;
-  --pc-warning: #f59e0b;
-  --pc-error: #ef4444;
-  --pc-info: #3b82f6;
+  --pc-success: #16a34a;
+  --pc-warning: #d97706;
+  --pc-error: #dc2626;
+  --pc-info: #2563eb;
 
-  /* Surfaces - Light mode */
-  --pc-bg: #f8f9fb;
+  /* Surfaces - Light mode (CF Dashboard style) */
+  --pc-bg: #f4f5f8;
   --pc-bg-surface: #ffffff;
   --pc-bg-elevated: #ffffff;
-  --pc-bg-sidebar: #1b2332;
+  --pc-bg-sidebar: #ffffff;
   --pc-bg-header: #ffffff;
-  --pc-border: #e5e7eb;
-  --pc-border-subtle: #f3f4f6;
+  --pc-border: #e2e8f0;
+  --pc-border-subtle: #f1f5f9;
 
   /* Text */
-  --pc-text: #111827;
+  --pc-text: #1a1a1a;
   --pc-text-secondary: #6b7280;
   --pc-text-muted: #9ca3af;
   --pc-text-inverse: #ffffff;
 
-  /* Sidebar text */
-  --pc-sidebar-text: #cbd5e1;
-  --pc-sidebar-text-active: #ffffff;
-  --pc-sidebar-icon: #94a3b8;
+  /* Sidebar - Light style matching CF Dashboard */
+  --pc-sidebar-text: #4b5563;
+  --pc-sidebar-text-active: #1a1a1a;
+  --pc-sidebar-icon: #9ca3af;
   --pc-sidebar-icon-active: #f6821f;
-  --pc-sidebar-hover: rgba(255, 255, 255, 0.06);
-  --pc-sidebar-active: rgba(246, 130, 31, 0.15);
-  --pc-sidebar-section: #64748b;
-  --pc-sidebar-border: rgba(255, 255, 255, 0.08);
+  --pc-sidebar-hover: #f8fafc;
+  --pc-sidebar-active: rgba(246, 130, 31, 0.08);
+  --pc-sidebar-section: #9ca3af;
+  --pc-sidebar-border: #e2e8f0;
 }
 
 /* Dark mode */
-.dark, [data-theme="dark"] {
-  --pc-bg: #0f1219;
-  --pc-bg-surface: #1a1f2e;
-  --pc-bg-elevated: #232838;
-  --pc-bg-sidebar: #0d1117;
-  --pc-bg-header: #1a1f2e;
-  --pc-border: #2d3348;
-  --pc-border-subtle: #232838;
+.dark, [data-mode="dark"] {
+  --pc-bg: #111111;
+  --pc-bg-surface: #1a1a1a;
+  --pc-bg-elevated: #222222;
+  --pc-bg-sidebar: #1a1a1a;
+  --pc-bg-header: #1a1a1a;
+  --pc-border: #333333;
+  --pc-border-subtle: #2a2a2a;
 
-  --pc-text: #f1f5f9;
-  --pc-text-secondary: #94a3b8;
-  --pc-text-muted: #64748b;
+  --pc-text: #ededed;
+  --pc-text-secondary: #a0a0a0;
+  --pc-text-muted: #6b6b6b;
 
-  --pc-sidebar-text: #94a3b8;
-  --pc-sidebar-hover: rgba(255, 255, 255, 0.04);
+  --pc-sidebar-text: #a0a0a0;
+  --pc-sidebar-text-active: #ededed;
+  --pc-sidebar-icon: #6b6b6b;
+  --pc-sidebar-icon-active: #f6821f;
+  --pc-sidebar-hover: #222222;
   --pc-sidebar-active: rgba(246, 130, 31, 0.12);
-  --pc-sidebar-border: rgba(255, 255, 255, 0.06);
+  --pc-sidebar-section: #6b6b6b;
+  --pc-sidebar-border: #333333;
 }
 
 /* ============================================================
@@ -135,7 +139,7 @@ ul:not([class]) {
   width: 100%;
 }
 
-/* Sidebar */
+/* Sidebar — Cloudflare Dashboard style */
 .pc-sidebar {
   position: fixed;
   top: 0;
@@ -157,7 +161,7 @@ ul:not([class]) {
 
 .pc-sidebar.collapsed.sidebar-hovered {
   width: var(--sidebar-width);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.08);
   z-index: calc(var(--z-sidebar) + 1);
 }
 
@@ -168,7 +172,7 @@ ul:not([class]) {
 
 .pc-sidebar.hidden.hovered {
   transform: translateX(0);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.08);
 }
 
 /* Sidebar header */
@@ -183,10 +187,10 @@ ul:not([class]) {
 
 .pc-sidebar-header .logo-text {
   margin-left: 10px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--pc-text-inverse);
+  letter-spacing: -0.01em;
+  color: var(--pc-text);
   white-space: nowrap;
   overflow: hidden;
   transition: opacity 0.2s ease, width 0.2s ease;
@@ -214,17 +218,17 @@ ul:not([class]) {
 }
 
 .pc-sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--pc-border);
   border-radius: 4px;
 }
 
 /* Nav section label */
 .pc-nav-section {
-  padding: 16px 16px 4px;
+  padding: 20px 16px 6px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--pc-sidebar-section);
   white-space: nowrap;
   overflow: hidden;
@@ -233,30 +237,34 @@ ul:not([class]) {
 .pc-sidebar.collapsed:not(.sidebar-hovered) .pc-nav-section {
   text-align: center;
   font-size: 0;
+  padding: 12px 4px 4px;
 }
 
 .pc-sidebar.collapsed:not(.sidebar-hovered) .pc-nav-section::after {
-  content: '•••';
-  font-size: 10px;
-  letter-spacing: 2px;
+  content: '';
+  display: block;
+  width: 16px;
+  height: 1px;
+  background: var(--pc-sidebar-border);
+  margin: 0 auto;
 }
 
-/* Nav item */
+/* Nav item — CF style: left border accent, no rounded bg */
 .pc-nav-item {
   display: flex;
   align-items: center;
-  padding: 6px 12px;
-  margin: 1px 8px;
-  border-radius: 8px;
+  padding: 7px 16px;
+  margin: 0;
+  border-left: 3px solid transparent;
   color: var(--pc-sidebar-text);
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 13.5px;
+  font-weight: 450;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   white-space: nowrap;
   overflow: hidden;
   text-decoration: none;
-  gap: 12px;
+  gap: 10px;
 }
 
 .pc-nav-item:hover {
@@ -265,8 +273,10 @@ ul:not([class]) {
 }
 
 .pc-nav-item.active {
+  border-left-color: var(--pc-primary);
   background: var(--pc-sidebar-active);
   color: var(--pc-sidebar-text-active);
+  font-weight: 500;
 }
 
 .pc-nav-item.active .pc-nav-icon {
@@ -277,12 +287,12 @@ ul:not([class]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   color: var(--pc-sidebar-icon);
-  font-size: 18px;
-  transition: color 0.15s ease;
+  font-size: 16px;
+  transition: color 0.12s ease;
 }
 
 .pc-nav-label {
@@ -300,6 +310,7 @@ ul:not([class]) {
   justify-content: center;
   padding: 8px;
   margin: 1px 4px;
+  border-left: none;
 }
 
 /* Sidebar toggle */
@@ -311,12 +322,13 @@ ul:not([class]) {
   border-top: 1px solid var(--pc-sidebar-border);
   cursor: pointer;
   color: var(--pc-sidebar-icon);
-  transition: color 0.15s ease;
+  transition: color 0.12s ease;
   flex-shrink: 0;
 }
 
 .pc-sidebar-toggle:hover {
   color: var(--pc-sidebar-text-active);
+  background: var(--pc-sidebar-hover);
 }
 
 /* Main content area */
@@ -340,7 +352,7 @@ ul:not([class]) {
   margin-left: 0;
 }
 
-/* Header */
+/* Header — Cloudflare Dashboard style */
 .pc-header {
   position: sticky;
   top: 0;
@@ -351,37 +363,38 @@ ul:not([class]) {
   align-items: center;
   padding: 0 var(--layout-padding);
   z-index: var(--z-header);
-  backdrop-filter: blur(8px);
-  gap: 12px;
+  gap: 16px;
 }
 
 .pc-header-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex: 1;
   min-width: 0;
 }
 
 .pc-header-title h1 {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--pc-text);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .pc-header-title .subtitle {
   font-size: 12px;
   color: var(--pc-text-muted);
+  margin-top: 1px;
 }
 
 .pc-header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -410,42 +423,43 @@ ul:not([class]) {
    Kumo Component Overrides for ProxCenter
    ============================================================ */
 
-/* Cards */
+/* Cards — CF Surface style */
 .pc-card {
   background: var(--pc-bg-surface);
   border: 1px solid var(--pc-border);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .pc-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--pc-border-subtle);
 }
 
 .pc-card-body {
-  padding: 16px;
+  padding: 20px;
 }
 
-/* Status badges */
+/* Status badges — CF style */
 .pc-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 500;
   line-height: 1.5;
 }
 
-.pc-badge.success { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-.pc-badge.warning { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-.pc-badge.error { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-.pc-badge.info { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+.pc-badge.success { background: rgba(22, 163, 74, 0.08); color: #16a34a; }
+.pc-badge.warning { background: rgba(217, 119, 6, 0.08); color: #d97706; }
+.pc-badge.error { background: rgba(220, 38, 38, 0.08); color: #dc2626; }
+.pc-badge.info { background: rgba(37, 99, 235, 0.08); color: #2563eb; }
 
 .dark .pc-badge.success { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
 .dark .pc-badge.warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
@@ -457,7 +471,7 @@ ul:not([class]) {
   position: fixed;
   left: 0;
   top: 0;
-  width: 12px;
+  width: 8px;
   height: 100vh;
   z-index: calc(var(--z-sidebar) + 1);
   cursor: pointer;
@@ -466,20 +480,20 @@ ul:not([class]) {
 .pc-sidebar-trigger::after {
   content: '';
   position: absolute;
-  left: 3px;
+  left: 2px;
   top: 50%;
   transform: translateY(-50%);
-  width: 4px;
-  height: 48px;
+  width: 3px;
+  height: 40px;
   border-radius: 2px;
   background: var(--pc-text-muted);
-  opacity: 0.2;
+  opacity: 0.15;
   transition: all 0.2s;
 }
 
 .pc-sidebar-trigger:hover::after {
-  opacity: 0.6;
-  height: 64px;
+  opacity: 0.5;
+  height: 56px;
   background: var(--pc-primary);
 }
 

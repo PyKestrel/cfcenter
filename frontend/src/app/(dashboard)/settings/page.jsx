@@ -52,11 +52,6 @@ const NotificationsTab = dynamic(() => import('@/components/settings/Notificatio
   loading: () => <Box sx={{ p: 3, textAlign: 'center' }}><LinearProgress /></Box>
 })
 
-const AppearanceTab = dynamic(() => import('@/components/settings/AppearanceTab'), {
-  ssr: false,
-  loading: () => <Box sx={{ p: 3, textAlign: 'center' }}><LinearProgress /></Box>
-})
-
 const LdapConfigTab = dynamic(() => import('@/components/settings/LdapConfigTab'), {
   ssr: false,
   loading: () => <Box sx={{ p: 3, textAlign: 'center' }}><LinearProgress /></Box>
@@ -1748,10 +1743,8 @@ export default function SettingsPage() {
 
   const tabs = [
     { label: t('settings.connections'), icon: 'ri-link', component: ConnectionsTab },
-    { label: t('settings.appearance'), icon: 'ri-palette-line', component: AppearanceTab },
     { label: t('settings.notifications'), icon: 'ri-notification-3-line', component: NotificationsTab, requiredFeature: Features.NOTIFICATIONS },
     { label: 'LDAP / Active Directory', icon: 'ri-server-line', component: LdapConfigTab, requiredFeature: Features.LDAP },
-    { label: t('settings.license'), icon: 'ri-key-2-line', component: LicenseTab },
     { label: t('settings.ai'), icon: 'ri-robot-line', component: AITab, requiredFeature: Features.AI_INSIGHTS },
     { label: 'RSE / Green IT', icon: 'ri-leaf-line', component: GreenTab, requiredFeature: Features.GREEN_METRICS },
   ]

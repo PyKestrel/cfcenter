@@ -16,7 +16,7 @@ import { CardsSkeleton } from '@/components/skeletons'
 
 const GRID_COLS = { lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }
 const ROW_HEIGHT = 60
-const MARGIN = [12, 12]
+const MARGIN = [16, 16]
 
 // Génère un ID unique
 function generateId() {
@@ -49,20 +49,20 @@ function WidgetContainer({
 
   return (
     <Surface
-      className={`h-full flex flex-col relative overflow-hidden border rounded-lg transition-shadow ${editMode ? 'hover:shadow-lg' : ''}`}
+      className={`h-full flex flex-col relative overflow-hidden border rounded-lg transition-shadow ${editMode ? 'hover:shadow-md ring-1 ring-transparent hover:ring-[var(--pc-primary)]' : ''}`}
+      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
     >
       {/* Header - zone de drag */}
       <div
-        className="widget-drag-handle flex items-center justify-between px-3 py-1.5 border-b"
+        className="widget-drag-handle flex items-center justify-between px-4 py-2 border-b"
         style={{
           borderColor: 'var(--pc-border-subtle)',
-          backgroundColor: 'var(--pc-bg-subtle)',
           cursor: editMode ? 'move' : 'default',
         }}
       >
         <div className='flex items-center gap-2 min-w-0'>
-          <i className={widgetDef.icon} style={{ fontSize: 14, opacity: 0.7 }} />
-          <span className='text-xs font-bold truncate'>{widgetName}</span>
+          <i className={widgetDef.icon} style={{ fontSize: 14, color: 'var(--pc-text-muted)' }} />
+          <span className='text-xs font-semibold tracking-wide uppercase truncate' style={{ color: 'var(--pc-text-secondary)', letterSpacing: '0.04em' }}>{widgetName}</span>
         </div>
         {editMode && (
           <Tooltip content={t('common.delete')}>
@@ -74,7 +74,7 @@ function WidgetContainer({
       </div>
 
       {/* Content */}
-      <div className='flex-1 p-2 overflow-hidden'>
+      <div className='flex-1 p-3 overflow-hidden'>
         {loading ? (
           <div className='h-full p-1'>
             <SkeletonLine className='w-full h-full rounded' />
@@ -384,7 +384,7 @@ export default function WidgetGrid({ data, loading, onRefresh, refreshLoading })
   return (
     <div className='h-full flex flex-col'>
       {/* Toolbar */}
-      <div className='flex justify-end gap-2 mb-1 flex-wrap items-center'>
+      <div className='flex justify-end gap-2 mb-3 flex-wrap items-center'>
         {saving && (
           <div className='flex items-center gap-2 mr-2'>
             <SpinnerGap size={16} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
