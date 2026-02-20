@@ -1,46 +1,35 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Box, Typography } from '@mui/material'
+
+function StatusDot({ color }) {
+  return <span className='inline-block w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: color }} />
+}
 
 function GuestsSummaryWidget({ data, loading }) {
   const t = useTranslations()
   const guests = data?.guests || {}
 
   return (
-    <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, p: 1 }}>
-      <Box>
-        <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>{t('dashboard.widgets.vms').toUpperCase()}</Typography>
-        <Box sx={{ mt: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#4caf50' }} />
-            <Typography variant='body2' sx={{ fontSize: 12 }}>Running: <strong>{guests?.vms?.running || 0}</strong></Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#9e9e9e' }} />
-            <Typography variant='body2' sx={{ fontSize: 12 }}>Stopped: <strong>{guests?.vms?.stopped || 0}</strong></Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#2196f3' }} />
-            <Typography variant='body2' sx={{ fontSize: 12 }}>Templates: <strong>{guests?.vms?.templates || 0}</strong></Typography>
-          </Box>
-        </Box>
-      </Box>
-      <Box>
-        <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>{t('inventory.containers').toUpperCase()}</Typography>
-        <Box sx={{ mt: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#4caf50' }} />
-            <Typography variant='body2' sx={{ fontSize: 12 }}>Running: <strong>{guests?.lxc?.running || 0}</strong></Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#9e9e9e' }} />
-            <Typography variant='body2' sx={{ fontSize: 12 }}>Stopped: <strong>{guests?.lxc?.stopped || 0}</strong></Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+    <div className='h-full grid grid-cols-2 gap-4 p-2'>
+      <div>
+        <span className='text-[10px] opacity-60 font-semibold'>{t('dashboard.widgets.vms').toUpperCase()}</span>
+        <div className='mt-2 space-y-1'>
+          <div className='flex items-center gap-1.5 text-xs'><StatusDot color='#4caf50' /> Running: <strong>{guests?.vms?.running || 0}</strong></div>
+          <div className='flex items-center gap-1.5 text-xs'><StatusDot color='#9e9e9e' /> Stopped: <strong>{guests?.vms?.stopped || 0}</strong></div>
+          <div className='flex items-center gap-1.5 text-xs'><StatusDot color='#2196f3' /> Templates: <strong>{guests?.vms?.templates || 0}</strong></div>
+        </div>
+      </div>
+      <div>
+        <span className='text-[10px] opacity-60 font-semibold'>{t('inventory.containers').toUpperCase()}</span>
+        <div className='mt-2 space-y-1'>
+          <div className='flex items-center gap-1.5 text-xs'><StatusDot color='#4caf50' /> Running: <strong>{guests?.lxc?.running || 0}</strong></div>
+          <div className='flex items-center gap-1.5 text-xs'><StatusDot color='#9e9e9e' /> Stopped: <strong>{guests?.lxc?.stopped || 0}</strong></div>
+        </div>
+      </div>
+    </div>
   )
 }
 

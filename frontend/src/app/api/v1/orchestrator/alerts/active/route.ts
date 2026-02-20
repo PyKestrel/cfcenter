@@ -21,7 +21,7 @@ return NextResponse.json(response.data)
   } catch (error: any) {
     console.error('[orchestrator/alerts/active] GET error:', error)
     
-    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('timeout')) {
+    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch failed') || error.message?.includes('timeout')) {
       return NextResponse.json([])
     }
 

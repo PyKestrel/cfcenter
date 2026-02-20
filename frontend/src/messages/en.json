@@ -80,7 +80,13 @@
     "comingSoon": "Coming soon",
     "loadVms": "Load VMs",
     "default": "Default",
-    "node": "Node"
+    "node": "Node",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "healthy": "Healthy",
+    "unhealthy": "Unhealthy",
+    "updateAvailable": "Update available",
+    "logout": "Logout"
   },
   "license": {
     "enterpriseRequired": "Enterprise license required",

@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useMemo } from 'react'
+
 import { useRouter } from 'next/navigation'
-import { Box, Typography } from '@mui/material'
+
 import VmWaffleChart from '@/components/VmWaffleChart'
 
 function VmStatusWaffleWidget({ data, loading }) {
@@ -21,22 +22,22 @@ function VmStatusWaffleWidget({ data, loading }) {
 
   if (!data) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">Loading...</Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <span className='text-xs' style={{ color: 'var(--pc-text-muted)' }}>Loading...</span>
+      </div>
     )
   }
 
   if (allGuests.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">No VMs found</Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <span className='text-xs' style={{ color: 'var(--pc-text-muted)' }}>No VMs found</span>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ height: '100%', overflow: 'auto' }}>
+    <div className='h-full overflow-auto'>
       <VmWaffleChart
         vms={allGuests}
         cellSize={10}
@@ -46,7 +47,7 @@ function VmStatusWaffleWidget({ data, loading }) {
         showLegend={false}
         compact
       />
-    </Box>
+    </div>
   )
 }
 

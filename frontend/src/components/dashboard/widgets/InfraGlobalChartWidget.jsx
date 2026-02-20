@@ -1,16 +1,8 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
+
 import { useTranslations } from 'next-intl'
-import {
-  Box,
-  CircularProgress,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-  useTheme,
-  alpha,
-} from '@mui/material'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -20,6 +12,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts'
+import { SpinnerGap } from '@phosphor-icons/react'
 
 const TIMEFRAMES = [
   { value: 'hour', label: '1h' },
@@ -37,7 +30,6 @@ const NODE_COLORS = [
 
 function InfraGlobalChartWidget({ data, loading: dashboardLoading }) {
   const t = useTranslations()
-  const theme = useTheme()
   const [timeframe, setTimeframe] = useState('week')
   const [metric, setMetric] = useState('ram')
   const [trendsData, setTrendsData] = useState(null)
@@ -125,89 +117,67 @@ function InfraGlobalChartWidget({ data, loading: dashboardLoading }) {
     if (!active || !payload || payload.length === 0) return null
 
     return (
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          p: 1.5,
-          boxShadow: 3,
-          maxWidth: 220,
-        }}
-      >
-        <Typography variant="caption" sx={{ fontWeight: 700, mb: 0.5, display: 'block' }}>
-          {label}
-        </Typography>
+      <div className='rounded border p-3 shadow-lg max-w-[220px]' style={{ backgroundColor: 'var(--pc-bg-card)', borderColor: 'var(--pc-border-subtle)' }}>
+        <span className='text-xs font-bold mb-1 block'>{label}</span>
         {payload.map((entry) => (
-          <Box key={entry.dataKey} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: entry.color, flexShrink: 0 }} />
-            <Typography variant="caption" sx={{ color: 'text.secondary', flex: 1 }}>
-              {entry.name}
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 600, fontFamily: '"JetBrains Mono", monospace' }}>
-              {entry.value}%
-            </Typography>
-          </Box>
+          <div key={entry.dataKey} className='flex items-center gap-1 mt-0.5'>
+            <span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: entry.color }} />
+            <span className='text-xs flex-1 opacity-70'>{entry.name}</span>
+            <span className='text-xs font-semibold font-mono'>{entry.value}%</span>
+          </div>
         ))}
-      </Box>
+      </div>
     )
   }
 
   if (dashboardLoading || loading) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <SpinnerGap size={24} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+      </div>
     )
   }
 
   if (!trendsData || trendsData.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
-          {t('common.noData')}
-        </Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <span className='text-xs opacity-60'>{t('common.noData')}</span>
+      </div>
     )
   }
 
   const suffix = metric === 'cpu' ? '_cpu' : '_ram'
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className='h-full flex flex-col'>
       {/* Controls */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, gap: 1 }}>
-        <ToggleButtonGroup
-          value={metric}
-          exclusive
-          onChange={(e, val) => val && setMetric(val)}
-          size="small"
-        >
-          <ToggleButton value="cpu" sx={{ px: 1.5, py: 0.25, fontSize: '0.65rem', minWidth: 40 }}>
-            CPU
-          </ToggleButton>
-          <ToggleButton value="ram" sx={{ px: 1.5, py: 0.25, fontSize: '0.65rem', minWidth: 40 }}>
-            RAM
-          </ToggleButton>
-        </ToggleButtonGroup>
-
-        <ToggleButtonGroup
-          value={timeframe}
-          exclusive
-          onChange={(e, val) => val && setTimeframe(val)}
-          size="small"
-        >
-          {TIMEFRAMES.map((tf) => (
-            <ToggleButton key={tf.value} value={tf.value} sx={{ px: 1, py: 0.25, fontSize: '0.65rem', minWidth: 32 }}>
-              {tf.label}
-            </ToggleButton>
+      <div className='flex justify-between items-center mb-2 gap-2'>
+        <div className='flex rounded border overflow-hidden' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+          {['cpu', 'ram'].map((m) => (
+            <button
+              key={m}
+              onClick={() => setMetric(m)}
+              className={`px-2.5 py-0.5 text-[11px] font-medium transition-colors ${metric === m ? 'bg-[var(--pc-primary)] text-white' : 'hover:bg-[var(--pc-bg-subtle)]'}`}
+            >
+              {m.toUpperCase()}
+            </button>
           ))}
-        </ToggleButtonGroup>
-      </Box>
+        </div>
+        <div className='flex rounded border overflow-hidden' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+          {TIMEFRAMES.map((tf) => (
+            <button
+              key={tf.value}
+              onClick={() => setTimeframe(tf.value)}
+              className={`px-2 py-0.5 text-[11px] font-medium transition-colors ${timeframe === tf.value ? 'bg-[var(--pc-primary)] text-white' : 'hover:bg-[var(--pc-bg-subtle)]'}`}
+            >
+              {tf.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Chart */}
-      <Box sx={{ flex: 1, minHeight: 0 }}>
+      <div className='flex-1 min-h-0'>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={trendsData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
             <defs>
@@ -221,17 +191,17 @@ function InfraGlobalChartWidget({ data, loading: dashboardLoading }) {
                 )
               })}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.5)} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.2)" />
             <XAxis
               dataKey="t"
-              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+              tick={{ fontSize: 10, fill: '#999' }}
               tickLine={false}
               axisLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
               domain={[0, 100]}
-              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+              tick={{ fontSize: 10, fill: '#999' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v) => `${v}%`}
@@ -256,20 +226,20 @@ function InfraGlobalChartWidget({ data, loading: dashboardLoading }) {
             })}
           </AreaChart>
         </ResponsiveContainer>
-      </Box>
+      </div>
 
       {/* Legend — compact node list */}
       {nodeNames.length > 1 && (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5, justifyContent: 'center' }}>
+        <div className='flex flex-wrap gap-2 mt-1 justify-center'>
           {nodeNames.map((name, i) => (
-            <Box key={name} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: NODE_COLORS[i % NODE_COLORS.length] }} />
-              <Typography variant="caption" sx={{ fontSize: 9, color: 'text.secondary' }}>{name}</Typography>
-            </Box>
+            <div key={name} className='flex items-center gap-1'>
+              <span className='w-1.5 h-1.5 rounded-full' style={{ backgroundColor: NODE_COLORS[i % NODE_COLORS.length] }} />
+              <span className='text-[9px] opacity-60'>{name}</span>
+            </div>
           ))}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   )
 }
 

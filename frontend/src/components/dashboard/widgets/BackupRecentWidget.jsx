@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Box, Chip, Typography } from '@mui/material'
 
 function BackupRecentWidget({ data, loading }) {
   const t = useTranslations()
@@ -19,94 +19,60 @@ function BackupRecentWidget({ data, loading }) {
 
     return t('time.daysAgo', { count: Math.floor(diff / 86400) })
   }
+
   const recentErrors = pbs.recentErrors || []
   const backups24h = pbs.backups24h || {}
-
-  // Créer une liste combinée de succès et erreurs
   const items = []
-  
-  // Ajouter les erreurs récentes
+
   recentErrors.forEach(err => {
-    items.push({
-      type: 'error',
-      name: err.id || 'Unknown',
-      taskType: err.type,
-      time: err.time,
-      server: err.server,
-      status: err.status,
-    })
+    items.push({ type: 'error', name: err.id || 'Unknown', taskType: err.type, time: err.time, server: err.server, status: err.status })
   })
 
-  // Stats globales si pas d'erreurs détaillées
   if (items.length === 0 && backups24h.total > 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography variant='h4' sx={{ fontWeight: 800, color: backups24h.error > 0 ? '#ff9800' : '#4caf50' }}>
+      <div className='h-full flex flex-col justify-center p-4'>
+        <div className='text-center'>
+          <span className='block text-3xl font-extrabold' style={{ color: backups24h.error > 0 ? '#ff9800' : '#4caf50' }}>
             {backups24h.ok}/{backups24h.total}
-          </Typography>
-          <Typography variant='caption' sx={{ opacity: 0.6 }}>
-            {t('dashboard.widgets.backups')} (24h)
-          </Typography>
-        </Box>
-        
+          </span>
+          <span className='block text-xs opacity-60'>{t('dashboard.widgets.backups')} (24h)</span>
+        </div>
         {backups24h.error > 0 && (
-          <Box sx={{ mt: 2, p: 1.5, bgcolor: '#ff980022', borderRadius: 1, textAlign: 'center' }}>
-            <Typography variant='body2' sx={{ color: '#ff9800', fontWeight: 700 }}>
-              {backups24h.error} {t('jobs.failed').toLowerCase()}
-            </Typography>
-          </Box>
+          <div className='mt-4 p-3 rounded text-center' style={{ backgroundColor: '#ff980022' }}>
+            <span className='text-sm font-bold' style={{ color: '#ff9800' }}>{backups24h.error} {t('jobs.failed').toLowerCase()}</span>
+          </div>
         )}
-
         {backups24h.error === 0 && (
-          <Box sx={{ mt: 2, p: 1.5, bgcolor: '#4caf5022', borderRadius: 1, textAlign: 'center' }}>
-            <Typography variant='body2' sx={{ color: '#4caf50', fontWeight: 700 }}>
-              {t('common.success')}
-            </Typography>
-          </Box>
+          <div className='mt-4 p-3 rounded text-center' style={{ backgroundColor: '#4caf5022' }}>
+            <span className='text-sm font-bold' style={{ color: '#4caf50' }}>{t('common.success')}</span>
+          </div>
         )}
-      </Box>
+      </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Typography variant='caption' sx={{ opacity: 0.6 }}>{t('common.noData')}</Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <span className='text-xs opacity-60'>{t('common.noData')}</span>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ height: '100%', overflow: 'auto', p: 0.5 }}>
+    <div className='h-full overflow-auto p-1'>
       {items.map((item, idx) => (
-        <Box 
-          key={idx}
-          sx={{ 
-            py: 0.75,
-            borderBottom: idx < items.length - 1 ? '1px solid' : 'none',
-            borderColor: 'divider'
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-            <Chip
-              size='small'
-              label={item.type === 'error' ? t('jobs.failed') : 'OK'}
-              color={item.type === 'error' ? 'error' : 'success'}
-              sx={{ height: 18, fontSize: 9 }}
-            />
-            <Typography variant='caption' sx={{ fontWeight: 600, fontSize: 11 }}>
-              {item.name}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant='caption' sx={{ opacity: 0.5, fontSize: 9 }}>
-              {item.taskType} • {item.server} • {timeAgo(item.time)}
-            </Typography>
-          </Box>
-        </Box>
+        <div key={idx} className='py-1.5 border-b last:border-b-0' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+          <div className='flex items-center gap-2 mb-0.5'>
+            <span className='inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded text-white' style={{ backgroundColor: item.type === 'error' ? '#f44336' : '#4caf50' }}>
+              {item.type === 'error' ? t('jobs.failed') : 'OK'}
+            </span>
+            <span className='text-[11px] font-semibold'>{item.name}</span>
+          </div>
+          <span className='text-[9px] opacity-50'>{item.taskType} • {item.server} • {timeAgo(item.time)}</span>
+        </div>
       ))}
-    </Box>
+    </div>
   )
 }
 

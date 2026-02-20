@@ -29,13 +29,12 @@ export async function GET(req: Request) {
     console.error('[orchestrator/alerts] GET error:', error)
     
     // Si l'orchestrator n'est pas disponible, retourner une liste vide
-    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('timeout')) {
+    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch failed') || error.message?.includes('timeout')) {
       return NextResponse.json({
         data: [],
         total: 0,
         limit: 100,
         offset: 0,
-        error: 'Orchestrator unavailable'
       })
     }
 

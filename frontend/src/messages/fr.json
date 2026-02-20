@@ -80,7 +80,13 @@
     "comingSoon": "Fonctionnalité à venir",
     "loadVms": "Charger les VMs",
     "default": "Par défaut",
-    "node": "Nœud"
+    "node": "Nœud",
+    "darkMode": "Mode sombre",
+    "lightMode": "Mode clair",
+    "healthy": "Opérationnel",
+    "unhealthy": "Indisponible",
+    "updateAvailable": "Mise à jour disponible",
+    "logout": "Déconnexion"
   },
   "license": {
     "enterpriseRequired": "Licence Enterprise requise",

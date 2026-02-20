@@ -19,7 +19,7 @@ return NextResponse.json(response.data)
     console.error('[orchestrator/alerts/thresholds] GET error:', error)
     
     // Valeurs par défaut si orchestrator indisponible
-    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('timeout')) {
+    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch failed') || error.message?.includes('timeout')) {
       return NextResponse.json({
         cpu_warning: 80,
         cpu_critical: 95,

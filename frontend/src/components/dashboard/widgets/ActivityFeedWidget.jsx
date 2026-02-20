@@ -3,8 +3,17 @@
 import React from 'react'
 
 import { useTranslations } from 'next-intl'
-import { Alert, Box, Chip, CircularProgress, List, ListItem, ListItemText, Typography } from '@mui/material'
+import { SpinnerGap } from '@phosphor-icons/react'
+
 import { useTaskEvents } from '@/hooks/useTaskEvents'
+
+const STATUS_COLORS = {
+  running: '#2196f3',
+  OK: '#4caf50',
+  warning: '#ff9800',
+  error: '#f44336',
+  success: '#4caf50',
+}
 
 function ActivityFeedWidget({ data, loading, config }) {
   const t = useTranslations()
@@ -41,66 +50,62 @@ function ActivityFeedWidget({ data, loading, config }) {
 
   if (loadingEvents) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <SpinnerGap size={24} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+      </div>
     )
   }
 
   if (events.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Alert severity='info' sx={{ width: '100%' }}>{t('common.noData')}</Alert>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <div className='w-full text-center text-sm px-3 py-2 rounded-lg' style={{ backgroundColor: 'var(--pc-bg-subtle)', color: 'var(--pc-text-muted)' }}>
+          {t('common.noData')}
+        </div>
+      </div>
     )
   }
 
   return (
-    <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
+    <div className='h-full overflow-auto'>
       {events.map((event, idx) => {
-        const statusColor = event.status === 'running' ? 'info' 
-          : event.status === 'OK' ? 'success' 
-          : event.status?.includes('WARNINGS') ? 'warning' 
+        const statusKey = event.status === 'running' ? 'running'
+          : event.status === 'OK' ? 'OK'
+          : event.status?.includes('WARNINGS') ? 'warning'
           : event.level === 'error' ? 'error' : 'success'
-        
+
         const statusLabel = event.status === 'running' ? t('jobs.running')
           : event.status === 'OK' ? 'OK'
           : event.status?.includes('WARNINGS') ? t('common.warning')
           : event.level === 'error' ? t('common.error') : 'OK'
 
+        const color = STATUS_COLORS[statusKey] || STATUS_COLORS.success
+
         return (
-          <ListItem key={idx} sx={{ px: 0.5, py: 0.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Chip 
-                    size='small' 
-                    label={statusLabel}
-                    color={statusColor}
-                    sx={{ height: 18, fontSize: 9, minWidth: 50 }}
-                  />
-                  <Typography variant='caption' sx={{ fontWeight: 600, fontSize: 11 }}>
-                    {TASK_LABELS[event.type] || event.typeLabel || event.type}
-                  </Typography>
-                </Box>
-              }
-              secondary={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                  {event.entity && (
-                    <Typography variant='caption' sx={{ opacity: 0.7, fontSize: 10 }}>
-                      {event.entity}
-                    </Typography>
-                  )}
-                  <Typography variant='caption' sx={{ opacity: 0.5, fontSize: 9 }}>
-                    {timeAgo(event.starttime || event.ts)} • {event.node}
-                  </Typography>
-                </Box>
-              }
-            />
-          </ListItem>
+          <div key={idx} className='px-1.5 py-1.5 border-b' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            <div className='flex items-center gap-1.5'>
+              <span
+                className='inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded min-w-[50px] text-center text-white'
+                style={{ backgroundColor: color }}
+              >
+                {statusLabel}
+              </span>
+              <span className='text-[11px] font-semibold'>
+                {TASK_LABELS[event.type] || event.typeLabel || event.type}
+              </span>
+            </div>
+            <div className='flex items-center gap-2 mt-0.5'>
+              {event.entity && (
+                <span className='text-[10px] opacity-70'>{event.entity}</span>
+              )}
+              <span className='text-[9px] opacity-50'>
+                {timeAgo(event.starttime || event.ts)} • {event.node}
+              </span>
+            </div>
+          </div>
         )
       })}
-    </List>
+    </div>
   )
 }
 

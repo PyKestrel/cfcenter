@@ -1,7 +1,9 @@
 'use client'
 
 import React from 'react'
-import { Box, Typography, Chip, CircularProgress, alpha, Stack } from '@mui/material'
+
+import { SpinnerGap } from '@phosphor-icons/react'
+
 import { useClusterFirewallOptions } from '@/hooks/useZeroTrust'
 
 function ZeroTrustFirewallWidget({ data, loading, config }) {
@@ -9,9 +11,9 @@ function ZeroTrustFirewallWidget({ data, loading, config }) {
 
   if (loadingData) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <SpinnerGap size={24} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+      </div>
     )
   }
 
@@ -21,50 +23,34 @@ function ZeroTrustFirewallWidget({ data, loading, config }) {
   const connectionName = firewallData?.connectionName || ''
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', p: 1 }}>
-      <Box sx={{
-        width: 44, height: 44, borderRadius: 2,
-        bgcolor: isEnabled ? alpha('#22c55e', 0.15) : alpha('#ef4444', 0.15),
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, mr: 1.5
-      }}>
+    <div className='h-full flex items-center p-2'>
+      <div className='w-11 h-11 rounded-lg flex items-center justify-center shrink-0 mr-3'
+        style={{ backgroundColor: isEnabled ? '#22c55e26' : '#ef444426' }}>
         <i className={isEnabled ? 'ri-shield-check-line' : 'ri-shield-cross-line'}
            style={{ fontSize: 22, color: isEnabled ? '#22c55e' : '#ef4444' }} />
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Firewall Cluster
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant='body2' sx={{ fontWeight: 700, color: isEnabled ? '#22c55e' : '#ef4444' }}>
+      </div>
+      <div className='flex-1 min-w-0'>
+        <span className='text-xs opacity-60 font-semibold uppercase tracking-wider block'>Firewall Cluster</span>
+        <div className='flex items-center gap-2'>
+          <span className='text-sm font-bold' style={{ color: isEnabled ? '#22c55e' : '#ef4444' }}>
             {isEnabled ? '● Actif' : '○ Inactif'}
-          </Typography>
+          </span>
           {connectionName && (
-            <Chip label={connectionName} size="small" sx={{ height: 16, fontSize: 9 }} />
+            <span className='text-[9px] px-1 py-0.5 rounded' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>{connectionName}</span>
           )}
-        </Box>
-        <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
-          <Chip
-            label={`IN: ${policyIn}`}
-            size="small"
-            sx={{
-              height: 18, fontSize: 9, fontWeight: 600,
-              bgcolor: policyIn === 'DROP' ? alpha('#ef4444', 0.15) : alpha('#22c55e', 0.15),
-              color: policyIn === 'DROP' ? '#ef4444' : '#22c55e'
-            }}
-          />
-          <Chip
-            label={`OUT: ${policyOut}`}
-            size="small"
-            sx={{
-              height: 18, fontSize: 9, fontWeight: 600,
-              bgcolor: policyOut === 'DROP' ? alpha('#ef4444', 0.15) : alpha('#22c55e', 0.15),
-              color: policyOut === 'DROP' ? '#ef4444' : '#22c55e'
-            }}
-          />
-        </Stack>
-      </Box>
-    </Box>
+        </div>
+        <div className='flex gap-1 mt-1'>
+          <span className='text-[9px] font-semibold px-1.5 py-0.5 rounded'
+            style={{ backgroundColor: policyIn === 'DROP' ? '#ef444426' : '#22c55e26', color: policyIn === 'DROP' ? '#ef4444' : '#22c55e' }}>
+            IN: {policyIn}
+          </span>
+          <span className='text-[9px] font-semibold px-1.5 py-0.5 rounded'
+            style={{ backgroundColor: policyOut === 'DROP' ? '#ef444426' : '#22c55e26', color: policyOut === 'DROP' ? '#ef4444' : '#22c55e' }}>
+            OUT: {policyOut}
+          </span>
+        </div>
+      </div>
+    </div>
   )
 }
 

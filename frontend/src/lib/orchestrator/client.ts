@@ -57,6 +57,11 @@ export async function orchestratorFetch<T>(
       throw new Error('Orchestrator request timeout')
     }
 
+    // Normalize connection errors so route handlers can match on a single string
+    if (error.message?.includes('fetch failed') || error.cause?.code === 'ECONNREFUSED') {
+      throw new Error('ECONNREFUSED: Orchestrator unavailable')
+    }
+
     throw error
   }
 }

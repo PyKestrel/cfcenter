@@ -5,12 +5,18 @@ export const dynamic = "force-dynamic"
 
 const ORCHESTRATOR_URL = process.env.ORCHESTRATOR_URL || "http://localhost:8080"
 
-// Default community license status when orchestrator is unavailable
+// Default license status when orchestrator is unavailable — all features unlocked
 const DEFAULT_COMMUNITY_STATUS = {
-  licensed: false,
+  licensed: true,
   expired: false,
-  edition: 'community',
-  features: ['dashboard', 'inventory', 'backups', 'storage'],
+  edition: 'enterprise',
+  features: [
+    'dashboard', 'inventory', 'backups', 'storage',
+    'drs', 'firewall', 'microsegmentation', 'rolling_updates',
+    'ai_insights', 'predictive_alerts', 'alerts', 'green_metrics',
+    'cross_cluster_migration', 'ceph_replication', 'ldap', 'reports',
+    'rbac', 'task_center', 'notifications', 'cve_scanner',
+  ],
 }
 
 export async function GET() {

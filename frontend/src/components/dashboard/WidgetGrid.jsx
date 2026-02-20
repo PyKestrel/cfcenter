@@ -4,12 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useTranslations } from 'next-intl'
 import { ResponsiveGridLayout } from 'react-grid-layout'
-
 import {
-  Box, Card, CardContent, CircularProgress, IconButton, Menu, MenuItem,
-  Skeleton, Tooltip, Typography, Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Chip, Tabs, Tab, Snackbar, Alert
-} from '@mui/material'
+  Button, DialogRoot, DialogTitle, DialogDescription, DialogClose,
+  Tabs, Tooltip, Toast, Surface, SkeletonLine, Badge
+} from '@cloudflare/kumo'
+import { X, Plus, GearSix, Check, ArrowsClockwise, SpinnerGap } from '@phosphor-icons/react'
 
 import { WIDGET_REGISTRY, WIDGET_CATEGORIES, getWidgetsByCategory } from './widgetRegistry'
 import { DEFAULT_LAYOUT, PRESET_LAYOUTS } from './types'
@@ -42,68 +41,49 @@ function WidgetContainer({
 
   if (!WidgetComponent) {
     return (
-      <Card variant='outlined' sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant='caption' color='error'>{t('dashboard.unknownWidget')} {config.type}</Typography>
-      </Card>
+      <Surface className='h-full flex items-center justify-center border rounded-lg'>
+        <span className='text-xs' style={{ color: 'var(--pc-error)' }}>{t('dashboard.unknownWidget')} {config.type}</span>
+      </Surface>
     )
   }
 
   return (
-    <Card
-      variant='outlined'
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'box-shadow 0.2s',
-        '&:hover': editMode ? { boxShadow: 4 } : {},
-      }}
+    <Surface
+      className={`h-full flex flex-col relative overflow-hidden border rounded-lg transition-shadow ${editMode ? 'hover:shadow-lg' : ''}`}
     >
       {/* Header - zone de drag */}
-      <Box
-        className="widget-drag-handle"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 1.5,
-          py: 0.75,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'action.hover',
+      <div
+        className="widget-drag-handle flex items-center justify-between px-3 py-1.5 border-b"
+        style={{
+          borderColor: 'var(--pc-border-subtle)',
+          backgroundColor: 'var(--pc-bg-subtle)',
           cursor: editMode ? 'move' : 'default',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+        <div className='flex items-center gap-2 min-w-0'>
           <i className={widgetDef.icon} style={{ fontSize: 14, opacity: 0.7 }} />
-          <Typography variant='caption' sx={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {widgetName}
-          </Typography>
-        </Box>
+          <span className='text-xs font-bold truncate'>{widgetName}</span>
+        </div>
         {editMode && (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <Tooltip title={t('common.delete')}>
-              <IconButton size='small' onClick={onRemove} sx={{ p: 0.25 }}>
-                <i className='ri-close-line' style={{ fontSize: 14 }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
+          <Tooltip content={t('common.delete')}>
+            <button onClick={onRemove} className='p-0.5 rounded hover:bg-[var(--pc-border-subtle)] transition-colors'>
+              <X size={14} />
+            </button>
+          </Tooltip>
         )}
-      </Box>
+      </div>
 
       {/* Content */}
-      <CardContent sx={{ flex: 1, p: 1, overflow: 'hidden', '&:last-child': { pb: 1 } }}>
+      <div className='flex-1 p-2 overflow-hidden'>
         {loading ? (
-          <Box sx={{ height: '100%', p: 0.5 }}>
-            <Skeleton variant="rounded" width="100%" height="100%" sx={{ borderRadius: 0.5 }} />
-          </Box>
+          <div className='h-full p-1'>
+            <SkeletonLine className='w-full h-full rounded' />
+          </div>
         ) : (
           <WidgetComponent config={config} data={data} loading={loading} />
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </Surface>
   )
 }
 
@@ -128,67 +108,68 @@ function AddWidgetDialog({ open, onClose, onAdd, t }) {
     return t(`dashboard.widgetDescs.${key}`, { defaultValue: widget.description })
   }
 
+  if (!open) return null
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth='sm' fullWidth>
-      <DialogTitle sx={{ pb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <i className='ri-add-circle-line' style={{ fontSize: 20 }} />
-          {t('dashboard.addWidget')}
-        </Box>
-      </DialogTitle>
-      <DialogContent sx={{ p: 0 }}>
-        <Tabs
-          value={tab}
-          onChange={(e, v) => setTab(v)}
-          variant='scrollable'
-          scrollButtons='auto'
-          sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
-        >
-          {categories.map((cat, idx) => (
-            <Tab
-              key={cat.id}
-              label={getCategoryName(cat)}
-              icon={<i className={cat.icon} style={{ fontSize: 16 }} />}
-              iconPosition='start'
-              sx={{ minHeight: 48, textTransform: 'none' }}
-            />
-          ))}
-        </Tabs>
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
-            {getWidgetsByCategory(categories[tab]?.id).map((widget) => (
-              <Card
-                key={widget.type}
-                variant='outlined'
-                sx={{
-                  p: 1.5,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': { bgcolor: 'action.hover', borderColor: 'primary.main' }
-                }}
-                onClick={() => onAdd(widget.type)}
+    <DialogRoot open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
+      <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40'>
+        <Surface className='w-full max-w-lg rounded-xl border shadow-xl' style={{ backgroundColor: 'var(--pc-bg-card)' }}>
+          <div className='flex items-center gap-2 px-5 py-4 border-b' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            <Plus size={20} />
+            <span className='text-base font-semibold'>{t('dashboard.addWidget')}</span>
+            <button onClick={onClose} className='ml-auto p-1 rounded hover:bg-[var(--pc-border-subtle)]'>
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Category tabs */}
+          <div className='flex gap-1 px-4 pt-3 pb-0 overflow-x-auto border-b' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            {categories.map((cat, idx) => (
+              <button
+                key={cat.id}
+                onClick={() => setTab(idx)}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t transition-colors whitespace-nowrap ${
+                  tab === idx
+                    ? 'border-b-2 text-[var(--pc-primary)]'
+                    : 'text-[var(--pc-text-muted)] hover:text-[var(--pc-text-primary)]'
+                }`}
+                style={tab === idx ? { borderColor: 'var(--pc-primary)' } : {}}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                  <i className={widget.icon} style={{ fontSize: 18, opacity: 0.7 }} />
-                  <Typography variant='body2' sx={{ fontWeight: 700 }}>{getWidgetName(widget)}</Typography>
-                </Box>
-                <Typography variant='caption' sx={{ opacity: 0.6 }}>{getWidgetDesc(widget)}</Typography>
-                <Box sx={{ mt: 1 }}>
-                  <Chip
-                    size='small'
-                    label={`${widget.defaultSize.w}x${widget.defaultSize.h}`}
-                    sx={{ height: 18, fontSize: 10 }}
-                  />
-                </Box>
-              </Card>
+                <i className={cat.icon} style={{ fontSize: 14 }} />
+                {getCategoryName(cat)}
+              </button>
             ))}
-          </Box>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t('common.close')}</Button>
-      </DialogActions>
-    </Dialog>
+          </div>
+
+          {/* Widget list */}
+          <div className='p-4 max-h-[400px] overflow-y-auto'>
+            <div className='grid grid-cols-2 gap-3'>
+              {getWidgetsByCategory(categories[tab]?.id).map((widget) => (
+                <button
+                  key={widget.type}
+                  className='text-left p-3 border rounded-lg cursor-pointer transition-all hover:border-[var(--pc-primary)] hover:bg-[var(--pc-bg-subtle)]'
+                  style={{ borderColor: 'var(--pc-border-subtle)' }}
+                  onClick={() => onAdd(widget.type)}
+                >
+                  <div className='flex items-center gap-2 mb-1'>
+                    <i className={widget.icon} style={{ fontSize: 18, opacity: 0.7 }} />
+                    <span className='text-sm font-bold'>{getWidgetName(widget)}</span>
+                  </div>
+                  <span className='text-xs opacity-60'>{getWidgetDesc(widget)}</span>
+                  <div className='mt-2'>
+                    <Badge>{`${widget.defaultSize.w}x${widget.defaultSize.h}`}</Badge>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className='flex justify-end px-5 py-3 border-t' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            <Button variant='outline' onClick={onClose}>{t('common.close')}</Button>
+          </div>
+        </Surface>
+      </div>
+    </DialogRoot>
   )
 }
 
@@ -394,74 +375,90 @@ export default function WidgetGrid({ data, loading, onRefresh, refreshLoading })
 
   if (!layoutLoaded) {
     return (
-      <Box sx={{ pt: 2 }}>
+      <div className='pt-4'>
         <CardsSkeleton count={6} columns={3} />
-      </Box>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className='h-full flex flex-col'>
       {/* Toolbar */}
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: 1,
-        mb: 0.5,
-        flexWrap: 'wrap',
-        alignItems: 'center'
-      }}>
+      <div className='flex justify-end gap-2 mb-1 flex-wrap items-center'>
         {saving && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
-            <CircularProgress size={16} />
-            <Typography variant='caption' sx={{ opacity: 0.6 }}>{t('dashboard.saving')}</Typography>
-          </Box>
+          <div className='flex items-center gap-2 mr-2'>
+            <SpinnerGap size={16} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+            <span className='text-xs opacity-60'>{t('dashboard.saving')}</span>
+          </div>
         )}
         {editMode && (
           <>
-            <Button
-              variant='outlined'
-              size='small'
-              startIcon={<i className='ri-add-line' />}
-              onClick={() => setAddDialogOpen(true)}
-            >
+            <Button variant='outline' size='small' onClick={() => setAddDialogOpen(true)}>
+              <Plus size={14} className='mr-1' />
               {t('dashboard.add')}
             </Button>
-            <Button
-              variant='outlined'
-              size='small'
-              onClick={(e) => setLayoutMenuAnchor(e.currentTarget)}
-            >
-              {t('dashboard.layouts')}
-            </Button>
+            <div className='relative'>
+              <Button variant='outline' size='small' onClick={() => setLayoutMenuAnchor(prev => !prev)}>
+                {t('dashboard.layouts')}
+              </Button>
+              {layoutMenuAnchor && (
+                <>
+                  <div className='fixed inset-0 z-40' onClick={() => setLayoutMenuAnchor(false)} />
+                  <div
+                    className='absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border shadow-lg py-1'
+                    style={{ backgroundColor: 'var(--pc-bg-card)', borderColor: 'var(--pc-border-subtle)' }}
+                  >
+                    <div className='px-3 py-1.5'>
+                      <span className='text-xs font-bold' style={{ color: 'var(--pc-text-muted)' }}>{t('dashboard.presetLayouts')}</span>
+                    </div>
+                    {Object.values(PRESET_LAYOUTS).map((preset) => (
+                      <button
+                        key={preset.id}
+                        className='w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--pc-bg-subtle)] transition-colors'
+                        onClick={() => handleApplyPreset(preset.id)}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                    <div className='border-t my-1' style={{ borderColor: 'var(--pc-border-subtle)' }} />
+                    <button
+                      className='w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 hover:bg-[var(--pc-bg-subtle)] transition-colors'
+                      style={{ color: 'var(--pc-error)' }}
+                      onClick={handleResetLayout}
+                    >
+                      <ArrowsClockwise size={14} />
+                      {t('dashboard.reset')}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </>
         )}
-        <Tooltip title={editMode ? t('dashboard.finish') : t('dashboard.customize')}>
-          <IconButton
+        <Tooltip content={editMode ? t('dashboard.finish') : t('dashboard.customize')}>
+          <button
             onClick={() => setEditMode(!editMode)}
-            size='small'
-            color={editMode ? 'primary' : 'default'}
-            sx={editMode ? {
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              '&:hover': { bgcolor: 'primary.dark' }
-            } : {}}
+            className={`p-1.5 rounded-md transition-colors ${
+              editMode
+                ? 'bg-[var(--pc-primary)] text-white hover:opacity-90'
+                : 'hover:bg-[var(--pc-bg-subtle)]'
+            }`}
           >
-            <i className={editMode ? 'ri-check-line' : 'ri-settings-3-line'} />
-          </IconButton>
+            {editMode ? <Check size={16} /> : <GearSix size={16} />}
+          </button>
         </Tooltip>
         {onRefresh && (
-          <Tooltip title={t('dashboard.refreshData')}>
-            <IconButton
+          <Tooltip content={t('dashboard.refreshData')}>
+            <button
               onClick={onRefresh}
               disabled={refreshLoading}
-              size='small'
+              className='p-1.5 rounded-md hover:bg-[var(--pc-bg-subtle)] transition-colors disabled:opacity-40'
             >
-              <i className={refreshLoading ? 'ri-loader-4-line' : 'ri-refresh-line'} />
-            </IconButton>
+              <ArrowsClockwise size={16} className={refreshLoading ? 'animate-spin' : ''} />
+            </button>
           </Tooltip>
         )}
-      </Box>
+      </div>
 
       {/* Grid avec react-grid-layout */}
       <div
@@ -474,7 +471,7 @@ export default function WidgetGrid({ data, loading, onRefresh, refreshLoading })
       >
       <style>{`
         .react-grid-item.react-grid-placeholder {
-          background-color: var(--mui-palette-primary-main);
+          background-color: var(--pc-primary);
           opacity: 0.2;
           border-radius: 4px;
         }
@@ -521,38 +518,25 @@ export default function WidgetGrid({ data, loading, onRefresh, refreshLoading })
         t={t}
       />
 
-      {/* Layout Menu */}
-      <Menu
-        anchorEl={layoutMenuAnchor}
-        open={Boolean(layoutMenuAnchor)}
-        onClose={() => setLayoutMenuAnchor(null)}
-      >
-        <MenuItem disabled sx={{ opacity: 1 }}>
-          <Typography variant='caption' sx={{ fontWeight: 700 }}>{t('dashboard.presetLayouts')}</Typography>
-        </MenuItem>
-        {Object.values(PRESET_LAYOUTS).map((preset) => (
-          <MenuItem key={preset.id} onClick={() => handleApplyPreset(preset.id)}>
-            {preset.name}
-          </MenuItem>
-        ))}
-        <MenuItem divider />
-        <MenuItem onClick={handleResetLayout} sx={{ color: 'error.main' }}>
-          <i className='ri-refresh-line' style={{ marginRight: 8 }} />
-          {t('dashboard.reset')}
-        </MenuItem>
-      </Menu>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {/* Toast notification */}
+      {snackbar.open && (
+        <div className='fixed bottom-4 right-4 z-50'>
+          <Surface
+            className={`px-4 py-3 rounded-lg border shadow-lg flex items-center gap-3 ${
+              snackbar.severity === 'error' ? 'border-[var(--pc-error)]' : 'border-[var(--pc-border-subtle)]'
+            }`}
+            style={{ backgroundColor: 'var(--pc-bg-card)' }}
+          >
+            <span className='text-sm'>{snackbar.message}</span>
+            <button
+              onClick={() => setSnackbar({ ...snackbar, open: false })}
+              className='p-0.5 rounded hover:bg-[var(--pc-border-subtle)]'
+            >
+              <X size={14} />
+            </button>
+          </Surface>
+        </div>
+      )}
+    </div>
   )
 }

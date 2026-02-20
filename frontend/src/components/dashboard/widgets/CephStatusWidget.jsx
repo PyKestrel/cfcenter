@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Alert, Box, Chip, LinearProgress, Typography } from '@mui/material'
 
 function CephStatusWidget({ data, loading }) {
   const t = useTranslations()
@@ -10,80 +10,74 @@ function CephStatusWidget({ data, loading }) {
 
   if (!ceph || !ceph.available) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Alert severity='info' sx={{ width: '100%' }}>{t('common.notAvailable')}</Alert>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <div className='w-full text-center text-sm px-3 py-2 rounded-lg' style={{ backgroundColor: '#2196f318', color: '#2196f3' }}>
+          {t('common.notAvailable')}
+        </div>
+      </div>
     )
   }
 
   const healthColor = ceph.health === 'HEALTH_OK' ? '#4caf50' : ceph.health === 'HEALTH_WARN' ? '#ff9800' : '#f44336'
+  const usedPct = ceph.usedPct || 0
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5, p: 1, overflow: 'auto' }}>
+    <div className='h-full flex flex-col gap-3 p-2 overflow-auto'>
       {/* Health */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>HEALTH</Typography>
-        <Chip 
-          size='small' 
-          label={ceph.health?.replace('HEALTH_', '') || 'UNKNOWN'} 
-          sx={{ 
-            height: 20, fontSize: 10, fontWeight: 700,
-            bgcolor: `${healthColor}22`, color: healthColor
-          }} 
-        />
-      </Box>
+      <div className='flex items-center justify-between'>
+        <span className='text-[10px] opacity-60 font-semibold'>HEALTH</span>
+        <span className='text-[10px] font-bold px-2 py-0.5 rounded' style={{ backgroundColor: `${healthColor}22`, color: healthColor }}>
+          {ceph.health?.replace('HEALTH_', '') || 'UNKNOWN'}
+        </span>
+      </div>
 
       {/* Storage */}
-      <Box>
-        <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>{t('storage.title').toUpperCase()}</Typography>
-        <Box sx={{ position: 'relative', mt: 0.5 }}>
-          <LinearProgress
-            variant='determinate'
-            value={ceph.usedPct || 0}
-            sx={{
-              height: 14, borderRadius: 0, bgcolor: (theme) => theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-              '& .MuiLinearProgress-bar': { borderRadius: 0, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: (ceph.usedPct || 0) > 0 ? `${(100 / (ceph.usedPct || 1)) * 100}% 100%` : '100% 100%' }
+      <div>
+        <span className='text-[10px] opacity-60 font-semibold'>{t('storage.title').toUpperCase()}</span>
+        <div className='relative mt-1 h-3.5 rounded-sm overflow-hidden' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>
+          <div
+            className='absolute inset-y-0 left-0 rounded-sm'
+            style={{
+              width: `${usedPct}%`,
+              background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)',
+              backgroundSize: usedPct > 0 ? `${(100 / usedPct) * 100}% 100%` : '100% 100%',
             }}
           />
-          <Typography variant='caption' sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#fff', lineHeight: 1, textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{ceph.usedPct || 0}%</Typography>
-        </Box>
-      </Box>
+          <span className='absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white' style={{ textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>
+            {usedPct}%
+          </span>
+        </div>
+      </div>
 
       {/* OSDs */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-        <Box>
-          <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>OSDs</Typography>
-          <Typography variant='body2' sx={{ fontWeight: 700 }}>
+      <div className='grid grid-cols-2 gap-2'>
+        <div>
+          <span className='text-[10px] opacity-60 font-semibold'>OSDs</span>
+          <div className='text-sm font-bold'>
             {ceph.osdsUp || 0} / {ceph.osdsTotal || 0}
-            <Typography component='span' variant='caption' sx={{ opacity: 0.6, ml: 0.5 }}>up</Typography>
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>PGs</Typography>
-          <Typography variant='body2' sx={{ fontWeight: 700 }}>
-            {ceph.pgsTotal || 0}
-          </Typography>
-        </Box>
-      </Box>
+            <span className='text-xs opacity-60 ml-1'>up</span>
+          </div>
+        </div>
+        <div>
+          <span className='text-[10px] opacity-60 font-semibold'>PGs</span>
+          <div className='text-sm font-bold'>{ceph.pgsTotal || 0}</div>
+        </div>
+      </div>
 
       {/* I/O */}
       {(ceph.readBps > 0 || ceph.writeBps > 0) && (
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-          <Box>
-            <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>READ</Typography>
-            <Typography variant='body2' sx={{ fontWeight: 700, fontSize: 12 }}>
-              {formatBps(ceph.readBps)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>WRITE</Typography>
-            <Typography variant='body2' sx={{ fontWeight: 700, fontSize: 12 }}>
-              {formatBps(ceph.writeBps)}
-            </Typography>
-          </Box>
-        </Box>
+        <div className='grid grid-cols-2 gap-2'>
+          <div>
+            <span className='text-[10px] opacity-60 font-semibold'>READ</span>
+            <div className='text-xs font-bold'>{formatBps(ceph.readBps)}</div>
+          </div>
+          <div>
+            <span className='text-[10px] opacity-60 font-semibold'>WRITE</span>
+            <div className='text-xs font-bold'>{formatBps(ceph.writeBps)}</div>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   )
 }
 
@@ -93,8 +87,7 @@ function formatBps(bps) {
   const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s']
   const i = Math.floor(Math.log(bps) / Math.log(k))
 
-  
-return parseFloat((bps / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+  return parseFloat((bps / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
 export default React.memo(CephStatusWidget)

@@ -1,14 +1,8 @@
-// MUI Imports
-import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
-
 // Third-party Imports
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
-
-// Util Imports
-import { getSystemMode } from '@core/utils/serverHelpers'
 
 // Style Imports
 import '@/app/globals.css'
@@ -29,14 +23,9 @@ const RootLayout = async props => {
   const locale = await getLocale()
   const messages = await getMessages()
 
-  // Vars
-  const systemMode = await getSystemMode()
-  const direction = 'ltr'
-
   return (
-    <html id='__next' lang={locale} dir={direction} suppressHydrationWarning>
-      <body className='flex is-full min-bs-full flex-auto flex-col'>
-        <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
+    <html id='__next' lang={locale} dir='ltr' suppressHydrationWarning>
+      <body className='flex w-full min-h-full flex-auto flex-col'>
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>

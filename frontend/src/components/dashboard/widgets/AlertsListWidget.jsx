@@ -1,8 +1,10 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Alert, Box, Chip, List, ListItem, ListItemText, Typography } from '@mui/material'
+
+const SEVERITY_COLORS = { crit: '#f44336', warn: '#ff9800', info: '#2196f3' }
 
 function AlertsListWidget({ data, loading }) {
   const t = useTranslations()
@@ -22,58 +24,42 @@ function AlertsListWidget({ data, loading }) {
 
   if (alerts.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Alert severity='success' sx={{ width: '100%' }}>{t('alerts.noActiveAlerts')}</Alert>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <div className='w-full text-center text-sm px-3 py-2 rounded-lg' style={{ backgroundColor: '#4caf5018', color: '#4caf50' }}>
+          {t('alerts.noActiveAlerts')}
+        </div>
+      </div>
     )
   }
 
   const severityConfig = {
-    crit: { label: 'CRIT', color: 'error' },
-    warn: { label: 'WARN', color: 'warning' },
-    info: { label: 'INFO', color: 'info' },
+    crit: { label: 'CRIT' },
+    warn: { label: 'WARN' },
+    info: { label: 'INFO' },
   }
 
   return (
-    <List dense disablePadding sx={{ height: '100%', overflow: 'auto', p: 0.5 }}>
+    <div className='h-full overflow-auto p-1'>
       {alerts.map((alert, idx) => {
         const cfg = severityConfig[alert.severity] || severityConfig.info
+        const color = SEVERITY_COLORS[alert.severity] || SEVERITY_COLORS.info
 
-        
-return (
-          <ListItem key={idx} sx={{ px: 0.5, py: 0.5 }}>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Chip 
-                    size='small' 
-                    label={cfg.label} 
-                    color={cfg.color}
-                    sx={{ height: 18, fontSize: 9, minWidth: 40 }}
-                  />
-                  <Typography variant='caption' sx={{ 
-                    fontWeight: 600, overflow: 'hidden', 
-                    textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11 
-                  }}>
-                    {alert.message}
-                  </Typography>
-                </Box>
-              }
-              secondary={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                  <Typography variant='caption' sx={{ opacity: 0.5, fontSize: 9 }}>
-                    {timeAgo(alert.time)}
-                  </Typography>
-                  <Typography variant='caption' sx={{ opacity: 0.4, fontSize: 9 }}>
-                    • {alert.source}
-                  </Typography>
-                </Box>
-              }
-            />
-          </ListItem>
+        return (
+          <div key={idx} className='px-1 py-1.5 border-b last:border-b-0' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            <div className='flex items-center gap-1.5'>
+              <span className='inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded min-w-[40px] text-center text-white' style={{ backgroundColor: color }}>
+                {cfg.label}
+              </span>
+              <span className='text-[11px] font-semibold truncate'>{alert.message}</span>
+            </div>
+            <div className='flex items-center gap-2 mt-0.5'>
+              <span className='text-[9px] opacity-50'>{timeAgo(alert.time)}</span>
+              <span className='text-[9px] opacity-40'>• {alert.source}</span>
+            </div>
+          </div>
         )
       })}
-    </List>
+    </div>
   )
 }
 

@@ -1,8 +1,10 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Box, Chip, Typography } from '@mui/material'
+
+const HEALTH_COLORS = { HEALTH_OK: '#4caf50', HEALTH_WARN: '#ff9800', HEALTH_ERR: '#f44336' }
 
 function ClustersListWidget({ data, loading }) {
   const t = useTranslations()
@@ -10,49 +12,37 @@ function ClustersListWidget({ data, loading }) {
 
   if (clusters.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Typography variant='caption' sx={{ opacity: 0.6 }}>{t('common.noData')}</Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <span className='text-xs opacity-60'>{t('common.noData')}</span>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1, p: 1, overflow: 'auto' }}>
+    <div className='h-full flex flex-col gap-2 p-2 overflow-auto'>
       {clusters.map((cluster, idx) => (
-        <Box 
-          key={idx}
-          sx={{ 
-            p: 1.5, borderRadius: 1.5, bgcolor: 'action.hover',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1,
-          }}
-        >
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant='body2' sx={{ fontWeight: 700, fontSize: 13 }}>{cluster.name}</Typography>
-            <Typography variant='caption' sx={{ opacity: 0.6, fontSize: 10 }}>
+        <div key={idx} className='p-3 rounded-lg flex items-center justify-between gap-2' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>
+          <div className='min-w-0'>
+            <span className='block text-[13px] font-bold'>{cluster.name}</span>
+            <span className='block text-[10px] opacity-60'>
               {cluster.nodes} {t('inventory.nodes').toLowerCase()} • {cluster.onlineNodes} {t('common.online').toLowerCase()}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+            </span>
+          </div>
+          <div className='flex gap-1 shrink-0'>
             {cluster.quorum && (
-              <Chip 
-                size='small' 
-                label='Quorum' 
-                color={cluster.quorum.quorate ? 'success' : 'error'} 
-                sx={{ fontSize: 9, height: 18 }} 
-              />
+              <span className='text-[9px] font-semibold px-1.5 py-0.5 rounded text-white' style={{ backgroundColor: cluster.quorum.quorate ? '#4caf50' : '#f44336' }}>
+                Quorum
+              </span>
             )}
             {cluster.cephHealth && (
-              <Chip 
-                size='small' 
-                label={cluster.cephHealth.replace('HEALTH_', '')} 
-                color={cluster.cephHealth === 'HEALTH_OK' ? 'success' : cluster.cephHealth === 'HEALTH_WARN' ? 'warning' : 'error'} 
-                sx={{ fontSize: 9, height: 18 }} 
-              />
+              <span className='text-[9px] font-semibold px-1.5 py-0.5 rounded text-white' style={{ backgroundColor: HEALTH_COLORS[cluster.cephHealth] || '#f44336' }}>
+                {cluster.cephHealth.replace('HEALTH_', '')}
+              </span>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
       ))}
-    </Box>
+    </div>
   )
 }
 

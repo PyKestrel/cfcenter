@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 import { useTranslations } from 'next-intl'
-import { Alert, Box, Button } from '@mui/material'
+import { Banner, Button } from '@cloudflare/kumo'
 
 import WidgetGrid from '@/components/dashboard/WidgetGrid'
 import { usePageTitle } from '@/contexts/PageTitleContext'
@@ -21,7 +21,7 @@ function useTimeAgo() {
     if (diff < 3600) return t('minutesAgo', { count: Math.floor(diff / 60) })
     if (diff < 86400) return t('hoursAgo', { count: Math.floor(diff / 3600) })
 
-return t('daysAgo', { count: Math.floor(diff / 86400) })
+    return t('daysAgo', { count: Math.floor(diff / 86400) })
   }
 }
 
@@ -47,19 +47,19 @@ export default function HomePage() {
 
   if (error && !data) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity='error'>{t('dashboard.loadingError')}: {error.message}</Alert>
-        <Button variant='outlined' onClick={() => mutate()} sx={{ mt: 2 }}>{t('common.retry')}</Button>
-      </Box>
+      <div className='p-6'>
+        <Banner type='error'>{t('dashboard.loadingError')}: {error.message}</Banner>
+        <Button variant='outline' onClick={() => mutate()} className='mt-4'>{t('common.retry')}</Button>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <div className='flex flex-col h-full min-h-0'>
       {/* Widget Grid - avec boutons refresh et personnaliser */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+      <div className='flex-1 min-h-0 overflow-auto'>
         <WidgetGrid data={data} loading={loading && !data} onRefresh={() => mutate()} refreshLoading={isValidating} />
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }

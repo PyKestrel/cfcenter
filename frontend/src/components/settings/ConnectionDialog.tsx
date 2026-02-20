@@ -265,7 +265,7 @@ export default function ConnectionDialog({
         </Typography>
 
         <Alert severity="info" sx={{ mb: 2 }}>
-          <span dangerouslySetInnerHTML={{ __html: isPbs ? t('settings.pbsPortInfo') : t('settings.pvePortInfo') }} />
+          <span dangerouslySetInnerHTML={{ __html: isPbs ? t.raw('settings.pbsPortInfo') : t.raw('settings.pvePortInfo') }} />
         </Alert>
 
         <TextField

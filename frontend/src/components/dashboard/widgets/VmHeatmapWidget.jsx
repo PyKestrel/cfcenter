@@ -1,17 +1,9 @@
 'use client'
 
 import React, { useMemo, useState, useCallback } from 'react'
+
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import {
-  Box,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip as MuiTooltip,
-  Typography,
-  useTheme,
-  alpha,
-} from '@mui/material'
 
 // Color gradient: green (low) → yellow (mid) → red (high)
 function getHeatColor(pct) {
@@ -58,48 +50,29 @@ function formatBytes(bytes) {
 
 function TileTooltipContent({ vm, metric }) {
   return (
-    <Box sx={{ minWidth: 180 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-        <i
-          className={vm.type === 'lxc' ? 'ri-instance-line' : 'ri-computer-line'}
-          style={{ fontSize: 13, opacity: 0.7 }}
-        />
-        <Typography variant="caption" sx={{ fontWeight: 700 }}>
-          {vm.name || `VM ${vm.vmid}`}
-        </Typography>
-      </Box>
-      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: 10, mb: 0.75 }}>
+    <div style={{ minWidth: 180 }}>
+      <div className='flex items-center gap-1 mb-1'>
+        <i className={vm.type === 'lxc' ? 'ri-instance-line' : 'ri-computer-line'} style={{ fontSize: 13, opacity: 0.7 }} />
+        <span className='text-xs font-bold'>{vm.name || `VM ${vm.vmid}`}</span>
+      </div>
+      <span className='text-[10px] block mb-1.5' style={{ color: 'var(--pc-text-muted)' }}>
         #{vm.vmid} · {vm.type === 'lxc' ? 'LXC' : 'VM'} · {vm.node}
-      </Typography>
-      <Box sx={{ display: 'flex', gap: 2.5 }}>
-        <Box>
-          <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>CPU</Typography>
-          <Typography variant="caption" sx={{
-            display: 'block',
-            fontWeight: metric === 'cpu' ? 700 : 400,
-            fontFamily: '"JetBrains Mono", monospace',
-          }}>
-            {vm.cpuPct}%
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>RAM</Typography>
-          <Typography variant="caption" sx={{
-            display: 'block',
-            fontWeight: metric === 'ram' ? 700 : 400,
-            fontFamily: '"JetBrains Mono", monospace',
-          }}>
-            {vm.ramPct}%
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>Alloc</Typography>
-          <Typography variant="caption" sx={{ display: 'block', fontFamily: '"JetBrains Mono", monospace' }}>
-            {formatBytes(vm.maxmem)}
-          </Typography>
-        </Box>
-      </Box>
-    </Box>
+      </span>
+      <div className='flex gap-4'>
+        <div>
+          <span className='text-[10px] block' style={{ color: 'var(--pc-text-muted)' }}>CPU</span>
+          <span className='text-xs block' style={{ fontWeight: metric === 'cpu' ? 700 : 400, fontFamily: '"JetBrains Mono", monospace' }}>{vm.cpuPct}%</span>
+        </div>
+        <div>
+          <span className='text-[10px] block' style={{ color: 'var(--pc-text-muted)' }}>RAM</span>
+          <span className='text-xs block' style={{ fontWeight: metric === 'ram' ? 700 : 400, fontFamily: '"JetBrains Mono", monospace' }}>{vm.ramPct}%</span>
+        </div>
+        <div>
+          <span className='text-[10px] block' style={{ color: 'var(--pc-text-muted)' }}>Alloc</span>
+          <span className='text-xs block' style={{ fontFamily: '"JetBrains Mono", monospace' }}>{formatBytes(vm.maxmem)}</span>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -196,7 +169,6 @@ function computeTreemapLayout(items, width, height) {
 
 function VmHeatmapWidget({ data, loading: dashboardLoading }) {
   const t = useTranslations()
-  const theme = useTheme()
   const router = useRouter()
   const [metric, setMetric] = useState('ram')
 
@@ -248,114 +220,86 @@ function VmHeatmapWidget({ data, loading: dashboardLoading }) {
 
   if (!data || dashboardLoading) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">Loading...</Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <span className='text-xs' style={{ color: 'var(--pc-text-muted)' }}>Loading...</span>
+      </div>
     )
   }
 
   if (guests.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
-          {t('common.noData')}
-        </Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <span className='text-xs' style={{ color: 'var(--pc-text-muted)' }}>{t('common.noData')}</span>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className='h-full flex flex-col'>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, gap: 1 }}>
+      <div className='flex justify-between items-center mb-2 gap-2'>
         {stats && (
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 10 }}>
-              {stats.total} guests
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 10 }}>
-              Avg <Box component="span" sx={{ fontWeight: 700, color: 'text.primary', fontFamily: '"JetBrains Mono", monospace' }}>{stats.avg}%</Box>
-            </Typography>
+          <div className='flex gap-3 items-center'>
+            <span className='text-[10px]' style={{ color: 'var(--pc-text-muted)' }}>{stats.total} guests</span>
+            <span className='text-[10px]' style={{ color: 'var(--pc-text-muted)' }}>
+              Avg <span className='font-bold' style={{ color: 'var(--pc-text)', fontFamily: '"JetBrains Mono", monospace' }}>{stats.avg}%</span>
+            </span>
             {stats.hot > 0 && (
-              <Typography variant="caption" sx={{ color: 'error.main', fontSize: 10, fontWeight: 600 }}>
-                {stats.hot} hot
-              </Typography>
+              <span className='text-[10px] font-semibold' style={{ color: 'var(--pc-error)' }}>{stats.hot} hot</span>
             )}
-          </Box>
+          </div>
         )}
 
-        <ToggleButtonGroup
-          value={metric}
-          exclusive
-          onChange={(e, val) => val && setMetric(val)}
-          size="small"
-        >
-          <ToggleButton value="cpu" sx={{ px: 1.5, py: 0.25, fontSize: '0.65rem', minWidth: 40 }}>
-            CPU
-          </ToggleButton>
-          <ToggleButton value="ram" sx={{ px: 1.5, py: 0.25, fontSize: '0.65rem', minWidth: 40 }}>
-            RAM
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
+        <div className='flex rounded overflow-hidden border' style={{ borderColor: 'var(--pc-border)' }}>
+          {['cpu', 'ram'].map((val) => (
+            <button key={val} onClick={() => setMetric(val)}
+              className='px-2.5 py-0.5 text-[11px] font-medium transition-colors'
+              style={{
+                backgroundColor: metric === val ? 'var(--pc-primary)' : 'transparent',
+                color: metric === val ? '#fff' : 'var(--pc-text-secondary)',
+              }}>
+              {val.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Treemap area */}
-      <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+      <div className='flex-1 overflow-auto min-h-0'>
         {nodeGroups.map((group) => (
-          <Box key={group.node} sx={{ mb: 1 }}>
-            {/* Node header */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <i className="ri-server-line" style={{ fontSize: 11, color: theme.palette.text.secondary }} />
-              <Typography variant="caption" sx={{ fontWeight: 600, fontSize: 10, color: 'text.secondary' }}>
-                {group.node}
-              </Typography>
-              <Typography variant="caption" sx={{ fontSize: 9, color: 'text.disabled' }}>
-                ({group.vms.length})
-              </Typography>
-            </Box>
-
-            {/* Treemap tiles for this node */}
-            <TreemapGroup
-              vms={group.vms}
-              metric={metric}
-              theme={theme}
-              onClick={handleClick}
-            />
-          </Box>
+          <div key={group.node} className='mb-2'>
+            <div className='flex items-center gap-1 mb-1'>
+              <i className='ri-server-line' style={{ fontSize: 11, color: 'var(--pc-text-muted)' }} />
+              <span className='text-[10px] font-semibold' style={{ color: 'var(--pc-text-muted)' }}>{group.node}</span>
+              <span className='text-[9px]' style={{ color: 'var(--pc-text-muted)', opacity: 0.6 }}>({group.vms.length})</span>
+            </div>
+            <TreemapGroup vms={group.vms} metric={metric} onClick={handleClick} />
+          </div>
         ))}
-      </Box>
+      </div>
 
       {/* Color scale legend */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, px: 0.5 }}>
-        <Typography variant="caption" sx={{ fontSize: 9, color: 'text.secondary' }}>0%</Typography>
-        <Box
-          sx={{
-            flex: 1,
-            height: 6,
-            borderRadius: 3,
-            background: `linear-gradient(to right, ${getHeatColor(0)}, ${getHeatColor(30)}, ${getHeatColor(60)}, ${getHeatColor(80)}, ${getHeatColor(100)})`,
-          }}
-        />
-        <Typography variant="caption" sx={{ fontSize: 9, color: 'text.secondary' }}>100%</Typography>
-        <Typography variant="caption" sx={{ fontSize: 9, color: 'text.secondary', ml: 0.5 }}>
-          {metric.toUpperCase()}
-        </Typography>
-      </Box>
-    </Box>
+      <div className='flex items-center gap-2 mt-1 px-1'>
+        <span className='text-[9px]' style={{ color: 'var(--pc-text-muted)' }}>0%</span>
+        <div className='flex-1 h-1.5 rounded-full' style={{ background: `linear-gradient(to right, ${getHeatColor(0)}, ${getHeatColor(30)}, ${getHeatColor(60)}, ${getHeatColor(80)}, ${getHeatColor(100)})` }} />
+        <span className='text-[9px]' style={{ color: 'var(--pc-text-muted)' }}>100%</span>
+        <span className='text-[9px] ml-1' style={{ color: 'var(--pc-text-muted)' }}>{metric.toUpperCase()}</span>
+      </div>
+    </div>
   )
 }
 
 // Sub-component: renders the treemap tiles for a single node group
-function TreemapGroup({ vms, metric, theme, onClick }) {
+function TreemapGroup({ vms, metric, onClick }) {
   const containerRef = React.useRef(null)
   const [dims, setDims] = React.useState({ w: 0, h: 0 })
+  const [hoveredId, setHoveredId] = React.useState(null)
 
   React.useEffect(() => {
     if (!containerRef.current) return
 
     const obs = new ResizeObserver((entries) => {
       const { width } = entries[0].contentRect
-      // Height is proportional to number of VMs, min 60, max 160
       const h = Math.max(60, Math.min(160, 20 + vms.length * 8))
       setDims({ w: width, h })
     })
@@ -369,85 +313,67 @@ function TreemapGroup({ vms, metric, theme, onClick }) {
 
     const items = vms.map((vm) => ({
       ...vm,
-      value: Math.max(Number(vm.maxmem) || 1, 1), // Size by allocated RAM
+      value: Math.max(Number(vm.maxmem) || 1, 1),
     }))
 
     return computeTreemapLayout(items, dims.w, dims.h)
   }, [vms, dims.w, dims.h])
 
   return (
-    <Box
+    <div
       ref={containerRef}
-      sx={{
-        position: 'relative',
-        width: '100%',
+      className='relative w-full rounded overflow-hidden'
+      style={{
         height: Math.max(60, Math.min(160, 20 + vms.length * 8)),
-        borderRadius: 1,
-        overflow: 'hidden',
-        bgcolor: alpha(theme.palette.divider, 0.15),
+        backgroundColor: 'var(--pc-bg-subtle)',
       }}
     >
       {tiles.map((tile) => {
         const val = metric === 'cpu' ? tile.cpuPct : tile.ramPct
         const bgColor = getHeatColor(val)
         const showLabel = tile.w > 40 && tile.h > 18
+        const isHovered = hoveredId === tile.id
 
         return (
-          <MuiTooltip
+          <div
             key={tile.id}
-            title={<TileTooltipContent vm={tile} metric={metric} />}
-            arrow
-            placement="top"
-            enterDelay={80}
-            leaveDelay={0}
+            onClick={() => onClick(tile)}
+            onMouseEnter={() => setHoveredId(tile.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            title={`${tile.name || tile.vmid} — CPU: ${tile.cpuPct}% RAM: ${tile.ramPct}%`}
+            className='absolute flex items-center justify-center overflow-hidden cursor-pointer'
+            style={{
+              left: tile.x,
+              top: tile.y,
+              width: Math.max(tile.w - 1, 1),
+              height: Math.max(tile.h - 1, 1),
+              backgroundColor: bgColor,
+              border: '0.5px solid rgba(0,0,0,0.15)',
+              transition: 'filter 0.1s',
+              filter: isHovered ? 'brightness(1.2)' : 'none',
+              zIndex: isHovered ? 10 : 0,
+              outline: isHovered ? '2px solid white' : 'none',
+            }}
           >
-            <Box
-              onClick={() => onClick(tile)}
-              sx={{
-                position: 'absolute',
-                left: tile.x,
-                top: tile.y,
-                width: Math.max(tile.w - 1, 1),
-                height: Math.max(tile.h - 1, 1),
-                bgcolor: bgColor,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+            {showLabel && (
+              <span style={{
+                fontSize: Math.min(10, tile.h * 0.5),
+                fontWeight: 600,
+                color: val > 60 ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.75)',
+                lineHeight: 1,
                 overflow: 'hidden',
-                transition: 'filter 0.1s, z-index 0s',
-                border: `0.5px solid ${alpha(theme.palette.common.black, 0.15)}`,
-                '&:hover': {
-                  filter: 'brightness(1.2)',
-                  zIndex: 10,
-                  outline: `2px solid ${theme.palette.common.white}`,
-                },
-              }}
-            >
-              {showLabel && (
-                <Typography
-                  sx={{
-                    fontSize: Math.min(10, tile.h * 0.5),
-                    fontWeight: 600,
-                    color: val > 60 ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.75)',
-                    lineHeight: 1,
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap',
-                    px: 0.25,
-                    textShadow: val > 60
-                      ? '0 0 2px rgba(0,0,0,0.3)'
-                      : '0 0 2px rgba(255,255,255,0.3)',
-                  }}
-                >
-                  {tile.name || tile.vmid}
-                </Typography>
-              )}
-            </Box>
-          </MuiTooltip>
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                padding: '0 2px',
+                textShadow: val > 60 ? '0 0 2px rgba(0,0,0,0.3)' : '0 0 2px rgba(255,255,255,0.3)',
+              }}>
+                {tile.name || tile.vmid}
+              </span>
+            )}
+          </div>
         )
       })}
-    </Box>
+    </div>
   )
 }
 

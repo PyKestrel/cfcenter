@@ -1,14 +1,14 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Box, Typography, useTheme } from '@mui/material'
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 function GaugeChart({ value, label, subtitle, color, size = 150 }) {
   return (
-    <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Box sx={{ position: 'relative', width: size, height: size, mx: 'auto' }}>
+    <div className='text-center flex-1 flex flex-col items-center'>
+      <div className='relative mx-auto' style={{ width: size, height: size }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -28,34 +28,23 @@ function GaugeChart({ value, label, subtitle, color, size = 150 }) {
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <Box sx={{ 
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          textAlign: 'center'
-        }}>
-          <Typography variant='h5' sx={{ fontWeight: 800, lineHeight: 1 }}>{value || 0}%</Typography>
-        </Box>
-      </Box>
-      <Typography variant='body1' sx={{ fontWeight: 700, mt: 1.5, display: 'block' }}>{label}</Typography>
-      {subtitle && <Typography variant='body2' sx={{ opacity: 0.5 }}>{subtitle}</Typography>}
-    </Box>
+        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center'>
+          <span className='text-xl font-extrabold leading-none'>{value || 0}%</span>
+        </div>
+      </div>
+      <span className='font-bold mt-3 block'>{label}</span>
+      {subtitle && <span className='text-sm opacity-50'>{subtitle}</span>}
+    </div>
   )
 }
 
 function ResourcesGaugesWidget({ data, loading }) {
   const t = useTranslations()
-  const theme = useTheme()
-  const primaryColor = theme.palette.primary.main
+  const primaryColor = 'var(--pc-primary)'
   const resources = data?.resources || {}
 
   return (
-    <Box sx={{
-      height: '100%',
-      display: 'flex',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      p: 2,
-      gap: 2
-    }}>
+    <div className='h-full flex justify-around items-center p-4 gap-4'>
       <GaugeChart
         value={resources.cpuPct}
         label={t('monitoring.cpu')}
@@ -74,7 +63,7 @@ function ResourcesGaugesWidget({ data, loading }) {
         subtitle={resources.storageUsedFormatted ? `${resources.storageUsedFormatted}` : '0'}
         color={primaryColor}
       />
-    </Box>
+    </div>
   )
 }
 

@@ -1,8 +1,10 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Box, Typography, Chip, CircularProgress, alpha, Stack } from '@mui/material'
+import { SpinnerGap } from '@phosphor-icons/react'
+
 import { useClusterSecurityGroups } from '@/hooks/useZeroTrust'
 
 const GROUP_COLORS = [
@@ -16,77 +18,57 @@ function ZeroTrustSecurityGroupsWidget({ data, loading, config }) {
 
   if (loadingData) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <SpinnerGap size={24} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+      </div>
     )
   }
 
   const totalGroups = clustersData.reduce((acc, c) => acc + c.groups.length, 0)
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 1.5, overflow: 'hidden' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-        <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Security Groups
-        </Typography>
-        <Chip
-          label={`${totalGroups} groups`}
-          size="small"
-          sx={{ height: 18, fontSize: 9 }}
-        />
-      </Box>
+    <div className='h-full flex flex-col p-3 overflow-hidden'>
+      <div className='flex justify-between items-center mb-3'>
+        <span className='text-xs opacity-60 font-semibold uppercase tracking-wider'>Security Groups</span>
+        <span className='text-[9px] px-1.5 py-0.5 rounded' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>{totalGroups} groups</span>
+      </div>
 
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <div className='flex-1 overflow-auto'>
         {clustersData.length > 0 ? (
-          <Stack spacing={1.5}>
+          <div className='space-y-3'>
             {clustersData.map((cluster) => (
-              <Box key={cluster.id}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: 10, mb: 0.5, display: 'block' }}>
-                  {cluster.name}
-                </Typography>
+              <div key={cluster.id}>
+                <span className='text-[10px] font-semibold mb-1 block' style={{ color: 'var(--pc-text-muted)' }}>{cluster.name}</span>
                 {cluster.groups.length > 0 ? (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <div className='flex flex-wrap gap-1'>
                     {cluster.groups.map((sg, index) => {
                       const color = GROUP_COLORS[index % GROUP_COLORS.length]
                       const isBase = sg.group?.startsWith('sg-base-')
 
                       return (
-                        <Chip
-                          key={sg.group}
-                          size="small"
-                          icon={isBase ? <i className="ri-lock-line" style={{ fontSize: 9, marginLeft: 4 }} /> : undefined}
-                          label={sg.group?.length > 12 ? sg.group.slice(0, 12) + '...' : sg.group}
-                          sx={{
-                            height: 20,
-                            fontSize: 9,
-                            borderLeft: `2px solid ${color}`,
-                            bgcolor: isBase ? alpha('#8b5cf6', 0.05) : 'transparent',
-                          }}
-                        />
+                        <span key={sg.group} className='inline-flex items-center gap-0.5 text-[9px] h-5 px-1.5 rounded-sm' style={{ borderLeft: `2px solid ${color}`, backgroundColor: isBase ? '#8b5cf60d' : 'transparent' }}>
+                          {isBase && <i className='ri-lock-line' style={{ fontSize: 9 }} />}
+                          {sg.group?.length > 12 ? sg.group.slice(0, 12) + '...' : sg.group}
+                        </span>
                       )
                     })}
                     {cluster.groups.length === 10 && (
-                      <Chip label="..." size="small" sx={{ height: 20, fontSize: 9 }} />
+                      <span className='text-[9px] h-5 px-1.5 rounded-sm flex items-center' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>...</span>
                     )}
-                  </Box>
+                  </div>
                 ) : (
-                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 9 }}>
-                    {t('dashboard.noGroup')}
-                  </Typography>
+                  <span className='text-[9px]' style={{ color: 'var(--pc-text-muted)' }}>{t('dashboard.noGroup')}</span>
                 )}
-              </Box>
+              </div>
             ))}
-          </Stack>
+          </div>
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {t('dashboard.noPveCluster')}
-            </Typography>
-          </Box>
+          <div className='flex items-center justify-center h-full'>
+            <span className='text-xs' style={{ color: 'var(--pc-text-muted)' }}>{t('dashboard.noPveCluster')}</span>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }
 

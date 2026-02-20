@@ -1,127 +1,119 @@
-/* Google Fonts imports pour les thèmes */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fira+Code:wght@400;500;600&family=Lato:wght@300;400;700&family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600&family=Source+Sans+Pro:wght@300;400;600;700&family=Poppins:wght@300;400;500;600;700&family=Nunito+Sans:wght@300;400;600;700&display=swap');
+/* Google Fonts - must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-@layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme) important;
-@import "tailwindcss/utilities.css" layer(utilities) important;
+/* Kumo UI Styles - must come before tailwindcss */
+@source "../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}";
+@import "@cloudflare/kumo/styles/tailwind";
+@import "tailwindcss";
+
 @plugin 'tailwindcss-logical';
 
-@theme {
-  --radius-none: 0px;
-  --radius-xs: var(--mui-shape-customBorderRadius-xs);
-  --radius-sm: var(--mui-shape-customBorderRadius-sm);
-  --radius: var(--mui-shape-customBorderRadius-md);
-  --radius-md: var(--mui-shape-customBorderRadius-md);
-  --radius-lg: var(--mui-shape-customBorderRadius-lg);
-  --radius-xl: var(--mui-shape-customBorderRadius-xl);
-  --radius-2xl: 0.75rem;
-  --radius-3xl: 1rem;
-  --radius-4xl: 1.5rem;
-  --radius-full: 9999px;
-
-  --color-primary: var(--primary-color);
-  --color-primaryLight: var(--mui-palette-primary-lightOpacity);
-  --color-primaryLighter: var(--mui-palette-primary-lighterOpacity);
-  --color-secondary: var(--mui-palette-secondary-main);
-  --color-error: var(--mui-palette-error-main);
-  --color-errorLight: var(--mui-palette-error-lightOpacity);
-  --color-errorLighter: var(--mui-palette-error-lighterOpacity);
-  --color-warning: var(--mui-palette-warning-main);
-  --color-info: var(--mui-palette-info-main);
-  --color-success: var(--mui-palette-success-main);
-  --color-textPrimary: var(--mui-palette-text-primary);
-  --color-textSecondary: var(--mui-palette-text-secondary);
-  --color-textDisabled: var(--mui-palette-text-disabled);
-  --color-actionActive: var(--mui-palette-action-active);
-  --color-actionHover: var(--mui-palette-action-hover);
-  --color-actionSelected: var(--mui-palette-action-selected);
-  --color-actionFocus: var(--mui-palette-action-focus);
-  --color-backgroundPaper: var(--mui-palette-background-paper);
-  --color-backgroundDefault: var(--mui-palette-background-default);
-  --color-track: var(--mui-palette-customColors-trackBg);
-  --color-backdrop: var(--backdrop-color);
-  --color-facebook: #4267B2;
-  --color-twitter: #1DA1F2;
-  --color-linkedin: #007BB6;
-  --color-github: #272727;
-  --color-googlePlus: #DB4437;
-
-  --shadow-xs: var(--mui-customShadows-xs);
-  --shadow-sm: var(--mui-customShadows-sm);
-  --shadow-default: var(--mui-customShadows-md);
-  --shadow-md: var(--mui-customShadows-md);
-  --shadow-lg: var(--mui-customShadows-lg);
-  --shadow-xl: var(--mui-customShadows-xl);
-
-  --breakpoint-sm: 600px;
-  --breakpoint-md: 900px;
-  --breakpoint-lg: 1200px;
-  --breakpoint-xl: 1536px;
-  --breakpoint-2xl: 1920px;
-
-  --z-header: var(--header-z-index);
-  --z-footer: var(--footer-z-index);
-  --z-customizer: var(--customizer-z-index);
-  --z-search: var(--search-z-index);
-  --z-drawer: var(--drawer-z-index);
-}
-
+/* ============================================================
+   ProxCenter Design Tokens (Kumo-compatible)
+   ============================================================ */
 :root {
-  --border-radius: var(--mui-shape-borderRadius);
-  --border-color: var(--mui-palette-divider);
-  --primary-color: var(--mui-palette-primary-main);
-  --background-color: var(--mui-palette-background-default);
-  --header-height: 44px;
-  --header-z-index: var(--mui-zIndex-appBar);
-  --footer-z-index: 10;
-  --customizer-z-index: var(--mui-zIndex-drawer);
-  --search-z-index: var(--mui-zIndex-tooltip);
-  --drawer-z-index: var(--mui-zIndex-drawer);
-  --backdrop-color: rgb(var(--mui-mainColorChannels-light) / 0.5);
-  --mui-mainColorChannels-shadow: var(--mui-mainColorChannels-lightShadow);
+  /* Layout */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 68px;
+  --header-height: 48px;
+  --footer-height: 36px;
+
+  /* Z-index */
+  --z-sidebar: 40;
+  --z-header: 30;
+  --z-footer: 20;
+  --z-overlay: 50;
+  --z-modal: 60;
+
+  /* Spacing */
+  --layout-padding: 16px;
+
+  /* Colors - Cloudflare/ProxCenter palette */
+  --pc-primary: #f6821f;
+  --pc-primary-hover: #e07318;
+  --pc-primary-light: rgba(246, 130, 31, 0.12);
+  --pc-secondary: #6b7280;
+  --pc-success: #22c55e;
+  --pc-warning: #f59e0b;
+  --pc-error: #ef4444;
+  --pc-info: #3b82f6;
+
+  /* Surfaces - Light mode */
+  --pc-bg: #f8f9fb;
+  --pc-bg-surface: #ffffff;
+  --pc-bg-elevated: #ffffff;
+  --pc-bg-sidebar: #1b2332;
+  --pc-bg-header: #ffffff;
+  --pc-border: #e5e7eb;
+  --pc-border-subtle: #f3f4f6;
+
+  /* Text */
+  --pc-text: #111827;
+  --pc-text-secondary: #6b7280;
+  --pc-text-muted: #9ca3af;
+  --pc-text-inverse: #ffffff;
+
+  /* Sidebar text */
+  --pc-sidebar-text: #cbd5e1;
+  --pc-sidebar-text-active: #ffffff;
+  --pc-sidebar-icon: #94a3b8;
+  --pc-sidebar-icon-active: #f6821f;
+  --pc-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --pc-sidebar-active: rgba(246, 130, 31, 0.15);
+  --pc-sidebar-section: #64748b;
+  --pc-sidebar-border: rgba(255, 255, 255, 0.08);
 }
 
-[data-dark] {
-  --backdrop-color: rgb(21 16 43 / 0.6);
-  --mui-mainColorChannels-shadow: var(--mui-mainColorChannels-darkShadow);
+/* Dark mode */
+.dark, [data-theme="dark"] {
+  --pc-bg: #0f1219;
+  --pc-bg-surface: #1a1f2e;
+  --pc-bg-elevated: #232838;
+  --pc-bg-sidebar: #0d1117;
+  --pc-bg-header: #1a1f2e;
+  --pc-border: #2d3348;
+  --pc-border-subtle: #232838;
+
+  --pc-text: #f1f5f9;
+  --pc-text-secondary: #94a3b8;
+  --pc-text-muted: #64748b;
+
+  --pc-sidebar-text: #94a3b8;
+  --pc-sidebar-hover: rgba(255, 255, 255, 0.04);
+  --pc-sidebar-active: rgba(246, 130, 31, 0.12);
+  --pc-sidebar-border: rgba(255, 255, 255, 0.06);
 }
 
-@layer base {
-
-  *,
-  ::before,
-  ::after {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    border: 0 solid;
-    border-color: var(--border-color, currentColor);
-  }
+/* ============================================================
+   Base Styles
+   ============================================================ */
+*,
+::before,
+::after {
+  box-sizing: border-box;
 }
 
 html {
   display: flex;
-  inline-size: 100%;
-  min-block-size: 100%;
+  width: 100%;
+  min-height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Dégradé en haut de page avec la couleur du thème */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 280px;
-  background: linear-gradient(
-    180deg,
-    rgba(var(--mui-palette-primary-mainChannel), 0.18) 0%,
-    rgba(var(--mui-palette-primary-mainChannel), 0.10) 25%,
-    rgba(var(--mui-palette-primary-mainChannel), 0.04) 50%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 9999;
+body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: var(--pc-bg);
+  color: var(--pc-text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -134,79 +126,392 @@ ul:not([class]) {
   padding-inline-start: 40px;
 }
 
-/*! Do not remove the following styles */
-/*
-  Fix the popout / submenu closing issue when using hover trigger to open the menu and using
-  perfectscrollbar where the bridge create with safe polygon by floating ui was not working
-*/
-[data-floating-ui-safe-polygon] .scrollbar-container {
-  pointer-events: auto;
+/* ============================================================
+   ProxCenter Layout Shell
+   ============================================================ */
+.pc-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
 }
 
-[data-floating-ui-safe-polygon] .scrollbar-container .ps__rail-y {
-  pointer-events: none;
+/* Sidebar */
+.pc-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background: var(--pc-bg-sidebar);
+  border-right: 1px solid var(--pc-sidebar-border);
+  z-index: var(--z-sidebar);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
 }
 
-.ps__rail-y {
-  inset-inline-end: 0 !important;
-  inset-inline-start: auto !important;
-
-  & .ps__thumb-y {
-    inset-inline-end: 3px !important;
-    inset-inline-start: auto !important;
-    background-color: var(--mui-palette-divider);
-    inline-size: 6px;
-
-    &:hover,
-    &:focus,
-    &.ps--clicking {
-      background-color: var(--mui-palette-action-disabled) !important;
-    }
-  }
-
-  &:hover,
-  &:focus,
-  &.ps--clicking {
-    background-color: var(--mui-palette-action-hover) !important;
-  }
-
-  &:hover,
-  &:focus,
-  &.ps--clicking {
-    .ps__thumb-y {
-      background-color: var(--mui-palette-action-disabled) !important;
-    }
-  }
+.pc-sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
 }
 
-.ts-vertical-nav-root {
-  .ps__thumb-y {
-    inline-size: 4px;
-
-    &:hover,
-    &:focus,
-    &.ps--clicking {
-      inline-size: 6px;
-    }
-  }
-
-  .ps__rail-y {
-    inline-size: 10px;
-
-    &:hover,
-    &:focus,
-    &.ps--clicking {
-      background-color: transparent !important;
-
-      .ps__thumb-y {
-        inline-size: 6px;
-      }
-    }
-  }
+.pc-sidebar.collapsed.sidebar-hovered {
+  width: var(--sidebar-width);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: calc(var(--z-sidebar) + 1);
 }
 
+.pc-sidebar.hidden {
+  transform: translateX(-100%);
+  width: var(--sidebar-width);
+}
+
+.pc-sidebar.hidden.hovered {
+  transform: translateX(0);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Sidebar header */
+.pc-sidebar-header {
+  display: flex;
+  align-items: center;
+  height: var(--header-height);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--pc-sidebar-border);
+  flex-shrink: 0;
+}
+
+.pc-sidebar-header .logo-text {
+  margin-left: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--pc-text-inverse);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+.pc-sidebar.collapsed:not(.sidebar-hovered) .pc-sidebar-header .logo-text {
+  opacity: 0;
+  width: 0;
+}
+
+/* Sidebar nav */
+.pc-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+
+.pc-sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.pc-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pc-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* Nav section label */
+.pc-nav-section {
+  padding: 16px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pc-sidebar-section);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pc-sidebar.collapsed:not(.sidebar-hovered) .pc-nav-section {
+  text-align: center;
+  font-size: 0;
+}
+
+.pc-sidebar.collapsed:not(.sidebar-hovered) .pc-nav-section::after {
+  content: '•••';
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+/* Nav item */
+.pc-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  margin: 1px 8px;
+  border-radius: 8px;
+  color: var(--pc-sidebar-text);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-decoration: none;
+  gap: 12px;
+}
+
+.pc-nav-item:hover {
+  background: var(--pc-sidebar-hover);
+  color: var(--pc-sidebar-text-active);
+}
+
+.pc-nav-item.active {
+  background: var(--pc-sidebar-active);
+  color: var(--pc-sidebar-text-active);
+}
+
+.pc-nav-item.active .pc-nav-icon {
+  color: var(--pc-sidebar-icon-active);
+}
+
+.pc-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--pc-sidebar-icon);
+  font-size: 18px;
+  transition: color 0.15s ease;
+}
+
+.pc-nav-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pc-sidebar.collapsed:not(.sidebar-hovered) .pc-nav-label {
+  opacity: 0;
+  width: 0;
+}
+
+.pc-sidebar.collapsed:not(.sidebar-hovered) .pc-nav-item {
+  justify-content: center;
+  padding: 8px;
+  margin: 1px 4px;
+}
+
+/* Sidebar toggle */
+.pc-sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-top: 1px solid var(--pc-sidebar-border);
+  cursor: pointer;
+  color: var(--pc-sidebar-icon);
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.pc-sidebar-toggle:hover {
+  color: var(--pc-sidebar-text-active);
+}
+
+/* Main content area */
+.pc-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;
+  transition: margin-left 0.2s ease;
+}
+
+.pc-sidebar.collapsed ~ .pc-main,
+.pc-layout:has(.pc-sidebar.collapsed) .pc-main {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+.pc-sidebar.hidden ~ .pc-main,
+.pc-layout:has(.pc-sidebar.hidden) .pc-main {
+  margin-left: 0;
+}
+
+/* Header */
+.pc-header {
+  position: sticky;
+  top: 0;
+  height: var(--header-height);
+  background: var(--pc-bg-header);
+  border-bottom: 1px solid var(--pc-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--layout-padding);
+  z-index: var(--z-header);
+  backdrop-filter: blur(8px);
+  gap: 12px;
+}
+
+.pc-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pc-header-title h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pc-text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pc-header-title .subtitle {
+  font-size: 12px;
+  color: var(--pc-text-muted);
+}
+
+.pc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Content */
+.pc-content {
+  flex: 1;
+  padding: var(--layout-padding);
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Footer */
+.pc-footer {
+  height: var(--footer-height);
+  border-top: 1px solid var(--pc-border);
+  background: var(--pc-bg-surface);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--layout-padding);
+  font-size: 12px;
+  color: var(--pc-text-muted);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Kumo Component Overrides for ProxCenter
+   ============================================================ */
+
+/* Cards */
+.pc-card {
+  background: var(--pc-bg-surface);
+  border: 1px solid var(--pc-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--pc-border-subtle);
+}
+
+.pc-card-body {
+  padding: 16px;
+}
+
+/* Status badges */
+.pc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.pc-badge.success { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+.pc-badge.warning { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.pc-badge.error { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.pc-badge.info { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+
+.dark .pc-badge.success { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.dark .pc-badge.warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.dark .pc-badge.error { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.dark .pc-badge.info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+
+/* Hover trigger zone for hidden sidebar */
+.pc-sidebar-trigger {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 100vh;
+  z-index: calc(var(--z-sidebar) + 1);
+  cursor: pointer;
+}
+
+.pc-sidebar-trigger::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 48px;
+  border-radius: 2px;
+  background: var(--pc-text-muted);
+  opacity: 0.2;
+  transition: all 0.2s;
+}
+
+.pc-sidebar-trigger:hover::after {
+  opacity: 0.6;
+  height: 64px;
+  background: var(--pc-primary);
+}
+
+/* ============================================================
+   Utility classes
+   ============================================================ */
+.pc-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.pc-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.pc-scrollbar::-webkit-scrollbar-thumb { background: var(--pc-border); border-radius: 3px; }
+.pc-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--pc-text-muted); }
+
+/* Icon sizing for Phosphor icons */
+.pc-icon-sm { width: 16px; height: 16px; }
+.pc-icon-md { width: 20px; height: 20px; }
+.pc-icon-lg { width: 24px; height: 24px; }
+
+/* ============================================================
+   Legacy compatibility - keep ri- icons working during migration
+   ============================================================ */
 :where([class^='ri-']) {
   font-size: 1.5rem;
+}
+
+code {
+  font-family: 'JetBrains Mono', monospace;
+  padding-block: 2px;
+  padding-inline: 4px;
+  border-radius: 4px;
+  font-size: 90%;
+  color: var(--pc-info);
+  background-color: rgba(59, 130, 246, 0.08);
+  border: 0;
 }
 
 /* Fix width issue for the input-otp component */
@@ -214,13 +519,11 @@ input[autocomplete='one-time-code'][data-input-otp='true'] {
   inline-size: 100% !important;
 }
 
-code {
-  font-family: inherit;
-  padding-block: 2px;
-  padding-inline: 4px;
-  border-radius: 4px;
-  font-size: 90%;
-  color: var(--mui-palette-info-main);
-  background-color: rgb(var(--mui-palette-info-mainChannel) / 0.08);
-  border: 0;
+/*! Do not remove the following styles */
+[data-floating-ui-safe-polygon] .scrollbar-container {
+  pointer-events: auto;
+}
+
+[data-floating-ui-safe-polygon] .scrollbar-container .ps__rail-y {
+  pointer-events: none;
 }

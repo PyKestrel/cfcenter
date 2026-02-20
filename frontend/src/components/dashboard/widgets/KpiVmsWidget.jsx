@@ -1,37 +1,34 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Box, Typography, useTheme } from '@mui/material'
 
 function KpiVmsWidget({ data, loading }) {
   const t = useTranslations()
-  const theme = useTheme()
-  const primaryColor = theme.palette.primary.main
+  const primaryColor = 'var(--pc-primary)'
   const summary = data?.summary || {}
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', p: 1 }}>
-      <Box sx={{ 
-        width: 44, height: 44, borderRadius: 2, 
-        bgcolor: `${primaryColor}18`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, mr: 1.5
-      }}>
+    <div className='h-full flex items-center p-2'>
+      <div
+        className='w-11 h-11 rounded-lg flex items-center justify-center shrink-0 mr-3'
+        style={{ backgroundColor: 'color-mix(in srgb, var(--pc-primary) 10%, transparent)' }}
+      >
         <i className='ri-computer-line' style={{ fontSize: 22, color: primaryColor }} />
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      </div>
+      <div className='flex-1 min-w-0'>
+        <span className='block text-[10px] opacity-60 font-semibold uppercase tracking-wide'>
           {t('dashboard.widgets.vms')} ({t('common.active').toLowerCase()} / {t('common.total').toLowerCase()})
-        </Typography>
-        <Typography variant='h6' sx={{ fontWeight: 800, color: primaryColor, lineHeight: 1.2 }}>
+        </span>
+        <span className='block text-lg font-extrabold leading-tight' style={{ color: primaryColor }}>
           {summary.vmsRunning || 0} / {summary.vmsTotal || 0}
-        </Typography>
-        <Typography variant='caption' sx={{ opacity: 0.5 }}>
+        </span>
+        <span className='block text-[10px] opacity-50'>
           CPU {summary.cpuPct || 0}% • RAM {summary.ramPct || 0}%
-        </Typography>
-      </Box>
-    </Box>
+        </span>
+      </div>
+    </div>
   )
 }
 

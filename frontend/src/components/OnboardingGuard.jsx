@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import { useRouter, usePathname } from 'next/navigation'
-import { Box, CircularProgress } from '@mui/material'
+
+import { Spinner } from '@phosphor-icons/react'
 
 // Routes autorisées sans connexion Proxmox configurée
 const allowedRoutes = ['/settings', '/logout', '/profile']
@@ -20,6 +22,7 @@ export default function OnboardingGuard({ children }) {
     if (isAllowed) {
       setChecking(false)
       setReady(true)
+
       return
     }
 
@@ -43,16 +46,9 @@ export default function OnboardingGuard({ children }) {
 
   if (checking) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '50vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className='flex items-center justify-center min-h-[50vh]'>
+        <Spinner size={32} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+      </div>
     )
   }
 

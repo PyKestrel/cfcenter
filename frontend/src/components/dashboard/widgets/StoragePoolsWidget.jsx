@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 
 import { useTranslations } from 'next-intl'
-import { Alert, Box, Chip, CircularProgress, LinearProgress, Typography } from '@mui/material'
+import { SpinnerGap } from '@phosphor-icons/react'
 
 import { formatBytes } from '@/utils/format'
 
@@ -69,71 +69,46 @@ return bUsage - aUsage
 
   if (loadingStorages) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <SpinnerGap size={24} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+      </div>
     )
   }
 
   if (storages.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Alert severity='info' sx={{ width: '100%' }}>{t('common.noData')}</Alert>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <div className='w-full text-center text-sm px-3 py-2 rounded-lg' style={{ backgroundColor: '#2196f318', color: '#2196f3' }}>{t('common.noData')}</div>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ height: '100%', overflow: 'auto', p: 0.5 }}>
+    <div className='h-full overflow-auto p-1'>
       {storages.slice(0, 8).map((storage, idx) => {
         const usagePct = storage.total ? Math.round((storage.used / storage.total) * 100) : 0
-        const color = usagePct > 90 ? '#f44336' : usagePct > 75 ? '#ff9800' : '#4caf50'
 
         return (
-          <Box 
-            key={idx} 
-            sx={{ 
-              py: 0.75, 
-              borderBottom: idx < storages.length - 1 ? '1px solid' : 'none',
-              borderColor: 'divider'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+          <div key={idx} className='py-1.5 border-b last:border-b-0' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            <div className='flex items-center justify-between mb-1'>
+              <div className='flex items-center gap-2 min-w-0'>
                 <i className='ri-hard-drive-2-line' style={{ fontSize: 14, opacity: 0.6 }} />
-                <Typography variant='caption' sx={{ fontWeight: 700, fontSize: 11 }}>
-                  {storage.storage}
-                </Typography>
-                <Chip
-                  size='small'
-                  label={storage.type || 'dir'}
-                  sx={{ height: 16, fontSize: 9, opacity: 0.7 }}
-                />
-              </Box>
-            </Box>
-            <Box sx={{ position: 'relative' }}>
-              <LinearProgress
-                variant='determinate'
-                value={usagePct}
-                sx={{
-                  height: 14, borderRadius: 0, bgcolor: (theme) => theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-                  '& .MuiLinearProgress-bar': { borderRadius: 0, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: usagePct > 0 ? `${(100 / usagePct) * 100}% 100%` : '100% 100%' }
-                }}
-              />
-              <Typography variant='caption' sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#fff', lineHeight: 1, textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{usagePct}%</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}>
-              <Typography variant='caption' sx={{ opacity: 0.5, fontSize: 9 }}>
-                {storage.connectionName}
-              </Typography>
-              <Typography variant='caption' sx={{ opacity: 0.5, fontSize: 9 }}>
-                {formatBytes(storage.used)} / {formatBytes(storage.total)}
-              </Typography>
-            </Box>
-          </Box>
+                <span className='text-[11px] font-bold'>{storage.storage}</span>
+                <span className='text-[9px] opacity-70 px-1 py-0.5 rounded' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>{storage.type || 'dir'}</span>
+              </div>
+            </div>
+            <div className='relative h-3.5 rounded-sm overflow-hidden' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>
+              <div className='absolute inset-y-0 left-0 rounded-sm' style={{ width: `${usagePct}%`, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: usagePct > 0 ? `${(100 / usagePct) * 100}% 100%` : '100% 100%' }} />
+              <span className='absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white' style={{ textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{usagePct}%</span>
+            </div>
+            <div className='flex justify-between mt-0.5'>
+              <span className='text-[9px] opacity-50'>{storage.connectionName}</span>
+              <span className='text-[9px] opacity-50'>{formatBytes(storage.used)} / {formatBytes(storage.total)}</span>
+            </div>
+          </div>
         )
       })}
-    </Box>
+    </div>
   )
 }
 

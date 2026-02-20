@@ -5,28 +5,28 @@ export const dynamic = "force-dynamic"
 
 const ORCHESTRATOR_URL = process.env.ORCHESTRATOR_URL || "http://localhost:8080"
 
-// Default community features when orchestrator is unavailable
+// Default features when orchestrator is unavailable — all features unlocked
 const DEFAULT_COMMUNITY_FEATURES = {
   features: [
     { id: 'dashboard', name: 'Dashboard', enabled: true },
     { id: 'inventory', name: 'Inventory', enabled: true },
     { id: 'backups', name: 'Backups', enabled: true },
     { id: 'storage', name: 'Storage', enabled: true },
-    { id: 'drs', name: 'DRS', enabled: false },
-    { id: 'firewall', name: 'Firewall', enabled: false },
-    { id: 'microsegmentation', name: 'Microsegmentation', enabled: false },
-    { id: 'rolling_updates', name: 'Rolling Updates', enabled: false },
-    { id: 'ai_insights', name: 'AI Insights', enabled: false },
-    { id: 'predictive_alerts', name: 'Predictive Alerts', enabled: false },
-    { id: 'green_metrics', name: 'Green Metrics', enabled: false },
-    { id: 'cross_cluster_migration', name: 'Cross Cluster Migration', enabled: false },
-    { id: 'ceph_replication', name: 'Ceph Replication', enabled: false },
-    { id: 'ldap', name: 'LDAP', enabled: false },
-    { id: 'reports', name: 'Reports', enabled: false },
-    { id: 'rbac', name: 'RBAC', enabled: false },
-    { id: 'task_center', name: 'Task Center', enabled: false },
-    { id: 'notifications', name: 'Notifications', enabled: false },
-    { id: 'cve_scanner', name: 'CVE Scanner', enabled: false },
+    { id: 'drs', name: 'DRS', enabled: true },
+    { id: 'firewall', name: 'Firewall', enabled: true },
+    { id: 'microsegmentation', name: 'Microsegmentation', enabled: true },
+    { id: 'rolling_updates', name: 'Rolling Updates', enabled: true },
+    { id: 'ai_insights', name: 'AI Insights', enabled: true },
+    { id: 'predictive_alerts', name: 'Predictive Alerts', enabled: true },
+    { id: 'green_metrics', name: 'Green Metrics', enabled: true },
+    { id: 'cross_cluster_migration', name: 'Cross Cluster Migration', enabled: true },
+    { id: 'ceph_replication', name: 'Ceph Replication', enabled: true },
+    { id: 'ldap', name: 'LDAP', enabled: true },
+    { id: 'reports', name: 'Reports', enabled: true },
+    { id: 'rbac', name: 'RBAC', enabled: true },
+    { id: 'task_center', name: 'Task Center', enabled: true },
+    { id: 'notifications', name: 'Notifications', enabled: true },
+    { id: 'cve_scanner', name: 'CVE Scanner', enabled: true },
   ]
 }
 

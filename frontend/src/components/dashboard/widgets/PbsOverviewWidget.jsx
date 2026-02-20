@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Alert, Box, Chip, LinearProgress, Typography } from '@mui/material'
 
 function PbsOverviewWidget({ data, loading }) {
   const t = useTranslations()
@@ -10,95 +10,78 @@ function PbsOverviewWidget({ data, loading }) {
 
   if (!pbs.servers || pbs.servers === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Alert severity='info' sx={{ width: '100%' }}>{t('common.noData')}</Alert>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <div className='w-full text-center text-sm px-3 py-2 rounded-lg' style={{ backgroundColor: '#2196f318', color: '#2196f3' }}>{t('common.noData')}</div>
+      </div>
     )
   }
 
+  const usagePct = pbs.usagePct || 0
+
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5, p: 1, overflow: 'auto' }}>
+    <div className='h-full flex flex-col gap-3 p-2 overflow-auto'>
       {/* Stats globales */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <Box>
-          <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>{t('storage.title').toUpperCase()} PBS</Typography>
-          <Box sx={{ mt: 0.5 }}>
-            <Box sx={{ position: 'relative', mb: 0.5 }}>
-              <LinearProgress
-                variant='determinate'
-                value={pbs.usagePct || 0}
-                sx={{
-                  height: 14, borderRadius: 0, bgcolor: (theme) => theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-                  '& .MuiLinearProgress-bar': { borderRadius: 0, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: (pbs.usagePct || 0) > 0 ? `${(100 / (pbs.usagePct || 1)) * 100}% 100%` : '100% 100%' }
-                }}
-              />
-              <Typography variant='caption' sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#fff', lineHeight: 1, textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{pbs.usagePct || 0}%</Typography>
-            </Box>
-            <Typography variant='caption' sx={{ opacity: 0.6, fontSize: 9 }}>
-              {pbs.totalUsedFormatted} / {pbs.totalSizeFormatted}
-            </Typography>
-          </Box>
-        </Box>
-        <Box>
-          <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, fontSize: 10 }}>{t('dashboard.widgets.activity').toUpperCase()} 24H</Typography>
-          <Box sx={{ mt: 0.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
+      <div className='grid grid-cols-2 gap-4'>
+        <div>
+          <span className='text-[10px] opacity-60 font-semibold'>{t('storage.title').toUpperCase()} PBS</span>
+          <div className='mt-1'>
+            <div className='relative h-3.5 rounded-sm overflow-hidden mb-1' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>
+              <div className='absolute inset-y-0 left-0 rounded-sm' style={{ width: `${usagePct}%`, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: usagePct > 0 ? `${(100 / (usagePct || 1)) * 100}% 100%` : '100% 100%' }} />
+              <span className='absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white' style={{ textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{usagePct}%</span>
+            </div>
+            <span className='text-[9px] opacity-60'>{pbs.totalUsedFormatted} / {pbs.totalSizeFormatted}</span>
+          </div>
+        </div>
+        <div>
+          <span className='text-[10px] opacity-60 font-semibold'>{t('dashboard.widgets.activity').toUpperCase()} 24H</span>
+          <div className='mt-1 space-y-0.5'>
+            <div className='flex items-center gap-1 text-[11px]'>
               <i className='ri-checkbox-circle-fill' style={{ color: '#4caf50', fontSize: 12 }} />
-              <Typography variant='caption' sx={{ fontSize: 11 }}>Backups OK: <strong>{pbs.backups24h?.ok || 0}</strong></Typography>
-            </Box>
+              Backups OK: <strong>{pbs.backups24h?.ok || 0}</strong>
+            </div>
             {pbs.backups24h?.error > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
-                <i className='ri-close-circle-fill' style={{ color: '#f44336', fontSize: 12 }} />
-                <Typography variant='caption' sx={{ fontSize: 11, color: '#f44336' }}>{t('jobs.failed')}: <strong>{pbs.backups24h.error}</strong></Typography>
-              </Box>
+              <div className='flex items-center gap-1 text-[11px]' style={{ color: '#f44336' }}>
+                <i className='ri-close-circle-fill' style={{ fontSize: 12 }} />
+                {t('jobs.failed')}: <strong>{pbs.backups24h.error}</strong>
+              </div>
             )}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <div className='flex items-center gap-1 text-[11px]'>
               <i className='ri-verified-badge-fill' style={{ color: '#2196f3', fontSize: 12 }} />
-              <Typography variant='caption' sx={{ fontSize: 11 }}>Verify: <strong>{pbs.verify24h?.ok || 0}</strong></Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+              Verify: <strong>{pbs.verify24h?.ok || 0}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Serveurs PBS */}
       {pbs.serverDetails?.length > 0 && (
-        <Box>
-          <Typography variant='caption' sx={{ opacity: 0.6, fontWeight: 600, mb: 0.5, display: 'block', fontSize: 10 }}>{t('storage.server').toUpperCase()}</Typography>
+        <div>
+          <span className='text-[10px] opacity-60 font-semibold mb-1 block'>{t('storage.server').toUpperCase()}</span>
           {pbs.serverDetails.map((server, idx) => (
-            <Box key={idx} sx={{ 
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-              py: 0.5, borderBottom: '1px solid', borderColor: 'divider' 
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <div key={idx} className='flex items-center justify-between py-1 border-b' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+              <div className='flex items-center gap-2'>
                 <i className='ri-hard-drive-2-line' style={{ opacity: 0.6, fontSize: 12 }} />
-                <Typography variant='caption' sx={{ fontWeight: 600, fontSize: 11 }}>{server.name}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant='caption' sx={{ opacity: 0.6, fontSize: 10 }}>{server.datastores} DS</Typography>
-                <Chip 
-                  size='small' 
-                  label={`${server.usagePct}%`} 
-                  sx={{ 
-                    height: 16, fontSize: 9, fontWeight: 700,
-                    bgcolor: server.usagePct > 80 ? '#f4433622' : server.usagePct > 60 ? '#ff980022' : '#4caf5022',
-                    color: server.usagePct > 80 ? '#f44336' : server.usagePct > 60 ? '#ff9800' : '#4caf50',
-                  }} 
-                />
-              </Box>
-            </Box>
+                <span className='text-[11px] font-semibold'>{server.name}</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <span className='text-[10px] opacity-60'>{server.datastores} DS</span>
+                <span className='text-[9px] font-bold px-1.5 py-0.5 rounded' style={{
+                  backgroundColor: server.usagePct > 80 ? '#f4433622' : server.usagePct > 60 ? '#ff980022' : '#4caf5022',
+                  color: server.usagePct > 80 ? '#f44336' : server.usagePct > 60 ? '#ff9800' : '#4caf50',
+                }}>{server.usagePct}%</span>
+              </div>
+            </div>
           ))}
-        </Box>
+        </div>
       )}
 
       {/* Erreurs récentes */}
       {pbs.recentErrors?.length > 0 && (
-        <Alert severity='warning' sx={{ py: 0.25, '& .MuiAlert-message': { py: 0 } }}>
-          <Typography variant='caption' sx={{ fontWeight: 600, fontSize: 10 }}>
-            {pbs.recentErrors.length} {t('common.error').toLowerCase()}(s)
-          </Typography>
-        </Alert>
+        <div className='px-2 py-1 rounded text-[10px] font-semibold' style={{ backgroundColor: '#ff980018', color: '#ff9800' }}>
+          {pbs.recentErrors.length} {t('common.error').toLowerCase()}(s)
+        </div>
       )}
-    </Box>
+    </div>
   )
 }
 

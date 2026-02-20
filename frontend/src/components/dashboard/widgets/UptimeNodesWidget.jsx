@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import { Box, Typography } from '@mui/material'
 
 function formatUptime(seconds) {
   if (!seconds || seconds <= 0) return '—'
@@ -20,11 +20,11 @@ function getUptimeColor(seconds) {
   if (!seconds) return '#9e9e9e'
   const days = seconds / 86400
 
-  if (days > 30) return '#4caf50'  // Plus de 30 jours
-  if (days > 7) return '#8bc34a'   // Plus de 7 jours
-  if (days > 1) return '#ff9800'   // Plus de 1 jour
-  
-return '#f44336'                  // Moins de 1 jour (récemment redémarré)
+  if (days > 30) return '#4caf50'
+  if (days > 7) return '#8bc34a'
+  if (days > 1) return '#ff9800'
+
+  return '#f44336'
 }
 
 function UptimeNodesWidget({ data, loading }) {
@@ -33,54 +33,36 @@ function UptimeNodesWidget({ data, loading }) {
 
   if (nodes.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Typography variant='caption' sx={{ opacity: 0.6 }}>{t('common.noData')}</Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <span className='text-xs opacity-60'>{t('common.noData')}</span>
+      </div>
     )
   }
 
-  // Trier par uptime décroissant
   const sortedNodes = [...nodes].sort((a, b) => (b.uptime || 0) - (a.uptime || 0))
 
   return (
-    <Box sx={{ height: '100%', overflow: 'auto', p: 0.5 }}>
+    <div className='h-full overflow-auto p-1'>
       {sortedNodes.map((node, idx) => {
         const color = node.status === 'online' ? getUptimeColor(node.uptime) : '#f44336'
-        
+
         return (
-          <Box 
-            key={idx}
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              py: 0.75,
-              borderBottom: idx < sortedNodes.length - 1 ? '1px solid' : 'none',
-              borderColor: 'divider'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ 
-                width: 8, height: 8, borderRadius: '50%', 
-                bgcolor: node.status === 'online' ? '#4caf50' : '#f44336' 
-              }} />
-              <Typography variant='caption' sx={{ fontWeight: 600, fontSize: 11 }}>
-                {node.name}
-              </Typography>
-              <Typography variant='caption' sx={{ opacity: 0.5, fontSize: 10 }}>
-                {node.connection}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <div key={idx} className='flex items-center justify-between py-1.5 border-b last:border-b-0' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            <div className='flex items-center gap-2'>
+              <span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: node.status === 'online' ? '#4caf50' : '#f44336' }} />
+              <span className='text-[11px] font-semibold'>{node.name}</span>
+              <span className='text-[10px] opacity-50'>{node.connection}</span>
+            </div>
+            <div className='flex items-center gap-2'>
               <i className='ri-time-line' style={{ fontSize: 12, color, opacity: 0.8 }} />
-              <Typography variant='caption' sx={{ fontWeight: 700, color, fontSize: 11 }}>
+              <span className='text-[11px] font-bold' style={{ color }}>
                 {node.status === 'online' ? formatUptime(node.uptime) : t('common.offline')}
-              </Typography>
-            </Box>
-          </Box>
+              </span>
+            </div>
+          </div>
         )
       })}
-    </Box>
+    </div>
   )
 }
 

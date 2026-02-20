@@ -1,15 +1,9 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
+
 import { useTranslations } from 'next-intl'
-import {
-  Box,
-  CircularProgress,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-  useTheme,
-} from '@mui/material'
+import { SpinnerGap } from '@phosphor-icons/react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -27,9 +21,11 @@ const TIMEFRAMES = [
   { value: 'week', label: '7d' },
 ]
 
+const CPU_COLOR = 'var(--pc-primary, #3b82f6)'
+const RAM_COLOR = '#8b5cf6'
+
 function ResourceTrendsWidget({ data, loading: dashboardLoading }) {
   const t = useTranslations()
-  const theme = useTheme()
   const [timeframe, setTimeframe] = useState('hour')
   const [trendsData, setTrendsData] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -115,109 +111,80 @@ function ResourceTrendsWidget({ data, loading: dashboardLoading }) {
     fetchTrends()
   }, [nodesByConnection, timeframe])
 
-  const cpuColor = theme.palette.primary.main
-  const ramColor = theme.palette.secondary.main
-
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null
 
     return (
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          p: 1,
-          boxShadow: 2,
-        }}
-      >
-        <Typography variant="caption" sx={{ fontWeight: 600 }}>
-          {label}
-        </Typography>
+      <div className='px-2 py-1.5 rounded shadow-lg border text-xs' style={{ backgroundColor: 'var(--pc-bg-elevated)', borderColor: 'var(--pc-border)' }}>
+        <span className='font-semibold block'>{label}</span>
         {payload.map((entry) => (
-          <Typography
-            key={entry.dataKey}
-            variant="caption"
-            sx={{ display: 'block', color: entry.color }}
-          >
+          <span key={entry.dataKey} className='block' style={{ color: entry.color }}>
             {entry.dataKey === 'cpu' ? 'CPU' : 'RAM'}: {entry.value}%
-          </Typography>
+          </span>
         ))}
-      </Box>
+      </div>
     )
   }
 
   if (dashboardLoading || loading) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <SpinnerGap size={24} className='animate-spin' style={{ color: 'var(--pc-primary)' }} />
+      </div>
     )
   }
 
   if (!trendsData || trendsData.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
-          {t('common.noData')}
-        </Typography>
-      </Box>
+      <div className='h-full flex items-center justify-center'>
+        <span className='text-xs' style={{ color: 'var(--pc-text-muted)' }}>{t('common.noData')}</span>
+      </div>
     )
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className='h-full flex flex-col'>
       {/* Timeframe selector */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-        <ToggleButtonGroup
-          value={timeframe}
-          exclusive
-          onChange={(e, val) => val && setTimeframe(val)}
-          size="small"
-        >
+      <div className='flex justify-end mb-2'>
+        <div className='flex rounded overflow-hidden border' style={{ borderColor: 'var(--pc-border)' }}>
           {TIMEFRAMES.map((tf) => (
-            <ToggleButton
-              key={tf.value}
-              value={tf.value}
-              sx={{
-                px: 1,
-                py: 0.25,
-                fontSize: '0.65rem',
-                minWidth: 32,
-              }}
-            >
+            <button key={tf.value} onClick={() => setTimeframe(tf.value)}
+              className='px-2 py-0.5 text-[11px] font-medium transition-colors min-w-[32px]'
+              style={{
+                backgroundColor: timeframe === tf.value ? 'var(--pc-primary)' : 'transparent',
+                color: timeframe === tf.value ? '#fff' : 'var(--pc-text-secondary)',
+              }}>
               {tf.label}
-            </ToggleButton>
+            </button>
           ))}
-        </ToggleButtonGroup>
-      </Box>
+        </div>
+      </div>
 
       {/* Chart */}
-      <Box sx={{ flex: 1, minHeight: 0 }}>
+      <div className='flex-1 min-h-0'>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={trendsData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
             <defs>
-              <linearGradient id="cpuGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={cpuColor} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={cpuColor} stopOpacity={0} />
+              <linearGradient id="cpuGradientTrends" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
-              <linearGradient id="ramGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={ramColor} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={ramColor} stopOpacity={0} />
+              <linearGradient id="ramGradientTrends" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={RAM_COLOR} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={RAM_COLOR} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--pc-border-subtle)" />
             <XAxis
               dataKey="t"
-              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+              tick={{ fontSize: 10, fill: 'var(--pc-text-muted)' }}
               tickLine={false}
               axisLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
               domain={[0, 100]}
-              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+              tick={{ fontSize: 10, fill: 'var(--pc-text-muted)' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v) => `${v}%`}
@@ -231,22 +198,22 @@ function ResourceTrendsWidget({ data, loading: dashboardLoading }) {
               type="monotone"
               dataKey="cpu"
               name="CPU"
-              stroke={cpuColor}
+              stroke="#3b82f6"
               strokeWidth={2}
-              fill="url(#cpuGradient)"
+              fill="url(#cpuGradientTrends)"
             />
             <Area
               type="monotone"
               dataKey="ram"
               name="RAM"
-              stroke={ramColor}
+              stroke={RAM_COLOR}
               strokeWidth={2}
-              fill="url(#ramGradient)"
+              fill="url(#ramGradientTrends)"
             />
           </AreaChart>
         </ResponsiveContainer>
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }
 

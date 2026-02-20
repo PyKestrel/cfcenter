@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     console.error('[orchestrator/alerts/events] POST error:', error)
     
     // Si l'orchestrator n'est pas disponible, ignorer silencieusement
-    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('timeout')) {
+    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch failed') || error.message?.includes('timeout')) {
       return NextResponse.json({ status: 'skipped', reason: 'orchestrator unavailable' })
     }
 

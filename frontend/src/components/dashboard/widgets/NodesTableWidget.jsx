@@ -1,11 +1,19 @@
 'use client'
 
 import React from 'react'
+
 import { useTranslations } from 'next-intl'
-import {
-  Alert, Box, Chip, LinearProgress,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography
-} from '@mui/material'
+
+function ProgressBar({ value }) {
+  const pct = value || 0
+
+  return (
+    <div className='relative h-3.5 rounded-sm overflow-hidden min-w-[80px]' style={{ backgroundColor: 'var(--pc-bg-subtle)' }}>
+      <div className='absolute inset-y-0 left-0 rounded-sm' style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: pct > 0 ? `${(100 / pct) * 100}% 100%` : '100% 100%' }} />
+      <span className='absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white' style={{ textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{pct}%</span>
+    </div>
+  )
+}
 
 function NodesTableWidget({ data, loading }) {
   const t = useTranslations()
@@ -13,76 +21,46 @@ function NodesTableWidget({ data, loading }) {
 
   if (nodes.length === 0) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <Alert severity='info' sx={{ width: '100%' }}>{t('common.noData')}</Alert>
-      </Box>
+      <div className='h-full flex items-center justify-center p-4'>
+        <div className='w-full text-center text-sm px-3 py-2 rounded-lg' style={{ backgroundColor: '#2196f318', color: '#2196f3' }}>{t('common.noData')}</div>
+      </div>
     )
   }
 
   return (
-    <TableContainer sx={{ height: '100%', overflow: 'auto' }}>
-      <Table size='small' stickyHeader>
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper', fontSize: 12, py: 1 }}>{t('dashboard.widgets.nodes')}</TableCell>
-            <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper', fontSize: 12, py: 1 }}>{t('inventory.clusters')}</TableCell>
-            <TableCell align='center' sx={{ fontWeight: 800, bgcolor: 'background.paper', fontSize: 12, py: 1 }}>{t('common.status')}</TableCell>
-            <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper', minWidth: 100, fontSize: 12, py: 1 }}>{t('monitoring.cpu')}</TableCell>
-            <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper', minWidth: 100, fontSize: 12, py: 1 }}>{t('monitoring.memory')}</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+    <div className='h-full overflow-auto'>
+      <table className='w-full text-xs'>
+        <thead className='sticky top-0' style={{ backgroundColor: 'var(--pc-bg-card)' }}>
+          <tr className='border-b' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+            <th className='text-left font-extrabold py-2 px-2'>{t('dashboard.widgets.nodes')}</th>
+            <th className='text-left font-extrabold py-2 px-2'>{t('inventory.clusters')}</th>
+            <th className='text-center font-extrabold py-2 px-2'>{t('common.status')}</th>
+            <th className='text-left font-extrabold py-2 px-2'>{t('monitoring.cpu')}</th>
+            <th className='text-left font-extrabold py-2 px-2'>{t('monitoring.memory')}</th>
+          </tr>
+        </thead>
+        <tbody>
           {[...nodes].sort((a, b) => (b.memPct || 0) - (a.memPct || 0)).map((node, idx) => (
-            <TableRow key={idx} hover>
-              <TableCell sx={{ py: 0.75 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: node.status === 'online' ? '#4caf50' : '#f44336' }} />
-                  <Typography variant='body2' sx={{ fontWeight: 700, fontSize: 12 }}>{node.name}</Typography>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ py: 0.75 }}>
-                <Typography variant='body2' sx={{ opacity: 0.7, fontSize: 11 }}>{node.connection}</Typography>
-              </TableCell>
-              <TableCell align='center' sx={{ py: 0.75 }}>
-                <Chip
-                  size='small'
-                  label={node.status === 'online' ? t('common.online') : t('common.offline')}
-                  color={node.status === 'online' ? 'success' : 'error'}
-                  variant='outlined'
-                  sx={{ fontSize: 10, height: 20, fontWeight: 600 }}
-                />
-              </TableCell>
-              <TableCell sx={{ py: 0.75 }}>
-                <Box sx={{ position: 'relative' }}>
-                  <LinearProgress
-                    variant='determinate'
-                    value={node.cpuPct || 0}
-                    sx={{
-                      height: 14, borderRadius: 0, bgcolor: (theme) => theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-                      '& .MuiLinearProgress-bar': { borderRadius: 0, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: (node.cpuPct || 0) > 0 ? `${(100 / (node.cpuPct || 1)) * 100}% 100%` : '100% 100%' }
-                    }}
-                  />
-                  <Typography variant='caption' sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#fff', lineHeight: 1, textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{node.cpuPct || 0}%</Typography>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ py: 0.75 }}>
-                <Box sx={{ position: 'relative' }}>
-                  <LinearProgress
-                    variant='determinate'
-                    value={node.memPct || 0}
-                    sx={{
-                      height: 14, borderRadius: 0, bgcolor: (theme) => theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-                      '& .MuiLinearProgress-bar': { borderRadius: 0, background: 'linear-gradient(90deg, #22c55e 0%, #eab308 50%, #ef4444 100%)', backgroundSize: (node.memPct || 0) > 0 ? `${(100 / (node.memPct || 1)) * 100}% 100%` : '100% 100%' }
-                    }}
-                  />
-                  <Typography variant='caption' sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#fff', lineHeight: 1, textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>{node.memPct || 0}%</Typography>
-                </Box>
-              </TableCell>
-            </TableRow>
+            <tr key={idx} className='border-b hover:bg-[var(--pc-bg-subtle)] transition-colors' style={{ borderColor: 'var(--pc-border-subtle)' }}>
+              <td className='py-1.5 px-2'>
+                <div className='flex items-center gap-2'>
+                  <span className='w-2 h-2 rounded-full shrink-0' style={{ backgroundColor: node.status === 'online' ? '#4caf50' : '#f44336' }} />
+                  <span className='font-bold'>{node.name}</span>
+                </div>
+              </td>
+              <td className='py-1.5 px-2 opacity-70 text-[11px]'>{node.connection}</td>
+              <td className='py-1.5 px-2 text-center'>
+                <span className='text-[10px] font-semibold px-1.5 py-0.5 rounded border' style={{ color: node.status === 'online' ? '#4caf50' : '#f44336', borderColor: node.status === 'online' ? '#4caf50' : '#f44336' }}>
+                  {node.status === 'online' ? t('common.online') : t('common.offline')}
+                </span>
+              </td>
+              <td className='py-1.5 px-2'><ProgressBar value={node.cpuPct} /></td>
+              <td className='py-1.5 px-2'><ProgressBar value={node.memPct} /></td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+        </tbody>
+      </table>
+    </div>
   )
 }
 
