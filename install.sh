@@ -330,7 +330,12 @@ EOF
         -e APP_SECRET="$app_secret" \
         -e NEXTAUTH_SECRET="$nextauth_secret" \
         -e NEXTAUTH_URL="http://$server_ip:$APP_PORT" \
+        -e CFCENTER_REPO_DIR=/repo \
+        -e CFCENTER_CONTAINER_NAME="$CONTAINER_NAME" \
+        -e CFCENTER_IMAGE_NAME="$IMAGE_NAME" \
         -v "$DATA_VOLUME":/app/data \
+        -v /var/run/docker.sock:/var/run/docker.sock:ro \
+        -v "$INSTALL_DIR":/repo \
         --restart unless-stopped \
         "$IMAGE_NAME"
 
@@ -452,7 +457,12 @@ do_update() {
         -e APP_SECRET="$app_secret" \
         -e NEXTAUTH_SECRET="$nextauth_secret" \
         -e NEXTAUTH_URL="$nextauth_url" \
+        -e CFCENTER_REPO_DIR=/repo \
+        -e CFCENTER_CONTAINER_NAME="$CONTAINER_NAME" \
+        -e CFCENTER_IMAGE_NAME="$IMAGE_NAME" \
         -v "$DATA_VOLUME":/app/data \
+        -v /var/run/docker.sock:/var/run/docker.sock:ro \
+        -v "$REPO_DIR":/repo \
         --restart unless-stopped \
         "$IMAGE_NAME"
 

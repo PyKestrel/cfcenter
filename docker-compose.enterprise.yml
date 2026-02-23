@@ -21,8 +21,14 @@ services:
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - APP_URL=${APP_URL:-http://localhost:3000}
       - ORCHESTRATOR_URL=http://orchestrator:8080
+      # GUI update support (mount Docker socket + repo for in-app updates)
+      - CFCENTER_REPO_DIR=/repo
+      - CFCENTER_CONTAINER_NAME=cfcenter-frontend
+      - CFCENTER_IMAGE_NAME=cfcenter-frontend:dev
     volumes:
       - cfcenter_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # GUI updates
+      - .:/repo                                        # Source repo for git pull + rebuild
     networks:
       - cfcenter
     depends_on:

@@ -67,7 +67,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV GIT_SHA=${GIT_SHA}
 
 # Install runtime dependencies
-RUN apk add --no-cache sqlite-dev
+# docker-cli + git are needed for GUI self-update (git pull + docker build from /repo)
+RUN apk add --no-cache sqlite-dev docker-cli git
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \

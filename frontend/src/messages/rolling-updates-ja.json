@@ -1,0 +1,33 @@
+{
+  "updates": {
+    "rollingUpdate": "ローリングアップデート",
+    "rollingUpdateDescription": "Rolling Update allows you to update Proxmox nodes sequentially, automatically migrating VMs before each update to avoid service interruption.",
+    "refresh": "更新",
+    "nodesStatus": "ノードステータス",
+    "node": "ノード",
+    "version": "バージョン",
+    "vms": "VM",
+    "availableUpdates": "利用可能なアップデート",
+    "estimatedTime": "Estimated Time",
+    "status": "ステータス",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "rebootRequired": "Reboot required",
+    "rebootsRequired": "{count} reboot(s) required",
+    "rebootRequiredKernel": "A kernel update requires a reboot",
+    "summaryUpdates": "{count} update(s) available on {nodes} node(s)",
+    "totalEstimatedTime": "Total estimated time",
+    "updatesOn": "Updates on {node}",
+    "packagesToUpdate": "packages to update",
+    "package": "Package",
+    "currentVersion": "Current Version",
+    "newVersion": "New Version",
+    "upToDate": "すべてのノードは最新です",
+    "close": "閉じる",
+    "localVmsOn": "VMs with local storage on {node}",
+    "localVmsBlocking": "{count} VM(s) with local storage blocking migration",
+    "localVmsWithReplication": "{count} VM(s) with replication can be migrated",
+    "localVmsBlockingMigration": "These VMs prevent automatic update because they have local storage",
+    "startRollingUpdate": "ローリングアップデートを開始"
+  }
+}
