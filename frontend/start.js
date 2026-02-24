@@ -73,7 +73,19 @@ async function main() {
   }
 
   // WebSocket server (noServer mode — we handle upgrade routing ourselves)
-  const wss = new WebSocketServer({ noServer: true })
+  // Enable permessage-deflate compression for better VNC performance
+  const wss = new WebSocketServer({
+    noServer: true,
+    perMessageDeflate: {
+      zlibDeflateOptions: { chunkSize: 1024, memLevel: 7, level: 3 },
+      zlibInflateOptions: { chunkSize: 10 * 1024 },
+      clientNoContextTakeover: true,
+      serverNoContextTakeover: true,
+      serverMaxWindowBits: 10,
+      concurrencyLimit: 10,
+      threshold: 1024, // Only compress messages > 1KB
+    },
+  })
 
   wss.on('connection', (clientWs, req) => {
     handleWsConnection(clientWs, req)

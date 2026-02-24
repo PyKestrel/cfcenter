@@ -14,59 +14,157 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* Toolbar */
     #toolbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 16px; background: #111; border-bottom: 1px solid #333; flex-shrink: 0;
+      padding: 6px 12px; background: #0a0a0a; border-bottom: 1px solid #1f1f1f; flex-shrink: 0;
+      user-select: none; z-index: 20;
     }
-    #toolbar .info { display: flex; align-items: center; gap: 12px; }
-    #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #6b7280; }
+    #toolbar .info { display: flex; align-items: center; gap: 10px; }
+    #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #6b7280; flex-shrink: 0; }
     #status-dot.connected { background: #22c55e; }
-    #status-dot.connecting { background: #f59e0b; }
+    #status-dot.connecting { background: #f59e0b; animation: pulse 1.2s ease-in-out infinite; }
     #status-dot.error { background: #ef4444; }
-    #vm-info { color: #fff; font-size: 14px; font-weight: 600; }
-    #status-text { color: #666; font-size: 12px; }
-    #toolbar .vm-actions { display: flex; gap: 4px; margin: 0 16px; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    #vm-info { color: #e5e5e5; font-size: 13px; font-weight: 600; }
+    #status-text { color: #666; font-size: 11px; white-space: nowrap; }
+
+    /* VM power actions */
+    #toolbar .vm-actions { display: flex; gap: 2px; margin: 0 8px; }
     #toolbar .vm-actions button {
-      padding: 6px 10px; font-size: 16px; background: transparent; border: none;
+      padding: 5px 8px; font-size: 14px; background: transparent; border: none;
       color: #888; cursor: pointer; border-radius: 4px; display: flex; align-items: center;
+      transition: background 0.15s, color 0.15s;
     }
-    #toolbar .vm-actions button:hover { background: #333; color: #fff; }
-    #toolbar .vm-actions button:disabled { color: #444; cursor: not-allowed; }
-    #toolbar .vm-actions button.btn-start { color: #22c55e; }
-    #toolbar .vm-actions button.btn-start:hover { background: #14532d; }
-    #toolbar .vm-actions button.btn-shutdown { color: #f59e0b; }
-    #toolbar .vm-actions button.btn-shutdown:hover { background: #78350f; }
-    #toolbar .vm-actions button.btn-stop { color: #ef4444; }
-    #toolbar .vm-actions button.btn-stop:hover { background: #7f1d1d; }
-    #toolbar .vm-actions button.btn-pause { color: #3b82f6; }
-    #toolbar .vm-actions button.btn-pause:hover { background: #1e3a8a; }
+    #toolbar .vm-actions button:hover { background: #1f1f1f; color: #fff; }
+    #toolbar .vm-actions button:disabled { color: #333; cursor: not-allowed; }
+    #toolbar .vm-actions button.btn-start:not(:disabled) { color: #22c55e; }
+    #toolbar .vm-actions button.btn-start:not(:disabled):hover { background: #14532d; }
+    #toolbar .vm-actions button.btn-shutdown:not(:disabled) { color: #f59e0b; }
+    #toolbar .vm-actions button.btn-shutdown:not(:disabled):hover { background: #78350f; }
+    #toolbar .vm-actions button.btn-stop:not(:disabled) { color: #ef4444; }
+    #toolbar .vm-actions button.btn-stop:not(:disabled):hover { background: #7f1d1d; }
+    #toolbar .vm-actions button.btn-pause:not(:disabled) { color: #3b82f6; }
+    #toolbar .vm-actions button.btn-pause:not(:disabled):hover { background: #1e3a8a; }
     #toolbar .vm-actions button.loading { opacity: 0.5; pointer-events: none; }
-    #toolbar .buttons { display: flex; gap: 8px; }
-    button {
-      padding: 6px 12px; font-size: 12px; background: #333; color: #fff;
-      border: 1px solid #444; border-radius: 4px; cursor: pointer;
+
+    /* Toolbar buttons */
+    #toolbar .buttons { display: flex; gap: 4px; align-items: center; }
+    .tb { 
+      padding: 5px 10px; font-size: 11px; background: #1a1a1a; color: #aaa;
+      border: 1px solid #2a2a2a; border-radius: 5px; cursor: pointer;
+      transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 5px;
     }
-    button:hover { background: #444; }
-    button:disabled { background: #222; color: #666; cursor: not-allowed; }
+    .tb:hover { background: #252525; color: #fff; border-color: #3a3a3a; }
+    .tb:disabled { background: #111; color: #444; cursor: not-allowed; border-color: #1a1a1a; }
+    .tb.active { background: #1e3a5f; color: #60a5fa; border-color: #2563eb; }
+    .tb-sep { width: 1px; height: 20px; background: #222; margin: 0 4px; }
+
+    /* Performance badge */
+    #perf-badge {
+      display: flex; align-items: center; gap: 6px; padding: 3px 8px;
+      background: #111; border: 1px solid #222; border-radius: 4px; font-size: 10px; color: #666;
+    }
+    #perf-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+    #perf-badge .dot.good { background: #22c55e; }
+    #perf-badge .dot.fair { background: #f59e0b; }
+    #perf-badge .dot.poor { background: #ef4444; }
+
+    /* Error bar */
     #error-bar {
-      padding: 12px 16px; background: #7f1d1d; color: #fecaca; font-size: 13px; display: none;
+      padding: 8px 12px; background: #7f1d1d; color: #fecaca; font-size: 12px; display: none;
+      cursor: pointer;
     }
-    #error-bar.visible { display: block; }
-    #screen { flex: 1; width: 100%; background: #000; position: relative; }
+    #error-bar:hover { background: #991b1b; }
+    #error-bar.visible { display: flex; align-items: center; justify-content: space-between; }
+
+    /* Screen */
+    #screen { flex: 1; width: 100%; background: #000; position: relative; overflow: hidden; }
     #loading {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      text-align: center; color: #666;
+      text-align: center; color: #555; z-index: 5;
     }
-    #loading .icon { font-size: 48px; margin-bottom: 16px; }
-    #loading .text { font-size: 14px; }
-    #loading .subtext { font-size: 12px; margin-top: 8px; color: #555; }
+    #loading .spinner {
+      width: 40px; height: 40px; border: 3px solid #222; border-top-color: #3b82f6;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading .text { font-size: 13px; color: #888; }
+    #loading .subtext { font-size: 11px; margin-top: 6px; color: #555; }
     #novnc-instructions {
       display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       text-align: center; color: #fca5a5; background: #450a0a; padding: 24px; border-radius: 8px; max-width: 600px;
+      z-index: 5;
     }
     #novnc-instructions code {
       display: block; background: #1c1917; padding: 12px; border-radius: 4px; text-align: left; font-size: 12px; margin: 12px 0;
     }
+
+    /* Settings panel */
+    #settings-panel {
+      display: none; position: absolute; top: 0; right: 0; width: 280px; height: 100%;
+      background: #0f0f0f; border-left: 1px solid #222; z-index: 30;
+      overflow-y: auto; padding: 16px; animation: slideIn 0.2s ease-out;
+    }
+    #settings-panel.open { display: block; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    #settings-panel h3 { color: #e5e5e5; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+    .setting-group { margin-bottom: 16px; }
+    .setting-group label { display: block; color: #888; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .setting-group .desc { color: #555; font-size: 10px; margin-top: 4px; }
+
+    /* Quality presets */
+    .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .preset-btn {
+      padding: 8px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px;
+      color: #aaa; font-size: 11px; cursor: pointer; text-align: center; transition: all 0.15s;
+    }
+    .preset-btn:hover { background: #222; border-color: #3a3a3a; color: #fff; }
+    .preset-btn.active { background: #1e3a5f; border-color: #2563eb; color: #60a5fa; }
+    .preset-btn .name { font-weight: 600; display: block; }
+    .preset-btn .info { font-size: 9px; color: #666; margin-top: 2px; display: block; }
+
+    /* Sliders */
+    input[type="range"] {
+      width: 100%; height: 4px; -webkit-appearance: none; appearance: none;
+      background: #333; border-radius: 2px; outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+      background: #3b82f6; cursor: pointer; border: 2px solid #1e3a5f;
+    }
+    .range-labels { display: flex; justify-content: space-between; font-size: 9px; color: #555; margin-top: 4px; }
+
+    /* Toggle switch */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+    .toggle-row span { color: #aaa; font-size: 12px; }
+    .toggle {
+      width: 36px; height: 20px; background: #333; border-radius: 10px; position: relative;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .toggle.on { background: #2563eb; }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+      background: #fff; border-radius: 50%; transition: transform 0.2s;
+    }
+    .toggle.on::after { transform: translateX(16px); }
+
+    /* Clipboard panel */
+    #clipboard-panel {
+      display: none; position: absolute; bottom: 0; left: 0; right: 0;
+      background: #0f0f0f; border-top: 1px solid #222; z-index: 25; padding: 12px;
+      animation: slideUp 0.2s ease-out;
+    }
+    #clipboard-panel.open { display: block; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    #clipboard-textarea {
+      width: 100%; height: 80px; background: #1a1a1a; border: 1px solid #2a2a2a;
+      border-radius: 6px; color: #ccc; font-size: 12px; padding: 8px; resize: none;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+    #clipboard-textarea:focus { outline: none; border-color: #3b82f6; }
+    .clipboard-actions { display: flex; gap: 6px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -75,116 +173,217 @@
       <div class="info">
         <span id="status-dot"></span>
         <span id="vm-info">Console</span>
-        <span id="status-text">• Initializing...</span>
+        <span id="status-text"></span>
       </div>
       <div class="vm-actions">
-        <button id="btn-start" class="btn-start" title="Start">▶</button>
+        <button id="btn-start" class="btn-start" title="Start VM">▶</button>
         <button id="btn-shutdown" class="btn-shutdown" title="Shutdown (graceful)">⏻</button>
         <button id="btn-stop" class="btn-stop" title="Stop (forced)">■</button>
         <button id="btn-pause" class="btn-pause" title="Pause">⏸</button>
       </div>
       <div class="buttons">
-        <button id="btn-cad" disabled>Ctrl+Alt+Del</button>
-        <button id="btn-reconnect">Reconnect</button>
-        <button id="btn-close">Close</button>
+        <div id="perf-badge" style="display:none">
+          <span class="dot" id="perf-dot"></span>
+          <span id="perf-text">--</span>
+        </div>
+        <div class="tb-sep"></div>
+        <button class="tb" id="btn-cad" disabled title="Send Ctrl+Alt+Del">⌨ Ctrl+Alt+Del</button>
+        <button class="tb" id="btn-clipboard" title="Clipboard">📋</button>
+        <button class="tb" id="btn-fullscreen" title="Fullscreen">⛶</button>
+        <button class="tb" id="btn-settings" title="Settings">⚙</button>
+        <div class="tb-sep"></div>
+        <button class="tb" id="btn-reconnect" title="Reconnect">↻ Reconnect</button>
+        <button class="tb" id="btn-close" title="Close">✕</button>
       </div>
     </div>
-    <div id="error-bar"></div>
+    <div id="error-bar" onclick="this.classList.remove('visible')"></div>
     <div id="screen">
       <div id="loading">
-        <div class="icon">⌨️</div>
+        <div class="spinner"></div>
         <div class="text" id="loading-text">Loading...</div>
         <div class="subtext" id="loading-subtext"></div>
       </div>
       <div id="novnc-instructions">
-        <h3 style="margin-bottom: 12px;">⚠️ noVNC required</h3>
+        <h3 style="margin-bottom: 12px;">noVNC required</h3>
         <p>To use the console, build the noVNC bundle:</p>
-        <code>
-npm install @novnc/novnc esbuild<br>
-node bundle-novnc.js
-        </code>
+        <code>npm install @novnc/novnc esbuild<br>node bundle-novnc.js</code>
         <p style="margin-top: 12px; font-size: 12px; color: #a8a29e;">Then reload this page.</p>
+      </div>
+
+      <!-- Settings panel -->
+      <div id="settings-panel">
+        <h3>Display Settings</h3>
+
+        <div class="setting-group">
+          <label>Quality Preset</label>
+          <div class="preset-grid">
+            <div class="preset-btn" data-preset="auto" onclick="setPreset('auto')">
+              <span class="name">Auto</span>
+              <span class="info">Adapts to network</span>
+            </div>
+            <div class="preset-btn" data-preset="high" onclick="setPreset('high')">
+              <span class="name">High</span>
+              <span class="info">Best quality</span>
+            </div>
+            <div class="preset-btn" data-preset="balanced" onclick="setPreset('balanced')">
+              <span class="name">Balanced</span>
+              <span class="info">Quality + speed</span>
+            </div>
+            <div class="preset-btn" data-preset="performance" onclick="setPreset('performance')">
+              <span class="name">Performance</span>
+              <span class="info">Lowest latency</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label>JPEG Quality: <span id="quality-val">6</span></label>
+          <input type="range" id="quality-slider" min="0" max="9" value="6" oninput="setQuality(this.value)">
+          <div class="range-labels"><span>Low</span><span>High</span></div>
+        </div>
+
+        <div class="setting-group">
+          <label>Compression: <span id="compression-val">2</span></label>
+          <input type="range" id="compression-slider" min="0" max="9" value="2" oninput="setCompression(this.value)">
+          <div class="range-labels"><span>None</span><span>Max</span></div>
+        </div>
+
+        <div class="setting-group">
+          <label>Display</label>
+          <div class="toggle-row">
+            <span>Scale to fit</span>
+            <div class="toggle on" id="toggle-scale" onclick="toggleScale()"></div>
+          </div>
+          <div class="toggle-row">
+            <span>Resize session</span>
+            <div class="toggle" id="toggle-resize" onclick="toggleResize()"></div>
+          </div>
+          <div class="toggle-row">
+            <span>Clip viewport</span>
+            <div class="toggle" id="toggle-clip" onclick="toggleClip()"></div>
+          </div>
+          <div class="toggle-row">
+            <span>View only</span>
+            <div class="toggle" id="toggle-viewonly" onclick="toggleViewOnly()"></div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label>Performance</label>
+          <div class="toggle-row">
+            <span>Adaptive quality</span>
+            <div class="toggle on" id="toggle-adaptive" onclick="toggleAdaptive()"></div>
+          </div>
+          <div class="desc">Automatically lowers quality during rapid screen changes and restores it when idle.</div>
+        </div>
+      </div>
+
+      <!-- Clipboard panel -->
+      <div id="clipboard-panel">
+        <textarea id="clipboard-textarea" placeholder="Paste text here to send to VM, or copy from VM..."></textarea>
+        <div class="clipboard-actions">
+          <button class="tb" onclick="sendClipboard()">Send to VM</button>
+          <button class="tb" onclick="receiveClipboard()">Get from VM</button>
+          <button class="tb" onclick="clearClipboard()">Clear</button>
+          <button class="tb" style="margin-left:auto" onclick="toggleClipboardPanel()">Close</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Charger noVNC bundle (IIFE) -->
   <script src="/novnc/rfb.bundle.js"></script>
   
   <script>
+    // ─── State ───────────────────────────────────────────────────────
     let RFB;
-    
-    function loadNoVNC() {
-      // RFB est exposé sur window par le bundle IIFE
-      RFB = window.RFB;
-      
-      console.log('RFB:', RFB);
-      console.log('RFB type:', typeof RFB);
-      
-      if (typeof RFB !== 'function') {
-        console.error('RFB not found on window, checking noVNC:', window.noVNC);
-        // Fallback
-        if (window.noVNC && window.noVNC.default) {
-          RFB = window.noVNC.default;
-        }
-      }
-      
-      return typeof RFB === 'function';
-    }
-    
-    const statusDot = document.getElementById('status-dot');
-    const vmInfo = document.getElementById('vm-info');
-    const statusText = document.getElementById('status-text');
-    const errorBar = document.getElementById('error-bar');
-    const screen = document.getElementById('screen');
-    const loading = document.getElementById('loading');
-    const loadingText = document.getElementById('loading-text');
-    const loadingSubtext = document.getElementById('loading-subtext');
-    const novncInstructions = document.getElementById('novnc-instructions');
-    const btnCad = document.getElementById('btn-cad');
-    const btnReconnect = document.getElementById('btn-reconnect');
-    const btnClose = document.getElementById('btn-close');
-    const btnStart = document.getElementById('btn-start');
-    const btnShutdown = document.getElementById('btn-shutdown');
-    const btnStop = document.getElementById('btn-stop');
-    const btnPause = document.getElementById('btn-pause');
-    
+    let rfb = null;
+    let vmStatus = 'unknown';
+    let currentPreset = 'auto';
+    let adaptiveEnabled = true;
+    let adaptiveTimer = null;
+    let frameCount = 0;
+    let lastFrameTime = 0;
+    let settingsOpen = false;
+    let clipboardOpen = false;
+
+    // Quality presets: [qualityLevel, compressionLevel]
+    const PRESETS = {
+      auto:        { quality: 6, compression: 2, desc: 'Adapts to network' },
+      high:        { quality: 9, compression: 0, desc: 'Best quality' },
+      balanced:    { quality: 6, compression: 2, desc: 'Quality + speed' },
+      performance: { quality: 2, compression: 7, desc: 'Lowest latency' },
+    };
+
+    // ─── DOM refs ────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const statusDot = $('status-dot');
+    const vmInfo = $('vm-info');
+    const statusText = $('status-text');
+    const errorBar = $('error-bar');
+    const screen = $('screen');
+    const loading = $('loading');
+    const loadingText = $('loading-text');
+    const loadingSubtext = $('loading-subtext');
+    const novncInstructions = $('novnc-instructions');
+    const btnCad = $('btn-cad');
+    const btnReconnect = $('btn-reconnect');
+    const btnClose = $('btn-close');
+    const btnStart = $('btn-start');
+    const btnShutdown = $('btn-shutdown');
+    const btnStop = $('btn-stop');
+    const btnPause = $('btn-pause');
+    const btnSettings = $('btn-settings');
+    const btnFullscreen = $('btn-fullscreen');
+    const btnClipboard = $('btn-clipboard');
+    const settingsPanel = $('settings-panel');
+    const clipboardPanel = $('clipboard-panel');
+    const perfBadge = $('perf-badge');
+    const perfDot = $('perf-dot');
+    const perfText = $('perf-text');
+
     const params = new URLSearchParams(window.location.search);
     const connId = params.get('connId') || '1';
     const type = params.get('type');
     const node = params.get('node');
     const vmid = params.get('vmid');
-    
-    let rfb = null;
-    let vmStatus = 'unknown';  // running, stopped, paused
-    
+
     document.title = `Console - ${type?.toUpperCase()} ${vmid} - ${node}`;
-    vmInfo.textContent = `${type?.toUpperCase()} ${vmid} • ${node}`;
-    
+    vmInfo.textContent = `${type?.toUpperCase()} ${vmid} \u2022 ${node}`;
+
+    // ─── Load noVNC ──────────────────────────────────────────────────
+    function loadNoVNC() {
+      RFB = window.RFB;
+      if (typeof RFB !== 'function' && window.noVNC?.default) {
+        RFB = window.noVNC.default;
+      }
+      return typeof RFB === 'function';
+    }
+
+    // ─── Status helpers ──────────────────────────────────────────────
     function setStatus(status, text) {
       statusDot.className = status;
-      statusText.textContent = `• ${text}`;
+      statusText.textContent = text ? `\u2022 ${text}` : '';
     }
-    
-    // Mettre à jour l'état des boutons selon le status de la VM
+
+    function showError(msg) {
+      errorBar.textContent = msg;
+      errorBar.classList.add('visible');
+    }
+
+    function hideError() {
+      errorBar.classList.remove('visible');
+    }
+
+    // ─── VM status & actions ─────────────────────────────────────────
     function updateVmButtons() {
       const isRunning = vmStatus === 'running';
       const isStopped = vmStatus === 'stopped';
-      const isPaused = vmStatus === 'paused';
-      
       btnStart.disabled = isRunning;
       btnShutdown.disabled = !isRunning;
       btnStop.disabled = isStopped;
       btnPause.disabled = !isRunning;
-      
-      // Opacité visuelle
-      btnStart.style.opacity = isRunning ? '0.3' : '1';
-      btnShutdown.style.opacity = !isRunning ? '0.3' : '1';
-      btnStop.style.opacity = isStopped ? '0.3' : '1';
-      btnPause.style.opacity = !isRunning ? '0.3' : '1';
     }
-    
-    // Récupérer le status de la VM
+
     async function fetchVmStatus() {
       try {
         const apiUrl = `/api/v1/connections/${encodeURIComponent(connId)}/guests/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}/status`;
@@ -198,137 +397,290 @@ node bundle-novnc.js
         console.error('Failed to fetch VM status:', err);
       }
     }
-    
-    function showError(msg) {
-      errorBar.textContent = msg;
-      errorBar.classList.add('visible');
-    }
-    
-    function hideError() {
-      errorBar.classList.remove('visible');
-    }
-    
-    async function connect() {
-      if (!type || !node || !vmid) {
-        showError('Missing parameters');
-        setStatus('error', 'Error');
-        return;
+
+    async function vmAction(action) {
+      const btn = { start: btnStart, shutdown: btnShutdown, stop: btnStop, suspend: btnPause }[action];
+      if (btn) btn.classList.add('loading');
+      try {
+        const apiUrl = `/api/v1/connections/${encodeURIComponent(connId)}/guests/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}/${action}`;
+        const res = await fetch(apiUrl, { method: 'POST' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        setTimeout(fetchVmStatus, 1500);
+        if (action === 'start') setTimeout(connect, 3000);
+      } catch (err) {
+        showError(`Action ${action}: ${err.message}`);
+      } finally {
+        if (btn) btn.classList.remove('loading');
       }
-      
-      if (!RFB) {
-        showError('noVNC not loaded');
-        setStatus('error', 'Error');
-        return;
-      }
-      
+    }
+
+    // ─── Quality / Settings ──────────────────────────────────────────
+    function setPreset(name) {
+      currentPreset = name;
+      const p = PRESETS[name];
+      if (!p) return;
+      document.querySelectorAll('.preset-btn').forEach(el => {
+        el.classList.toggle('active', el.dataset.preset === name);
+      });
+      $('quality-slider').value = p.quality;
+      $('compression-slider').value = p.compression;
+      $('quality-val').textContent = p.quality;
+      $('compression-val').textContent = p.compression;
+      applyQuality(p.quality, p.compression);
+      localStorage.setItem('vnc-preset', name);
+    }
+
+    function setQuality(val) {
+      $('quality-val').textContent = val;
+      applyQuality(parseInt(val), parseInt($('compression-slider').value));
+      currentPreset = 'custom';
+      document.querySelectorAll('.preset-btn').forEach(el => el.classList.remove('active'));
+    }
+
+    function setCompression(val) {
+      $('compression-val').textContent = val;
+      applyQuality(parseInt($('quality-slider').value), parseInt(val));
+      currentPreset = 'custom';
+      document.querySelectorAll('.preset-btn').forEach(el => el.classList.remove('active'));
+    }
+
+    function applyQuality(quality, compression) {
+      if (!rfb) return;
+      rfb.qualityLevel = quality;
+      rfb.compressionLevel = compression;
+    }
+
+    function toggleScale() {
+      const el = $('toggle-scale');
+      el.classList.toggle('on');
       if (rfb) {
-        try { rfb.disconnect(); } catch {}
-        rfb = null;
+        rfb.scaleViewport = el.classList.contains('on');
+        if (rfb.scaleViewport) rfb.clipViewport = false;
+        $('toggle-clip').classList.toggle('on', rfb.clipViewport);
       }
-      
+    }
+
+    function toggleResize() {
+      const el = $('toggle-resize');
+      el.classList.toggle('on');
+      if (rfb) rfb.resizeSession = el.classList.contains('on');
+    }
+
+    function toggleClip() {
+      const el = $('toggle-clip');
+      el.classList.toggle('on');
+      if (rfb) {
+        rfb.clipViewport = el.classList.contains('on');
+        if (rfb.clipViewport) rfb.scaleViewport = false;
+        $('toggle-scale').classList.toggle('on', rfb.scaleViewport);
+      }
+    }
+
+    function toggleViewOnly() {
+      const el = $('toggle-viewonly');
+      el.classList.toggle('on');
+      if (rfb) rfb.viewOnly = el.classList.contains('on');
+    }
+
+    function toggleAdaptive() {
+      const el = $('toggle-adaptive');
+      el.classList.toggle('on');
+      adaptiveEnabled = el.classList.contains('on');
+      if (!adaptiveEnabled && currentPreset !== 'custom') {
+        setPreset(currentPreset); // Restore preset quality
+      }
+    }
+
+    // ─── Adaptive quality engine ─────────────────────────────────────
+    function startAdaptiveQuality() {
+      if (adaptiveTimer) clearInterval(adaptiveTimer);
+      frameCount = 0;
+      lastFrameTime = performance.now();
+
+      adaptiveTimer = setInterval(() => {
+        if (!rfb || !adaptiveEnabled || currentPreset !== 'auto') return;
+
+        const now = performance.now();
+        const elapsed = (now - lastFrameTime) / 1000;
+        const fps = elapsed > 0 ? frameCount / elapsed : 0;
+        frameCount = 0;
+        lastFrameTime = now;
+
+        // Adapt quality based on frame rate (high FPS = lots of changes = lower quality)
+        let quality, compression;
+        if (fps > 15) {
+          // High activity: prioritize speed
+          quality = 3; compression = 6;
+          updatePerfBadge('fair', `${Math.round(fps)} fps`);
+        } else if (fps > 5) {
+          // Medium activity: balanced
+          quality = 5; compression = 3;
+          updatePerfBadge('fair', `${Math.round(fps)} fps`);
+        } else {
+          // Low activity / idle: max quality
+          quality = 8; compression = 1;
+          updatePerfBadge('good', `${Math.round(fps)} fps`);
+        }
+
+        rfb.qualityLevel = quality;
+        rfb.compressionLevel = compression;
+        $('quality-slider').value = quality;
+        $('compression-slider').value = compression;
+        $('quality-val').textContent = quality;
+        $('compression-val').textContent = compression;
+      }, 2000);
+    }
+
+    function stopAdaptiveQuality() {
+      if (adaptiveTimer) {
+        clearInterval(adaptiveTimer);
+        adaptiveTimer = null;
+      }
+    }
+
+    function updatePerfBadge(level, text) {
+      perfBadge.style.display = 'flex';
+      perfDot.className = `dot ${level}`;
+      perfText.textContent = text;
+    }
+
+    // ─── Clipboard ───────────────────────────────────────────────────
+    function toggleClipboardPanel() {
+      clipboardOpen = !clipboardOpen;
+      clipboardPanel.classList.toggle('open', clipboardOpen);
+      btnClipboard.classList.toggle('active', clipboardOpen);
+    }
+
+    function sendClipboard() {
+      if (!rfb) return;
+      const text = $('clipboard-textarea').value;
+      if (text) rfb.clipboardPasteFrom(text);
+    }
+
+    function receiveClipboard() {
+      // noVNC fires 'clipboard' event when VM sends clipboard data
+      // The textarea is updated via the event listener
+    }
+
+    function clearClipboard() {
+      $('clipboard-textarea').value = '';
+    }
+
+    // ─── Fullscreen ──────────────────────────────────────────────────
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+        btnFullscreen.classList.add('active');
+      } else {
+        document.exitFullscreen().catch(() => {});
+        btnFullscreen.classList.remove('active');
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      btnFullscreen.classList.toggle('active', !!document.fullscreenElement);
+    });
+
+    // ─── Settings panel ──────────────────────────────────────────────
+    function toggleSettings() {
+      settingsOpen = !settingsOpen;
+      settingsPanel.classList.toggle('open', settingsOpen);
+      btnSettings.classList.toggle('active', settingsOpen);
+    }
+
+    // ─── Canvas focus helper ─────────────────────────────────────────
+    function focusCanvas() {
+      const canvas = screen.querySelector('canvas');
+      if (canvas) {
+        canvas.setAttribute('tabindex', '0');
+        canvas.style.outline = 'none';
+        canvas.focus({ preventScroll: true });
+      }
+    }
+
+    // ─── Connect ─────────────────────────────────────────────────────
+    async function connect() {
+      if (!type || !node || !vmid) { showError('Missing parameters'); setStatus('error', 'Error'); return; }
+      if (!RFB) { showError('noVNC not loaded'); setStatus('error', 'Error'); return; }
+      if (rfb) { try { rfb.disconnect(); } catch {} rfb = null; }
+
       hideError();
+      stopAdaptiveQuality();
       setStatus('connecting', 'Connecting...');
       loading.style.display = 'block';
       loadingText.textContent = 'Creating session...';
       loadingSubtext.textContent = '';
-      
+
       try {
         const apiUrl = `/api/v1/connections/${encodeURIComponent(connId)}/guests/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}/console`;
-        console.log('API call:', apiUrl);
-        
         const res = await fetch(apiUrl, { method: 'POST' });
-        console.log('API status:', res.status);
-        
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
-        
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+
         const json = await res.json();
-        console.log('API response:', json);
-        
         const { wsUrl, password } = json?.data || {};
         if (!wsUrl || !password) throw new Error('Invalid session');
 
         loadingText.textContent = 'Connecting to VNC...';
 
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // wsUrl comes from API as "/ws/console/{sessionId}"
-        // Unified server handles WS on same port — always use /api/internal prefix
         const wsFullUrl = `${wsProtocol}//${window.location.host}/api/internal${wsUrl}`;
-        console.log('WebSocket URL:', wsFullUrl);
-        
-        rfb = new RFB(screen, wsFullUrl, { credentials: { password } });
-        
+
+        // Load saved preset
+        const savedPreset = localStorage.getItem('vnc-preset') || 'auto';
+        const preset = PRESETS[savedPreset] || PRESETS.auto;
+
+        rfb = new RFB(screen, wsFullUrl, {
+          credentials: { password },
+          wsProtocols: ['binary'],
+        });
+
+        // Apply settings
         rfb.scaleViewport = true;
-        rfb.resizeSession = false;  // Désactivé car cause des erreurs
+        rfb.resizeSession = false;
         rfb.clipViewport = false;
         rfb.viewOnly = false;
         rfb.focusOnClick = true;
-        rfb.qualityLevel = 6;
-        rfb.compressionLevel = 2;
+        rfb.qualityLevel = preset.quality;
+        rfb.compressionLevel = preset.compression;
         rfb.background = '#000';
-        
-        // Debug: log des événements
-        console.log('RFB config:', {
-          scaleViewport: rfb.scaleViewport,
-          resizeSession: rfb.resizeSession,
-          viewOnly: rfb.viewOnly,
-          focusOnClick: rfb.focusOnClick,
-          qualityLevel: rfb.qualityLevel,
-          compressionLevel: rfb.compressionLevel
+        rfb.showDotCursor = false;
+
+        // Set active preset in UI
+        setPreset(savedPreset);
+
+        // Track frame updates for adaptive quality
+        rfb.addEventListener('desktopname', (e) => {
+          const name = e.detail?.name;
+          if (name) vmInfo.textContent = `${type?.toUpperCase()} ${vmid} \u2022 ${name}`;
         });
-        
-        // Vérifier si viewOnly est bien false
-        if (rfb.viewOnly) {
-          console.error('WARNING: viewOnly is true!');
-        }
-        
-        // Debug: intercepter les événements sur le canvas après connexion
-        setTimeout(() => {
-          const canvas = screen.querySelector('canvas');
-          if (canvas) {
-            canvas.addEventListener('keydown', (e) => {
-              console.log('KEY DOWN:', e.key, e.keyCode);
-            }, true);
-            canvas.addEventListener('mousedown', (e) => {
-              console.log('MOUSE DOWN:', e.button, e.clientX, e.clientY);
-            }, true);
-            canvas.addEventListener('click', (e) => {
-              console.log('CLICK:', e.button, e.clientX, e.clientY);
-            }, true);
+
+        // Count frame buffer updates for adaptive quality
+        const origOnMessage = rfb._sock?._eventHandlers?.message;
+        if (rfb._sock) {
+          const origHandler = rfb._sock._eventHandlers?.message;
+          if (origHandler) {
+            rfb._sock._eventHandlers.message = function(e) {
+              frameCount++;
+              return origHandler.call(this, e);
+            };
           }
-        }, 500);
-        
+        }
+
         rfb.addEventListener('connect', () => {
-          console.log('VNC connected');
           loading.style.display = 'none';
           setStatus('connected', 'Connected');
           btnCad.disabled = false;
-          
-          // Focus agressif sur le canvas
-          const focusCanvas = () => {
-            const canvas = screen.querySelector('canvas');
-            if (canvas) {
-              canvas.setAttribute('tabindex', '0');
-              canvas.style.outline = 'none';
-              canvas.focus({ preventScroll: true });
-              console.log('Canvas focused, activeElement:', document.activeElement.tagName);
-            }
-          };
-          
-          // Focus immédiat et répété
+
+          // Start adaptive quality
+          startAdaptiveQuality();
+
+          // Focus canvas
           focusCanvas();
           setTimeout(focusCanvas, 100);
           setTimeout(focusCanvas, 300);
-          setTimeout(focusCanvas, 500);
-          
-          // Capturer tous les clics sur le screen pour focus
-          screen.addEventListener('mousedown', (e) => {
-            focusCanvas();
-          });
-          
-          // Empêcher la perte de focus
+
+          // Click-to-focus
+          screen.addEventListener('mousedown', () => focusCanvas());
           document.addEventListener('mousedown', (e) => {
             if (screen.contains(e.target) || e.target === screen) {
               e.preventDefault();
@@ -336,96 +688,72 @@ node bundle-novnc.js
             }
           });
         });
-        
+
         rfb.addEventListener('disconnect', (e) => {
-          console.log('VNC disconnected:', e.detail);
           setStatus('', 'Disconnected');
           btnCad.disabled = true;
+          stopAdaptiveQuality();
+          perfBadge.style.display = 'none';
           loading.style.display = 'block';
           loadingText.textContent = 'Disconnected';
-          loadingSubtext.textContent = 'Click Reconnect';
+          loadingSubtext.textContent = 'Click Reconnect to resume';
         });
-        
+
         rfb.addEventListener('credentialsrequired', () => {
           rfb.sendCredentials({ password });
         });
-        
+
         rfb.addEventListener('securityfailure', (e) => {
-          showError(`Security: ${e.detail.reason}`);
+          showError(`Security failure: ${e.detail.reason}`);
         });
-        
+
+        // Clipboard sync
+        rfb.addEventListener('clipboard', (e) => {
+          $('clipboard-textarea').value = e.detail.text || '';
+          // Also copy to system clipboard if possible
+          if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(e.detail.text).catch(() => {});
+          }
+        });
+
       } catch (err) {
-        console.error('Error:', err);
+        console.error('VNC connect error:', err);
         showError(err.message);
         setStatus('error', 'Error');
-        loadingText.textContent = 'Error';
+        loadingText.textContent = 'Connection failed';
         loadingSubtext.textContent = err.message;
       }
     }
-    
+
+    // ─── Event listeners ─────────────────────────────────────────────
     btnCad.addEventListener('click', () => {
-      if (rfb) {
-        rfb.sendCtrlAltDel();
-        setTimeout(() => {
-          const canvas = screen.querySelector('canvas');
-          if (canvas) canvas.focus();
-        }, 50);
-      }
+      if (rfb) { rfb.sendCtrlAltDel(); setTimeout(focusCanvas, 50); }
     });
-    
-    // Actions VM
-    async function vmAction(action) {
-      const btn = {
-        start: btnStart,
-        shutdown: btnShutdown,
-        stop: btnStop,
-        suspend: btnPause
-      }[action];
-      
-      if (btn) btn.classList.add('loading');
-      
-      try {
-        const apiUrl = `/api/v1/connections/${encodeURIComponent(connId)}/guests/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}/${action}`;
-        const res = await fetch(apiUrl, { method: 'POST' });
-        
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
-        
-        // Rafraîchir l'état après un délai
-        setTimeout(fetchVmStatus, 1500);
-        
-        // Reconnecter après start
-        if (action === 'start') {
-          setTimeout(connect, 3000);
-        }
-      } catch (err) {
-        showError(`Action ${action}: ${err.message}`);
-      } finally {
-        if (btn) btn.classList.remove('loading');
-      }
-    }
-    
+
     btnStart.addEventListener('click', () => vmAction('start'));
     btnShutdown.addEventListener('click', () => vmAction('shutdown'));
     btnStop.addEventListener('click', () => vmAction('stop'));
     btnPause.addEventListener('click', () => vmAction('suspend'));
-    
+
     btnReconnect.addEventListener('click', connect);
     btnClose.addEventListener('click', () => window.close());
-    screen.addEventListener('click', () => {
-      const canvas = screen.querySelector('canvas');
-      if (canvas) canvas.focus();
+    btnSettings.addEventListener('click', toggleSettings);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    btnClipboard.addEventListener('click', toggleClipboardPanel);
+
+    // Keyboard shortcut: Escape closes panels
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (settingsOpen) toggleSettings();
+        if (clipboardOpen) toggleClipboardPanel();
+      }
     });
-    
+
+    // ─── Init ────────────────────────────────────────────────────────
     function init() {
       loadingText.textContent = 'Loading noVNC...';
       const loaded = loadNoVNC();
-      
-      // Charger le status de la VM
       fetchVmStatus();
-      
       if (loaded) {
         connect();
       } else {
@@ -435,7 +763,6 @@ node bundle-novnc.js
       }
     }
 
-    // Start when DOM is ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
     } else {
