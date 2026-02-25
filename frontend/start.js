@@ -42,7 +42,7 @@ const { getRequestHandlers } = require('next/dist/server/lib/start-server')
 const { handleWsConnection } = require('./ws-proxy')
 
 // Import guacd proxy (Apache Guacamole integration)
-const { initGuacamoleLite, checkGuacdHealth, GUACD_HOST, GUACD_PORT } = require('./guacd-proxy')
+const { initGuacamoleLite, handleGuacUpgrade, checkGuacdHealth, GUACD_HOST, GUACD_PORT } = require('./guacd-proxy')
 
 async function main() {
   // Get Next.js request & upgrade handlers
@@ -94,11 +94,11 @@ async function main() {
     handleWsConnection(clientWs, req)
   })
 
-  // Initialize guacamole-lite (attaches its own WebSocket handler on /ws/guac/)
+  // Initialize guacamole-lite in noServer mode.
   // This is optional — if guacd is not running, the Guacamole console option
   // will be unavailable and noVNC will be used instead.
   try {
-    initGuacamoleLite(server)
+    initGuacamoleLite()
   } catch (err) {
     console.warn('[start] Failed to initialize guacamole-lite:', err.message)
     console.warn('[start] Guacamole console will be unavailable. noVNC will be used.')
@@ -108,8 +108,9 @@ async function main() {
   server.on('upgrade', (req, socket, head) => {
     const pathname = req.url?.split('?')[0] || ''
 
-    // guacamole-lite handles /ws/guac/ paths internally — skip them here
+    // Route /ws/guac/ paths to guacamole-lite
     if (pathname.startsWith('/ws/guac')) {
+      handleGuacUpgrade(req, socket, head)
       return
     }
 

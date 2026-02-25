@@ -9,6 +9,10 @@
  * or localhost:4822 for local dev). Set GUACD_HOST / GUACD_PORT env vars.
  *
  * Token encryption uses AES-256-CBC with a key derived from APP_SECRET.
+ *
+ * IMPORTANT: Uses noServer mode so it doesn't conflict with other WebSocket
+ * handlers on the same HTTP server. The caller (start.js) must route
+ * /ws/guac/ upgrade requests to handleGuacUpgrade().
  */
 
 const crypto = require('crypto')
@@ -19,13 +23,13 @@ const GUACD_HOST = process.env.GUACD_HOST || 'guacd'
 const GUACD_PORT = parseInt(process.env.GUACD_PORT, 10) || 4822
 
 // Derive a 32-byte encryption key from APP_SECRET (or use a default for dev)
+// Uses raw Buffer to stay consistent between guacd-proxy.js and route.ts
 const APP_SECRET = process.env.APP_SECRET || process.env.NEXTAUTH_SECRET || 'cfcenter-dev-secret-key-change-me'
 const ENCRYPTION_KEY = crypto
   .createHash('sha256')
   .update(APP_SECRET)
   .digest()
-  .toString('latin1')
-  .substring(0, 32)
+  .subarray(0, 32)
 
 const CIPHER = 'AES-256-CBC'
 
@@ -33,12 +37,13 @@ const CIPHER = 'AES-256-CBC'
 
 /**
  * Encrypt a connection token for guacamole-lite.
+ * Must match the decryption logic in guacamole-lite's Server.decryptToken().
  * @param {object} tokenObject - { connection: { type, settings } }
  * @returns {string} Base64-encoded encrypted token
  */
 function encryptToken(tokenObject) {
   const iv = crypto.randomBytes(16)
-  const cipher = crypto.createCipheriv(CIPHER, Buffer.from(ENCRYPTION_KEY, 'latin1'), iv)
+  const cipher = crypto.createCipheriv(CIPHER, ENCRYPTION_KEY, iv)
   let encrypted = cipher.update(JSON.stringify(tokenObject), 'utf8', 'base64')
   encrypted += cipher.final('base64')
   const data = {
@@ -52,11 +57,12 @@ function encryptToken(tokenObject) {
 let guacServer = null
 
 /**
- * Initialize guacamole-lite and attach it to an existing HTTP server.
- * @param {import('http').Server} httpServer - The HTTP server to attach to
+ * Initialize guacamole-lite in noServer mode.
+ * Returns the guacamole-lite instance. The caller must route WebSocket
+ * upgrade requests to guacServer.webSocketServer via handleGuacUpgrade().
  * @returns {GuacamoleLite} The guacamole-lite instance
  */
-function initGuacamoleLite(httpServer) {
+function initGuacamoleLite() {
   const guacdOptions = {
     host: GUACD_HOST,
     port: GUACD_PORT,
@@ -93,10 +99,11 @@ function initGuacamoleLite(httpServer) {
     },
   }
 
-  // Attach guacamole-lite to the existing HTTP server
-  // It creates its own WebSocket server on a specific path
+  // Use noServer mode so we control upgrade routing in start.js
+  // This prevents guacamole-lite from adding its own upgrade listener
+  // to the HTTP server, which would conflict with noVNC/xterm.js routing.
   guacServer = new GuacamoleLite(
-    { server: httpServer, path: '/ws/guac/' },
+    { noServer: true },
     guacdOptions,
     clientOptions
   )
@@ -116,6 +123,24 @@ function initGuacamoleLite(httpServer) {
   })
 
   return guacServer
+}
+
+/**
+ * Handle a WebSocket upgrade for /ws/guac/ paths.
+ * Must be called from start.js's server.on('upgrade') handler.
+ * @param {import('http').IncomingMessage} req
+ * @param {import('net').Socket} socket
+ * @param {Buffer} head
+ */
+function handleGuacUpgrade(req, socket, head) {
+  if (!guacServer || !guacServer.webSocketServer) {
+    console.error('[guacd-proxy] Guacamole server not initialized')
+    socket.destroy()
+    return
+  }
+  guacServer.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
+    guacServer.webSocketServer.emit('connection', ws, req)
+  })
 }
 
 /**
@@ -174,6 +199,7 @@ function createVncToken({ hostname, port, password }) {
 
 module.exports = {
   initGuacamoleLite,
+  handleGuacUpgrade,
   checkGuacdHealth,
   createVncToken,
   encryptToken,
