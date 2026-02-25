@@ -70,6 +70,15 @@ function createVncRelay({ baseUrl, node, type, vmid, port, ticket, apiToken, tim
       // No more connections accepted
       tcpServer.close()
 
+      // Buffer TCP data from guacd until the Proxmox WebSocket is open.
+      // guacd sends VNC handshake immediately on connect; if that data is
+      // lost the handshake breaks and guacd drops the connection.
+      let wsReady = false
+      let tcpBuffer = []
+
+      // Pause the TCP socket until the WebSocket is ready
+      tcpSocket.pause()
+
       // Build Proxmox WebSocket VNC URL
       const pveUrl = new URL(baseUrl)
       const wsProtocol = pveUrl.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -89,6 +98,19 @@ function createVncRelay({ baseUrl, node, type, vmid, port, ticket, apiToken, tim
 
       pveWs.on('open', () => {
         console.log(`[vnc-relay] ${relayId} Proxmox WebSocket connected`)
+        wsReady = true
+
+        // Flush any buffered data from guacd
+        if (tcpBuffer.length > 0) {
+          console.log(`[vnc-relay] ${relayId} flushing ${tcpBuffer.length} buffered chunks to Proxmox`)
+          for (const chunk of tcpBuffer) {
+            pveWs.send(chunk)
+          }
+          tcpBuffer = []
+        }
+
+        // Resume the TCP socket now that WS is ready
+        tcpSocket.resume()
       })
 
       // Proxmox WS → TCP (guacd)
@@ -101,8 +123,11 @@ function createVncRelay({ baseUrl, node, type, vmid, port, ticket, apiToken, tim
 
       // TCP (guacd) → Proxmox WS
       tcpSocket.on('data', (data) => {
-        if (pveWs.readyState === WebSocket.OPEN) {
+        if (wsReady && pveWs.readyState === WebSocket.OPEN) {
           pveWs.send(data)
+        } else {
+          // Buffer until WS is ready
+          tcpBuffer.push(data)
         }
       })
 
