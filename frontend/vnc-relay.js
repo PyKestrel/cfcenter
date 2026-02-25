@@ -102,7 +102,7 @@ function createVncRelay({ baseUrl, node, type, vmid, port, ticket, apiToken, tim
 
         // Flush any buffered data from guacd
         if (tcpBuffer.length > 0) {
-          console.log(`[vnc-relay] ${relayId} flushing ${tcpBuffer.length} buffered chunks to Proxmox`)
+          console.log(`[vnc-relay] ${relayId} flushing ${tcpBuffer.length} buffered chunks (${tcpBuffer.reduce((a,b) => a + b.length, 0)} bytes) to Proxmox`)
           for (const chunk of tcpBuffer) {
             pveWs.send(chunk)
           }
@@ -114,26 +114,35 @@ function createVncRelay({ baseUrl, node, type, vmid, port, ticket, apiToken, tim
       })
 
       // Proxmox WS → TCP (guacd)
+      let wsToTcpBytes = 0
       pveWs.on('message', (data) => {
+        const buf = Buffer.isBuffer(data) ? data : Buffer.from(data)
+        wsToTcpBytes += buf.length
+        if (wsToTcpBytes <= 200) {
+          console.log(`[vnc-relay] ${relayId} WS→TCP: ${buf.length}B first=${buf.toString('utf8', 0, Math.min(buf.length, 40)).replace(/[^\x20-\x7e]/g, '.')}`)
+        }
         if (!tcpSocket.destroyed) {
-          const buf = Buffer.isBuffer(data) ? data : Buffer.from(data)
           tcpSocket.write(buf)
         }
       })
 
       // TCP (guacd) → Proxmox WS
+      let tcpToWsBytes = 0
       tcpSocket.on('data', (data) => {
+        tcpToWsBytes += data.length
+        if (tcpToWsBytes <= 200) {
+          console.log(`[vnc-relay] ${relayId} TCP→WS: ${data.length}B first=${data.toString('utf8', 0, Math.min(data.length, 40)).replace(/[^\x20-\x7e]/g, '.')}`)
+        }
         if (wsReady && pveWs.readyState === WebSocket.OPEN) {
           pveWs.send(data)
         } else {
-          // Buffer until WS is ready
           tcpBuffer.push(data)
         }
       })
 
       // Cleanup on close from either side
-      tcpSocket.on('close', () => {
-        console.log(`[vnc-relay] ${relayId} TCP socket closed`)
+      tcpSocket.on('close', (hadError) => {
+        console.log(`[vnc-relay] ${relayId} TCP socket closed (hadError=${hadError}, wsToTcp=${wsToTcpBytes}B, tcpToWs=${tcpToWsBytes}B)`)
         if (pveWs.readyState === WebSocket.OPEN) pveWs.close()
         cleanup()
       })
@@ -144,8 +153,8 @@ function createVncRelay({ baseUrl, node, type, vmid, port, ticket, apiToken, tim
         cleanup()
       })
 
-      pveWs.on('close', () => {
-        console.log(`[vnc-relay] ${relayId} Proxmox WebSocket closed`)
+      pveWs.on('close', (code, reason) => {
+        console.log(`[vnc-relay] ${relayId} Proxmox WebSocket closed (code=${code}, reason=${reason || ''})`)
         if (!tcpSocket.destroyed) tcpSocket.destroy()
         cleanup()
       })
