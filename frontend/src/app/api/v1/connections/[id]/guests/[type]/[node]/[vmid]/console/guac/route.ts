@@ -23,13 +23,14 @@ function encryptToken(tokenObject: object): string {
   const iv = crypto.randomBytes(16)
   const cipher = crypto.createCipheriv(CIPHER, ENCRYPTION_KEY, iv)
 
-  let encrypted = cipher.update(JSON.stringify(tokenObject), 'utf8', 'base64')
+  // Must use 'binary' encoding to match guacamole-lite's Crypt.js decrypt()
+  let encrypted = cipher.update(JSON.stringify(tokenObject), 'utf8', 'binary')
 
-  encrypted += cipher.final('base64')
+  encrypted += cipher.final('binary')
 
   const data = {
     iv: iv.toString('base64'),
-    value: encrypted,
+    value: Buffer.from(encrypted, 'binary').toString('base64'),
   }
 
   return Buffer.from(JSON.stringify(data)).toString('base64')
