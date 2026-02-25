@@ -426,44 +426,31 @@
           if (guacClient && connected) guacClient.sendKeyEvent(0, keysym);
         };
 
-        // Mouse input
-        const mouse = new Guacamole.Mouse(guacClient.getDisplay().getElement());
-        mouse.onEach(['mousedown', 'mousemove', 'mouseup'], function(e) {
-          if (guacClient && connected) {
-            // Scale mouse position
-            const guacDisplay = guacClient.getDisplay();
-            const scale = guacDisplay.getScale();
-            const scaledState = new Guacamole.Mouse.State(
-              e.x / scale,
-              e.y / scale,
-              e.left,
-              e.middle,
-              e.right,
-              e.up,
-              e.down
-            );
-            guacClient.sendMouseState(scaledState);
-          }
-        });
+        // Mouse input — attach to the display element
+        const displayElement = guacClient.getDisplay().getElement();
+        const mouse = new Guacamole.Mouse(displayElement);
+
+        function handleMouseState(e) {
+          if (!guacClient || !connected) return;
+          const guacDisplay = guacClient.getDisplay();
+          const scale = guacDisplay.getScale();
+          const scaledState = new Guacamole.Mouse.State(
+            e.x / scale,
+            e.y / scale,
+            e.left,
+            e.middle,
+            e.right,
+            e.up,
+            e.down
+          );
+          guacClient.sendMouseState(scaledState);
+        }
+
+        mouse.onmousedown = mouse.onmousemove = mouse.onmouseup = handleMouseState;
 
         // Touch input for mobile
-        const touch = new Guacamole.Mouse.Touchpad(guacClient.getDisplay().getElement());
-        touch.onEach(['mousedown', 'mousemove', 'mouseup'], function(e) {
-          if (guacClient && connected) {
-            const guacDisplay = guacClient.getDisplay();
-            const scale = guacDisplay.getScale();
-            const scaledState = new Guacamole.Mouse.State(
-              e.x / scale,
-              e.y / scale,
-              e.left,
-              e.middle,
-              e.right,
-              e.up,
-              e.down
-            );
-            guacClient.sendMouseState(scaledState);
-          }
-        });
+        const touch = new Guacamole.Mouse.Touchpad(displayElement);
+        touch.onmousedown = touch.onmousemove = touch.onmouseup = handleMouseState;
 
         // Connect with screen dimensions
         // IMPORTANT: Guacamole.WebSocketTunnel.connect(data) appends "?" + data to the URL.
