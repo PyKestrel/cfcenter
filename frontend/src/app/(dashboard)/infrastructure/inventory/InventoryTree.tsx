@@ -825,7 +825,7 @@ return
   const handleOpenConsole = () => {
     if (!contextMenu) return
     const { connId, node, type, vmid } = contextMenu
-    const url = `/novnc/console.html?connId=${encodeURIComponent(connId)}&type=${encodeURIComponent(type)}&node=${encodeURIComponent(node)}&vmid=${encodeURIComponent(vmid)}`
+    const url = `/console/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}?connId=${encodeURIComponent(connId)}`
 
     window.open(url, `console-${vmid}`, 'width=1024,height=768,menubar=no,toolbar=no,location=no,status=no')
     handleCloseContextMenu()

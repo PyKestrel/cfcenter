@@ -185,7 +185,7 @@ export default function FailoverDialog({ open, onClose, plan, type, onConfirm, o
                           onClick={(e) => {
                             e.stopPropagation()
                             window.open(
-                              `/novnc/console.html?connId=${encodeURIComponent(targetConnId)}&type=qemu&node=${encodeURIComponent(vm.target_node!)}&vmid=${vm.target_vmid}`,
+                              `/console/qemu/${encodeURIComponent(vm.target_node!)}/${vm.target_vmid}?connId=${encodeURIComponent(targetConnId)}`,
                               `console-dr-${vm.target_vmid}`,
                               'width=1024,height=768,menubar=no,toolbar=no,location=no,status=no'
                             )

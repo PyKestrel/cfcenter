@@ -109,6 +109,32 @@
 
     /* Guacamole display scaling */
     #display canvas { cursor: none; }
+
+    /* Keys dropdown */
+    .keys-wrapper { position: relative; }
+    #keys-menu {
+      display: none; position: absolute; top: 100%; right: 0; margin-top: 4px;
+      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
+      min-width: 200px; padding: 4px 0; z-index: 50;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    #keys-menu.open { display: block; }
+    #keys-menu .keys-section {
+      padding: 4px 10px; font-size: 9px; color: #555; text-transform: uppercase;
+      letter-spacing: 0.5px; font-weight: 700;
+    }
+    #keys-menu button {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      width: 100%; padding: 6px 12px; font-size: 12px; background: none; border: none;
+      color: #ccc; cursor: pointer; text-align: left; white-space: nowrap;
+    }
+    #keys-menu button:hover { background: #252525; color: #fff; }
+    #keys-menu button kbd {
+      font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 10px;
+      color: #666; background: #111; padding: 1px 5px; border-radius: 3px;
+      border: 1px solid #2a2a2a;
+    }
+    #keys-menu .keys-sep { height: 1px; background: #222; margin: 4px 0; }
   </style>
 </head>
 <body>
@@ -128,6 +154,31 @@
       </div>
       <div class="buttons">
         <button class="tb" id="btn-cad" disabled title="Send Ctrl+Alt+Del">&#9000; Ctrl+Alt+Del</button>
+        <div class="keys-wrapper">
+          <button class="tb" id="btn-keys" disabled title="Send special keys">&#9000; Keys &#9662;</button>
+          <div id="keys-menu">
+            <div class="keys-section">Windows</div>
+            <button onclick="sendKeyCombo('win')">Windows Key <kbd>&#8862;</kbd></button>
+            <button onclick="sendKeyCombo('win-d')">Show Desktop <kbd>&#8862;+D</kbd></button>
+            <button onclick="sendKeyCombo('win-e')">File Explorer <kbd>&#8862;+E</kbd></button>
+            <button onclick="sendKeyCombo('win-r')">Run Dialog <kbd>&#8862;+R</kbd></button>
+            <button onclick="sendKeyCombo('win-l')">Lock Screen <kbd>&#8862;+L</kbd></button>
+            <button onclick="sendKeyCombo('win-tab')">Task View <kbd>&#8862;+Tab</kbd></button>
+            <div class="keys-sep"></div>
+            <div class="keys-section">System</div>
+            <button onclick="sendKeyCombo('ctrl-alt-del')">Ctrl+Alt+Del <kbd>C+A+Del</kbd></button>
+            <button onclick="sendKeyCombo('alt-tab')">Switch Window <kbd>Alt+Tab</kbd></button>
+            <button onclick="sendKeyCombo('alt-f4')">Close Window <kbd>Alt+F4</kbd></button>
+            <button onclick="sendKeyCombo('ctrl-esc')">Start Menu <kbd>Ctrl+Esc</kbd></button>
+            <div class="keys-sep"></div>
+            <div class="keys-section">Navigation</div>
+            <button onclick="sendKeyCombo('tab')">Tab <kbd>Tab</kbd></button>
+            <button onclick="sendKeyCombo('esc')">Escape <kbd>Esc</kbd></button>
+            <button onclick="sendKeyCombo('ctrl-w')">Close Tab <kbd>Ctrl+W</kbd></button>
+            <button onclick="sendKeyCombo('ctrl-shift-esc')">Task Manager <kbd>C+S+Esc</kbd></button>
+            <button onclick="sendKeyCombo('printscreen')">Print Screen <kbd>PrtSc</kbd></button>
+          </div>
+        </div>
         <button class="tb" id="btn-clipboard" title="Clipboard">&#128203;</button>
         <button class="tb" id="btn-fullscreen" title="Fullscreen">&#9974;</button>
         <div class="tb-sep"></div>
@@ -373,6 +424,7 @@
               loading.style.display = 'none';
               setStatus('connected', 'Connected');
               btnCad.disabled = false;
+              btnKeys.disabled = false;
               // Scale display after initial render
               setTimeout(scaleDisplay, 200);
               setTimeout(scaleDisplay, 1000);
@@ -471,7 +523,6 @@
     // ─── Send Ctrl+Alt+Del ───────────────────────────────────────────
     function sendCtrlAltDel() {
       if (!guacClient || !connected) return;
-      // Key codes for Ctrl, Alt, Delete
       guacClient.sendKeyEvent(1, 0xFFE3); // Ctrl down
       guacClient.sendKeyEvent(1, 0xFFE9); // Alt down
       guacClient.sendKeyEvent(1, 0xFFFF); // Delete down
@@ -479,6 +530,64 @@
       guacClient.sendKeyEvent(0, 0xFFE9); // Alt up
       guacClient.sendKeyEvent(0, 0xFFE3); // Ctrl up
     }
+
+    // ─── Send special key combos ──────────────────────────────────────
+    // X11 keysyms: https://www.cl.cam.ac.uk/~mgk25/ucs/keysymdef.h
+    const KEYSYM = {
+      CTRL_L:  0xFFE3, ALT_L:   0xFFE9, SHIFT_L: 0xFFE1,
+      SUPER_L: 0xFFEB, DELETE:  0xFFFF, TAB:     0xFF09,
+      ESCAPE:  0xFF1B, F4:      0xFFC1, RETURN:  0xFF0D,
+      PRINT:   0xFF61,
+      d: 0x0064, e: 0x0065, l: 0x006C, r: 0x0072, w: 0x0077,
+    };
+
+    function sendKeys(keys) {
+      if (!guacClient || !connected) return;
+      // Press all keys down in order
+      keys.forEach(k => guacClient.sendKeyEvent(1, k));
+      // Release in reverse order
+      keys.slice().reverse().forEach(k => guacClient.sendKeyEvent(0, k));
+    }
+
+    function sendKeyCombo(combo) {
+      switch (combo) {
+        case 'ctrl-alt-del':    sendKeys([KEYSYM.CTRL_L, KEYSYM.ALT_L, KEYSYM.DELETE]); break;
+        case 'win':             sendKeys([KEYSYM.SUPER_L]); break;
+        case 'win-d':           sendKeys([KEYSYM.SUPER_L, KEYSYM.d]); break;
+        case 'win-e':           sendKeys([KEYSYM.SUPER_L, KEYSYM.e]); break;
+        case 'win-r':           sendKeys([KEYSYM.SUPER_L, KEYSYM.r]); break;
+        case 'win-l':           sendKeys([KEYSYM.SUPER_L, KEYSYM.l]); break;
+        case 'win-tab':         sendKeys([KEYSYM.SUPER_L, KEYSYM.TAB]); break;
+        case 'alt-tab':         sendKeys([KEYSYM.ALT_L, KEYSYM.TAB]); break;
+        case 'alt-f4':          sendKeys([KEYSYM.ALT_L, KEYSYM.F4]); break;
+        case 'ctrl-esc':        sendKeys([KEYSYM.CTRL_L, KEYSYM.ESCAPE]); break;
+        case 'ctrl-w':          sendKeys([KEYSYM.CTRL_L, KEYSYM.w]); break;
+        case 'ctrl-shift-esc':  sendKeys([KEYSYM.CTRL_L, KEYSYM.SHIFT_L, KEYSYM.ESCAPE]); break;
+        case 'tab':             sendKeys([KEYSYM.TAB]); break;
+        case 'esc':             sendKeys([KEYSYM.ESCAPE]); break;
+        case 'printscreen':     sendKeys([KEYSYM.PRINT]); break;
+      }
+      // Close the menu after sending
+      toggleKeysMenu(false);
+    }
+
+    // ─── Keys menu toggle ─────────────────────────────────────────────
+    let keysMenuOpen = false;
+    const keysMenu = $('keys-menu');
+    const btnKeys = $('btn-keys');
+
+    function toggleKeysMenu(force) {
+      keysMenuOpen = typeof force === 'boolean' ? force : !keysMenuOpen;
+      keysMenu.classList.toggle('open', keysMenuOpen);
+      btnKeys.classList.toggle('active', keysMenuOpen);
+    }
+
+    // Close keys menu on outside click
+    document.addEventListener('mousedown', (e) => {
+      if (keysMenuOpen && !e.target.closest('.keys-wrapper')) {
+        toggleKeysMenu(false);
+      }
+    });
 
     // ─── Switch to noVNC ─────────────────────────────────────────────
     function switchToNoVNC() {
@@ -493,6 +602,7 @@
 
     // ─── Event listeners ─────────────────────────────────────────────
     btnCad.addEventListener('click', sendCtrlAltDel);
+    btnKeys.addEventListener('click', () => toggleKeysMenu());
     btnStart.addEventListener('click', () => vmAction('start'));
     btnShutdown.addEventListener('click', () => vmAction('shutdown'));
     btnStop.addEventListener('click', () => vmAction('stop'));

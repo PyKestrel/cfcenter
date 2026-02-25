@@ -32,9 +32,9 @@ function ConsolePreview({
   const t = useTranslations()
   const isRunning = vmStatus?.toLowerCase() === 'running'
   
-  // URL de la page console fullscreen (noVNC)
+  // URL de la page console fullscreen (auto-detects Guacamole or noVNC)
   const consoleUrl = connId && node && type && vmid 
-    ? `/novnc/console.html?connId=${encodeURIComponent(connId)}&type=${encodeURIComponent(type)}&node=${encodeURIComponent(node)}&vmid=${encodeURIComponent(vmid)}`
+    ? `/console/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}?connId=${encodeURIComponent(connId)}`
     : null
 
   const handleOpenConsole = () => {
@@ -92,7 +92,7 @@ function ConsolePreview({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {isRunning && consoleUrl && (
             <Typography variant="caption" sx={{ opacity: 0.6 }}>
-              noVNC
+              Guacamole
             </Typography>
           )}
         </Box>
