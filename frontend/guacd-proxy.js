@@ -17,6 +17,7 @@
 
 const crypto = require('crypto')
 const GuacamoleLite = require('guacamole-lite')
+const ClientConnection = require('guacamole-lite/lib/ClientConnection')
 
 // ─── Configuration ───────────────────────────────────────────────
 const GUACD_HOST = process.env.GUACD_HOST || 'guacd'
@@ -34,12 +35,39 @@ const ENCRYPTION_KEY = crypto
 const CIPHER = 'AES-256-CBC'
 
 // ─── Token helpers ───────────────────────────────────────────────
+// IMPORTANT: guacamole-lite has TWO decryption paths:
+//   1. Server.js.decryptToken() — uses Buffer-based decryption (for guacd routing)
+//   2. ClientConnection.js.decryptToken() — uses Crypt.js with binary/ascii encoding (for connection settings)
+// Both run on every connection. Crypt.js's binary/ascii encoding can corrupt certain byte patterns.
+// To fix this, we patch ClientConnection.prototype.decryptToken to use Buffer-based decryption
+// and our encryptToken also uses pure Buffers. This guarantees compatibility.
+
+// Patch ClientConnection.prototype.decryptToken to use Buffer-based decryption
+// instead of Crypt.js (which uses lossy binary/ascii string encoding)
+const _originalDecryptToken = ClientConnection.prototype.decryptToken
+ClientConnection.prototype.decryptToken = function() {
+  const encrypted = this.query.token
+  delete this.query.token
+  try {
+    const tokenData = JSON.parse(Buffer.from(encrypted, 'base64').toString())
+    const decipher = crypto.createDecipheriv(
+      this.clientOptions.crypt.cypher,
+      this.clientOptions.crypt.key,
+      Buffer.from(tokenData.iv, 'base64')
+    )
+    let decrypted = decipher.update(Buffer.from(tokenData.value, 'base64'), null, 'utf8')
+    decrypted += decipher.final('utf8')
+    return JSON.parse(decrypted)
+  } catch (err) {
+    console.error('[guacd-proxy] Buffer-based decryptToken failed:', err.message)
+    throw err
+  }
+}
 
 /**
  * Encrypt a connection token for guacamole-lite.
- * MUST match Server.js decryptToken() — NOT Crypt.js (they use different encodings).
- * Server.js uses: Buffer.from(value,'base64') as raw Buffer input to decipher.update(buf, null, 'utf8')
- * So we encrypt with Buffer.concat (no string encoding intermediaries).
+ * Uses pure Buffer operations — no binary/ascii string encoding intermediaries.
+ * Matches both Server.js.decryptToken() and our patched ClientConnection.decryptToken().
  * @param {object} tokenObject - { connection: { type, settings } }
  * @returns {string} Base64-encoded encrypted token
  */
