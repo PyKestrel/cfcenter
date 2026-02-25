@@ -115,6 +115,25 @@ function initGuacamoleLite() {
 
   console.log(`[guacd-proxy] Guacamole proxy initialized (guacd: ${GUACD_HOST}:${GUACD_PORT})`)
 
+  // Self-test: verify encrypt/decrypt roundtrip works with the actual guacamole-lite instance
+  try {
+    const testPayload = { connection: { type: 'vnc', settings: { hostname: 'selftest', port: '5900' } } }
+    const testToken = encryptToken(testPayload)
+    const decrypted = guacServer.decryptToken(testToken)
+    if (decrypted && decrypted.connection && decrypted.connection.settings.hostname === 'selftest') {
+      console.log('[guacd-proxy] Token encrypt/decrypt self-test: PASSED')
+    } else {
+      console.error('[guacd-proxy] Token encrypt/decrypt self-test: FAILED - decrypted payload mismatch:', JSON.stringify(decrypted))
+    }
+  } catch (err) {
+    console.error('[guacd-proxy] Token encrypt/decrypt self-test: FAILED -', err.message)
+    // Log key info for debugging
+    console.error('[guacd-proxy] Encrypt key hex:', ENCRYPTION_KEY.toString('hex'))
+    const serverKey = guacServer.clientOptions && guacServer.clientOptions.crypt && guacServer.clientOptions.crypt.key
+    console.error('[guacd-proxy] Server key hex:', serverKey ? (Buffer.isBuffer(serverKey) ? serverKey.toString('hex') : typeof serverKey + ':' + JSON.stringify(serverKey).substring(0, 80)) : 'UNDEFINED')
+    console.error('[guacd-proxy] Server cypher:', guacServer.clientOptions && guacServer.clientOptions.crypt && guacServer.clientOptions.crypt.cypher)
+  }
+
   guacServer.on('open', (clientConnection) => {
     console.log(`[guacd-proxy] Client connected: ${clientConnection.connectionId}`)
   })
