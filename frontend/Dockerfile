@@ -110,6 +110,8 @@ COPY --from=builder /app/guacd-proxy.js ./guacd-proxy.js
 COPY --from=builder /app/vnc-relay.js ./vnc-relay.js
 COPY --from=builder /app/node_modules/guacamole-lite ./node_modules/guacamole-lite
 COPY --from=builder /app/node_modules/deep-extend ./node_modules/deep-extend
+# Patch guacamole-lite's Crypt.js: replace lossy binary/ascii encoding with Buffer-based ops
+COPY --from=builder /app/guacamole-crypt-patch.js ./node_modules/guacamole-lite/lib/Crypt.js
 
 # Copy package.json for version display in startup banner
 COPY --from=builder /app/package.json ./package.json

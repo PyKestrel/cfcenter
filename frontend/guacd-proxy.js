@@ -17,14 +17,12 @@
 
 const crypto = require('crypto')
 const GuacamoleLite = require('guacamole-lite')
-const ClientConnection = require('guacamole-lite/lib/ClientConnection')
 
 // ─── Configuration ───────────────────────────────────────────────
 const GUACD_HOST = process.env.GUACD_HOST || 'guacd'
 const GUACD_PORT = parseInt(process.env.GUACD_PORT, 10) || 4822
 
 // Derive a 32-byte encryption key from APP_SECRET (or use a default for dev)
-// Uses raw Buffer to stay consistent between guacd-proxy.js and route.ts
 const APP_SECRET = process.env.APP_SECRET || process.env.NEXTAUTH_SECRET || 'cfcenter-dev-secret-key-change-me'
 const ENCRYPTION_KEY = crypto
   .createHash('sha256')
@@ -35,39 +33,16 @@ const ENCRYPTION_KEY = crypto
 const CIPHER = 'AES-256-CBC'
 
 // ─── Token helpers ───────────────────────────────────────────────
-// IMPORTANT: guacamole-lite has TWO decryption paths:
-//   1. Server.js.decryptToken() — uses Buffer-based decryption (for guacd routing)
-//   2. ClientConnection.js.decryptToken() — uses Crypt.js with binary/ascii encoding (for connection settings)
-// Both run on every connection. Crypt.js's binary/ascii encoding can corrupt certain byte patterns.
-// To fix this, we patch ClientConnection.prototype.decryptToken to use Buffer-based decryption
-// and our encryptToken also uses pure Buffers. This guarantees compatibility.
-
-// Patch ClientConnection.prototype.decryptToken to use Buffer-based decryption
-// instead of Crypt.js (which uses lossy binary/ascii string encoding)
-const _originalDecryptToken = ClientConnection.prototype.decryptToken
-ClientConnection.prototype.decryptToken = function() {
-  const encrypted = this.query.token
-  delete this.query.token
-  try {
-    const tokenData = JSON.parse(Buffer.from(encrypted, 'base64').toString())
-    const decipher = crypto.createDecipheriv(
-      this.clientOptions.crypt.cypher,
-      this.clientOptions.crypt.key,
-      Buffer.from(tokenData.iv, 'base64')
-    )
-    let decrypted = decipher.update(Buffer.from(tokenData.value, 'base64'), null, 'utf8')
-    decrypted += decipher.final('utf8')
-    return JSON.parse(decrypted)
-  } catch (err) {
-    console.error('[guacd-proxy] Buffer-based decryptToken failed:', err.message)
-    throw err
-  }
-}
+// guacamole-lite has TWO decryption paths:
+//   1. Server.js.decryptToken() — Buffer-based (for guacd routing)
+//   2. ClientConnection.js.decryptToken() — uses Crypt.js (for connection settings)
+// The original Crypt.js uses binary/ascii encoding which corrupts certain byte patterns.
+// We replace Crypt.js at Docker build time (see guacamole-crypt-patch.js + Dockerfile)
+// so both paths now use pure Buffer operations.
 
 /**
  * Encrypt a connection token for guacamole-lite.
- * Uses pure Buffer operations — no binary/ascii string encoding intermediaries.
- * Matches both Server.js.decryptToken() and our patched ClientConnection.decryptToken().
+ * Uses pure Buffer operations — matches both Server.js and patched Crypt.js decryption.
  * @param {object} tokenObject - { connection: { type, settings } }
  * @returns {string} Base64-encoded encrypted token
  */
@@ -143,23 +118,38 @@ function initGuacamoleLite() {
 
   console.log(`[guacd-proxy] Guacamole proxy initialized (guacd: ${GUACD_HOST}:${GUACD_PORT})`)
 
-  // Self-test: verify encrypt/decrypt roundtrip works with the actual guacamole-lite instance
+  // Self-test: verify encrypt/decrypt roundtrip works through BOTH decryption paths
+  const testPayload = { connection: { type: 'vnc', settings: { hostname: 'selftest', port: '5900' } } }
+  const testToken = encryptToken(testPayload)
+
+  // Test 1: Server.js decryptToken (Buffer-based)
   try {
-    const testPayload = { connection: { type: 'vnc', settings: { hostname: 'selftest', port: '5900' } } }
-    const testToken = encryptToken(testPayload)
-    const decrypted = guacServer.decryptToken(testToken)
-    if (decrypted && decrypted.connection && decrypted.connection.settings.hostname === 'selftest') {
-      console.log('[guacd-proxy] Token encrypt/decrypt self-test: PASSED')
+    const dec1 = guacServer.decryptToken(testToken)
+    if (dec1 && dec1.connection && dec1.connection.settings.hostname === 'selftest') {
+      console.log('[guacd-proxy] Self-test Server.js decryptToken: PASSED')
     } else {
-      console.error('[guacd-proxy] Token encrypt/decrypt self-test: FAILED - decrypted payload mismatch:', JSON.stringify(decrypted))
+      console.error('[guacd-proxy] Self-test Server.js decryptToken: FAILED - mismatch:', JSON.stringify(dec1))
     }
   } catch (err) {
-    console.error('[guacd-proxy] Token encrypt/decrypt self-test: FAILED -', err.message)
-    // Log key info for debugging
-    console.error('[guacd-proxy] Encrypt key hex:', ENCRYPTION_KEY.toString('hex'))
-    const serverKey = guacServer.clientOptions && guacServer.clientOptions.crypt && guacServer.clientOptions.crypt.key
-    console.error('[guacd-proxy] Server key hex:', serverKey ? (Buffer.isBuffer(serverKey) ? serverKey.toString('hex') : typeof serverKey + ':' + JSON.stringify(serverKey).substring(0, 80)) : 'UNDEFINED')
-    console.error('[guacd-proxy] Server cypher:', guacServer.clientOptions && guacServer.clientOptions.crypt && guacServer.clientOptions.crypt.cypher)
+    console.error('[guacd-proxy] Self-test Server.js decryptToken: FAILED -', err.message)
+  }
+
+  // Test 2: Crypt.js decrypt (used by ClientConnection — patched at build time)
+  try {
+    const Crypt = require('guacamole-lite/lib/Crypt')
+    const crypt = new Crypt(CIPHER, ENCRYPTION_KEY)
+    const dec2 = crypt.decrypt(testToken)
+    if (dec2 && dec2.connection && dec2.connection.settings.hostname === 'selftest') {
+      console.log('[guacd-proxy] Self-test Crypt.js decrypt: PASSED')
+    } else {
+      console.error('[guacd-proxy] Self-test Crypt.js decrypt: FAILED - mismatch:', JSON.stringify(dec2))
+    }
+    // Log whether the patch is active
+    const cryptSrc = Crypt.prototype.decrypt.toString()
+    const isPatched = cryptSrc.includes('null') && !cryptSrc.includes('binary')
+    console.log('[guacd-proxy] Crypt.js patched:', isPatched)
+  } catch (err) {
+    console.error('[guacd-proxy] Self-test Crypt.js decrypt: FAILED -', err.message)
   }
 
   guacServer.on('open', (clientConnection) => {

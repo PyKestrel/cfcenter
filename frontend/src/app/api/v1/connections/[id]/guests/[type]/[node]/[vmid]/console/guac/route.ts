@@ -90,7 +90,7 @@ export async function POST(
     return NextResponse.json({
       data: {
         token,
-        wsPath: `/ws/guac/?token=${encodeURIComponent(token)}`,
+        wsPath: `/ws/guac/`,
         port: data.port,
         relayId: relay.relayId,
       },

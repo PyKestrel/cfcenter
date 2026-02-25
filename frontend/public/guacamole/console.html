@@ -337,8 +337,8 @@
         }
 
         const json = await res.json();
-        const { wsPath } = json?.data || {};
-        if (!wsPath) throw new Error('Invalid session — no WebSocket path returned');
+        const { wsPath, token } = json?.data || {};
+        if (!wsPath || !token) throw new Error('Invalid session — no WebSocket path or token returned');
 
         loadingText.textContent = 'Connecting to Guacamole...';
 
@@ -466,9 +466,11 @@
         });
 
         // Connect with screen dimensions
+        // IMPORTANT: Guacamole.WebSocketTunnel.connect(data) appends "?" + data to the URL.
+        // So the token MUST be passed here, not in wsPath, to avoid double-? corruption.
         const width = screen.clientWidth;
         const height = screen.clientHeight;
-        guacClient.connect(`width=${width}&height=${height}&dpi=96`);
+        guacClient.connect(`token=${encodeURIComponent(token)}&width=${width}&height=${height}&dpi=96`);
 
       } catch (err) {
         console.error('Guacamole connect error:', err);
