@@ -75,7 +75,7 @@ async function main() {
           const params = JSON.parse(body)
           const relay = await createVncRelay(params)
 
-          // Encrypt token using guacamole-lite's own Crypt class (guarantees compatibility)
+          // Encrypt token with VNC connection settings for guacd
           const containerName = process.env.CFCENTER_CONTAINER_NAME || 'cfcenter-frontend'
           const token = encryptToken({
             connection: {
@@ -83,7 +83,7 @@ async function main() {
               settings: {
                 hostname: containerName,
                 port: String(relay.relayPort),
-                security: 'none',
+                password: params.ticket,
                 'ignore-cert': true,
                 'enable-audio': false,
                 'cursor': 'remote',
