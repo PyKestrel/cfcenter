@@ -44,6 +44,9 @@ const { handleWsConnection } = require('./ws-proxy')
 // Import guacd proxy (Apache Guacamole integration)
 const { initGuacamoleLite, handleGuacUpgrade, checkGuacdHealth, GUACD_HOST, GUACD_PORT } = require('./guacd-proxy')
 
+// Import VNC relay (bridges Proxmox WebSocket VNC to TCP for guacd)
+const { createVncRelay, closeAllRelays } = require('./vnc-relay')
+
 async function main() {
   // Get Next.js request & upgrade handlers
   const initResult = await getRequestHandlers({
@@ -62,6 +65,26 @@ async function main() {
 
   // Create a single HTTP server
   const server = http.createServer(async (req, res) => {
+    // Internal API: create VNC relay for Guacamole
+    // Handled here (before Next.js) because vnc-relay.js is only in this process
+    if (req.method === 'POST' && req.url === '/api/internal/vnc-relay') {
+      let body = ''
+      req.on('data', (chunk) => { body += chunk })
+      req.on('end', async () => {
+        try {
+          const params = JSON.parse(body)
+          const relay = await createVncRelay(params)
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ relayPort: relay.relayPort, relayId: relay.relayId }))
+        } catch (err) {
+          console.error('[start] VNC relay error:', err)
+          res.writeHead(500, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: err.message }))
+        }
+      })
+      return
+    }
+
     try {
       await nextRequestHandler(req, res)
     } catch (err) {
@@ -142,6 +165,7 @@ async function main() {
   // Graceful shutdown
   const shutdown = (signal) => {
     console.log(`\n[start] ${signal} received, shutting down...`)
+    closeAllRelays()
     server.close(() => {
       console.log('[start] Server closed')
       process.exit(0)

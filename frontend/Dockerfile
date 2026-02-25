@@ -105,8 +105,9 @@ COPY --from=builder /app/start.js ./start.js
 COPY --from=builder /app/ws-proxy.js ./ws-proxy.js
 COPY --from=builder /app/node_modules/ws ./node_modules/ws
 
-# Copy guacamole-lite proxy and its dependencies
+# Copy guacamole-lite proxy, VNC relay, and their dependencies
 COPY --from=builder /app/guacd-proxy.js ./guacd-proxy.js
+COPY --from=builder /app/vnc-relay.js ./vnc-relay.js
 COPY --from=builder /app/node_modules/guacamole-lite ./node_modules/guacamole-lite
 COPY --from=builder /app/node_modules/deep-extend ./node_modules/deep-extend
 

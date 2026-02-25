@@ -35,12 +35,23 @@ function encryptToken(tokenObject: object): string {
   return Buffer.from(JSON.stringify(data)).toString('base64')
 }
 
+const APP_PORT = process.env.PORT || 3000
+const INTERNAL_API_URL = `http://localhost:${APP_PORT}`
+
 /**
  * POST /api/v1/connections/{id}/guests/{type}/{node}/{vmid}/console/guac
  *
  * Creates a VNC proxy session with Proxmox and returns an encrypted token
  * for guacamole-lite. The browser uses this token to connect via WebSocket
  * to /ws/guac/?token=<token>.
+ *
+ * Architecture:
+ *   Browser → WebSocket → guacamole-lite → TCP → guacd → TCP → VNC relay
+ *   VNC relay → WebSocket → Proxmox vncwebsocket
+ *
+ * We use websocket=1 with Proxmox and create a local TCP relay (via internal API)
+ * so guacd can reach the VNC stream. Proxmox VNC ports are only accessible via
+ * the WebSocket API, not as raw TCP.
  */
 export async function POST(
   _req: Request,
@@ -62,29 +73,53 @@ export async function POST(
   }
 
   try {
-    // Get VNC proxy ticket from Proxmox
+    // Get VNC proxy ticket from Proxmox (websocket=1 for WebSocket VNC)
     const data = await pveFetch<any>(
       conn,
       `/nodes/${encodeURIComponent(node)}/${encodeURIComponent(type)}/${encodeURIComponent(vmid)}/vncproxy`,
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "websocket=0", // guacd connects via native VNC, not WebSocket
+        body: "websocket=1",
       }
     )
 
-    // Extract Proxmox host from connection URL
-    const pveUrl = new URL(conn.baseUrl)
+    // Create a local TCP relay via internal API (vnc-relay.js runs in start.js process)
+    // This bridges Proxmox's WebSocket VNC to a local TCP port that guacd can connect to
+    const relayRes = await fetch(`${INTERNAL_API_URL}/api/internal/vnc-relay`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: conn.baseUrl,
+        node,
+        type,
+        vmid,
+        port: data.port,
+        ticket: data.ticket,
+        apiToken: conn.apiToken || undefined,
+      }),
+    })
+
+    if (!relayRes.ok) {
+      const errText = await relayRes.text()
+
+      throw new Error(`Failed to create VNC relay: ${errText}`)
+    }
+
+    const relay = await relayRes.json()
 
     // Create encrypted token for guacamole-lite
-    // guacd will connect directly to the Proxmox VNC port using native VNC protocol
+    // guacd connects to the frontend container's relay port via Docker network
+    const containerName = process.env.CFCENTER_CONTAINER_NAME || "cfcenter-frontend"
+
     const token = encryptToken({
       connection: {
         type: "vnc",
         settings: {
-          hostname: pveUrl.hostname,
-          port: String(data.port),
-          password: data.ticket,
+          hostname: containerName,
+          port: String(relay.relayPort),
+          security: "none",
+          "ignore-cert": true,
           "enable-audio": false,
           "cursor": "remote",
           "color-depth": 24,
@@ -97,6 +132,7 @@ export async function POST(
         token,
         wsPath: `/ws/guac/?token=${encodeURIComponent(token)}`,
         port: data.port,
+        relayId: relay.relayId,
       },
     })
   } catch (err: any) {
