@@ -41,6 +41,9 @@ const { getRequestHandlers } = require('next/dist/server/lib/start-server')
 // Import ws-proxy handler
 const { handleWsConnection } = require('./ws-proxy')
 
+// Import guacd proxy (Apache Guacamole integration)
+const { initGuacamoleLite, checkGuacdHealth, GUACD_HOST, GUACD_PORT } = require('./guacd-proxy')
+
 async function main() {
   // Get Next.js request & upgrade handlers
   const initResult = await getRequestHandlers({
@@ -91,11 +94,26 @@ async function main() {
     handleWsConnection(clientWs, req)
   })
 
+  // Initialize guacamole-lite (attaches its own WebSocket handler on /ws/guac/)
+  // This is optional — if guacd is not running, the Guacamole console option
+  // will be unavailable and noVNC will be used instead.
+  try {
+    initGuacamoleLite(server)
+  } catch (err) {
+    console.warn('[start] Failed to initialize guacamole-lite:', err.message)
+    console.warn('[start] Guacamole console will be unavailable. noVNC will be used.')
+  }
+
   // Route upgrade requests
   server.on('upgrade', (req, socket, head) => {
     const pathname = req.url?.split('?')[0] || ''
 
-    // Route WebSocket paths to our ws-proxy
+    // guacamole-lite handles /ws/guac/ paths internally — skip them here
+    if (pathname.startsWith('/ws/guac')) {
+      return
+    }
+
+    // Route WebSocket paths to our ws-proxy (noVNC / xterm.js)
     if (
       pathname.startsWith('/ws/') ||
       pathname.startsWith('/api/internal/ws/')
@@ -115,8 +133,9 @@ async function main() {
   })
 
   // Start listening
-  server.listen(PORT, hostname, () => {
-    printBanner()
+  server.listen(PORT, hostname, async () => {
+    const guacdAvailable = await checkGuacdHealth()
+    printBanner(guacdAvailable)
   })
 
   // Graceful shutdown
@@ -134,7 +153,7 @@ async function main() {
   process.on('SIGTERM', () => shutdown('SIGTERM'))
 }
 
-function printBanner() {
+function printBanner(guacdAvailable = false) {
   let appVersion = 'latest'
   try { appVersion = require('./package.json').version } catch {}
 
@@ -167,7 +186,8 @@ ${c.orange}${c.bold} ██████╗ ██╗  ██╗ █████�
 
  ${c.dim}WebSocket routes${c.reset}
  ${c.dim}├─${c.reset} /api/internal/ws/shell           ${c.dim}Node/VM/CT shell${c.reset}
- ${c.dim}├─${c.reset} /api/internal/ws/console/{id}    ${c.dim}VM/CT console${c.reset}
+ ${c.dim}├─${c.reset} /api/internal/ws/console/{id}    ${c.dim}VM/CT console (noVNC)${c.reset}
+ ${c.dim}├─${c.reset} /ws/guac/                        ${c.dim}VM/CT console (Guacamole)${c.reset}  ${guacdAvailable ? `${c.green}✓${c.reset}` : `${c.dim}✗ guacd not available${c.reset}`}
  ${c.dim}├─${c.reset} /ws/shell                        ${c.dim}(alias)${c.reset}
  ${c.dim}└─${c.reset} /ws/console/{id}                 ${c.dim}(alias)${c.reset}
 `)

@@ -20,6 +20,9 @@ set -e
 # Constants
 # ----------------------------------------
 CONTAINER_NAME="cfcenter-frontend"
+GUACD_CONTAINER="cfcenter-guacd"
+GUACD_IMAGE="guacamole/guacd:1.5.5"
+NETWORK_NAME="cfcenter"
 IMAGE_NAME="cfcenter-frontend:dev"
 DATA_VOLUME="cfcenter_data"
 DB_FILE="cfcenter.db"
@@ -317,19 +320,35 @@ EOF
     log_success "Secrets generated and saved to $INSTALL_DIR/.env"
     echo ""
 
-    # --- Start container ---
+    # --- Create Docker network ---
+    docker network create "$NETWORK_NAME" 2>/dev/null || true
+
+    # --- Start guacd (Apache Guacamole daemon) ---
+    log_info "Starting guacd (Guacamole daemon)..."
+    docker rm -f "$GUACD_CONTAINER" 2>/dev/null || true
+    docker run -d --name "$GUACD_CONTAINER" \
+        --network "$NETWORK_NAME" \
+        --restart unless-stopped \
+        "$GUACD_IMAGE"
+    log_success "guacd started"
+    echo ""
+
+    # --- Start frontend container ---
     log_info "Starting CFCenter..."
 
     # Remove existing container if present (from a previous failed install)
     docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
 
     docker run -d --name "$CONTAINER_NAME" \
+        --network "$NETWORK_NAME" \
         -p "$APP_PORT":3000 \
         -e NODE_ENV=production \
         -e DATABASE_URL="file:/app/data/$DB_FILE" \
         -e APP_SECRET="$app_secret" \
         -e NEXTAUTH_SECRET="$nextauth_secret" \
         -e NEXTAUTH_URL="http://$server_ip:$APP_PORT" \
+        -e GUACD_HOST="$GUACD_CONTAINER" \
+        -e GUACD_PORT=4822 \
         -e CFCENTER_REPO_DIR=/repo \
         -e CFCENTER_CONTAINER_NAME="$CONTAINER_NAME" \
         -e CFCENTER_IMAGE_NAME="$IMAGE_NAME" \
@@ -353,6 +372,7 @@ EOF
     echo -e "  URL:        ${CYAN}http://$server_ip:$APP_PORT${NC}"
     echo -e "  Install:    ${BOLD}$INSTALL_DIR${NC}"
     echo -e "  Container:  ${BOLD}$CONTAINER_NAME${NC}"
+    echo -e "  Guacd:      ${BOLD}$GUACD_CONTAINER${NC}"
     echo -e "  Volume:     ${BOLD}$DATA_VOLUME${NC}"
     echo ""
     echo "Useful commands:"
@@ -426,37 +446,57 @@ do_update() {
     echo ""
 
     # --- Pull latest code ---
-    log_info "[1/4] Pulling latest code..."
+    log_info "[1/6] Pulling latest code..."
     cd "$REPO_DIR"
     git pull origin "$REPO_BRANCH"
     echo ""
 
+    # --- Pull guacd image ---
+    log_info "[2/6] Pulling guacd image..."
+    docker pull "$GUACD_IMAGE" 2>/dev/null || true
+    echo ""
+
     # --- Build image ---
-    log_info "[2/4] Building Docker image..."
+    log_info "[3/6] Building Docker image..."
     docker build -t "$IMAGE_NAME" ./frontend
     log_success "Image built"
     echo ""
 
-    # --- Stop old container ---
-    log_info "[3/4] Stopping old container..."
+    # --- Stop old containers ---
+    log_info "[4/6] Stopping old containers..."
     if [ -n "$running_container" ]; then
         docker stop "$running_container" 2>/dev/null || true
         docker rm "$running_container" 2>/dev/null || true
     fi
+    docker stop "$GUACD_CONTAINER" 2>/dev/null || true
+    docker rm "$GUACD_CONTAINER" 2>/dev/null || true
 
     # --- Migrate db file if needed ---
     docker run --rm -v "$DATA_VOLUME":/data alpine sh -c \
         "[ -f /data/$OLD_DB ] && mv /data/$OLD_DB /data/$DB_FILE && echo '  [migrate] Renamed $OLD_DB -> $DB_FILE' || true" 2>/dev/null || true
 
-    # --- Start new container ---
-    log_info "[4/4] Starting new container..."
+    # --- Create Docker network ---
+    docker network create "$NETWORK_NAME" 2>/dev/null || true
+
+    # --- Start guacd ---
+    log_info "[5/6] Starting guacd..."
+    docker run -d --name "$GUACD_CONTAINER" \
+        --network "$NETWORK_NAME" \
+        --restart unless-stopped \
+        "$GUACD_IMAGE"
+
+    # --- Start new frontend container ---
+    log_info "[6/6] Starting new container..."
     docker run -d --name "$CONTAINER_NAME" \
+        --network "$NETWORK_NAME" \
         -p "$APP_PORT":3000 \
         -e NODE_ENV=production \
         -e DATABASE_URL="file:/app/data/$DB_FILE" \
         -e APP_SECRET="$app_secret" \
         -e NEXTAUTH_SECRET="$nextauth_secret" \
         -e NEXTAUTH_URL="$nextauth_url" \
+        -e GUACD_HOST="$GUACD_CONTAINER" \
+        -e GUACD_PORT=4822 \
         -e CFCENTER_REPO_DIR=/repo \
         -e CFCENTER_CONTAINER_NAME="$CONTAINER_NAME" \
         -e CFCENTER_IMAGE_NAME="$IMAGE_NAME" \
@@ -483,12 +523,15 @@ do_uninstall() {
     echo ""
     log_warn "This will stop and remove the CFCenter container."
     echo ""
-    read -rp "Remove container? [y/N] " confirm
+    read -rp "Remove containers? [y/N] " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         docker stop "$CONTAINER_NAME" 2>/dev/null || docker stop "$OLD_CONTAINER" 2>/dev/null || true
         docker rm "$CONTAINER_NAME" 2>/dev/null || docker rm "$OLD_CONTAINER" 2>/dev/null || true
+        docker stop "$GUACD_CONTAINER" 2>/dev/null || true
+        docker rm "$GUACD_CONTAINER" 2>/dev/null || true
         docker rmi "$IMAGE_NAME" 2>/dev/null || true
-        log_success "Container removed"
+        docker network rm "$NETWORK_NAME" 2>/dev/null || true
+        log_success "Containers removed"
     fi
 
     echo ""
@@ -514,19 +557,32 @@ do_status() {
     echo -e "${BOLD}CFCenter Status${NC}"
     echo "-------------------------------------------"
 
-    # Container
+    # Frontend container
     local status
     if docker inspect "$CONTAINER_NAME" > /dev/null 2>&1; then
         status=$(docker ps --filter name="$CONTAINER_NAME" --format '{{.Status}}')
         if [ -n "$status" ]; then
-            echo -e "  Container:  ${GREEN}Running${NC} ($status)"
+            echo -e "  Frontend:   ${GREEN}Running${NC} ($status)"
         else
-            echo -e "  Container:  ${YELLOW}Stopped${NC}"
+            echo -e "  Frontend:   ${YELLOW}Stopped${NC}"
         fi
     elif docker inspect "$OLD_CONTAINER" > /dev/null 2>&1; then
-        echo -e "  Container:  ${YELLOW}Legacy ($OLD_CONTAINER)${NC} — run 'update' to migrate"
+        echo -e "  Frontend:   ${YELLOW}Legacy ($OLD_CONTAINER)${NC} — run 'update' to migrate"
     else
-        echo -e "  Container:  ${RED}Not found${NC}"
+        echo -e "  Frontend:   ${RED}Not found${NC}"
+    fi
+
+    # Guacd container
+    if docker inspect "$GUACD_CONTAINER" > /dev/null 2>&1; then
+        local guacd_status
+        guacd_status=$(docker ps --filter name="$GUACD_CONTAINER" --format '{{.Status}}')
+        if [ -n "$guacd_status" ]; then
+            echo -e "  Guacd:      ${GREEN}Running${NC} ($guacd_status)"
+        else
+            echo -e "  Guacd:      ${YELLOW}Stopped${NC}"
+        fi
+    else
+        echo -e "  Guacd:      ${RED}Not found${NC}"
     fi
 
     # Image

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guacamole Console</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { 
+      width: 100%; 
+      height: 100%; 
+      overflow: hidden; 
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* Toolbar */
+    #toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 12px; background: #0a0a0a; border-bottom: 1px solid #1f1f1f; flex-shrink: 0;
+      user-select: none; z-index: 20;
+    }
+    #toolbar .info { display: flex; align-items: center; gap: 10px; }
+    #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #6b7280; flex-shrink: 0; }
+    #status-dot.connected { background: #22c55e; }
+    #status-dot.connecting { background: #f59e0b; animation: pulse 1.2s ease-in-out infinite; }
+    #status-dot.error { background: #ef4444; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    #vm-info { color: #e5e5e5; font-size: 13px; font-weight: 600; }
+    #status-text { color: #666; font-size: 11px; white-space: nowrap; }
+    .badge {
+      padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
+      background: #14532d; color: #4ade80; border: 1px solid #166534;
+    }
+
+    /* VM power actions */
+    #toolbar .vm-actions { display: flex; gap: 2px; margin: 0 8px; }
+    #toolbar .vm-actions button {
+      padding: 5px 8px; font-size: 14px; background: transparent; border: none;
+      color: #888; cursor: pointer; border-radius: 4px; display: flex; align-items: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    #toolbar .vm-actions button:hover { background: #1f1f1f; color: #fff; }
+    #toolbar .vm-actions button:disabled { color: #333; cursor: not-allowed; }
+    #toolbar .vm-actions button.btn-start:not(:disabled) { color: #22c55e; }
+    #toolbar .vm-actions button.btn-start:not(:disabled):hover { background: #14532d; }
+    #toolbar .vm-actions button.btn-shutdown:not(:disabled) { color: #f59e0b; }
+    #toolbar .vm-actions button.btn-shutdown:not(:disabled):hover { background: #78350f; }
+    #toolbar .vm-actions button.btn-stop:not(:disabled) { color: #ef4444; }
+    #toolbar .vm-actions button.btn-stop:not(:disabled):hover { background: #7f1d1d; }
+    #toolbar .vm-actions button.btn-pause:not(:disabled) { color: #3b82f6; }
+    #toolbar .vm-actions button.btn-pause:not(:disabled):hover { background: #1e3a8a; }
+    #toolbar .vm-actions button.loading { opacity: 0.5; pointer-events: none; }
+
+    /* Toolbar buttons */
+    #toolbar .buttons { display: flex; gap: 4px; align-items: center; }
+    .tb { 
+      padding: 5px 10px; font-size: 11px; background: #1a1a1a; color: #aaa;
+      border: 1px solid #2a2a2a; border-radius: 5px; cursor: pointer;
+      transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 5px;
+    }
+    .tb:hover { background: #252525; color: #fff; border-color: #3a3a3a; }
+    .tb:disabled { background: #111; color: #444; cursor: not-allowed; border-color: #1a1a1a; }
+    .tb.active { background: #1e3a5f; color: #60a5fa; border-color: #2563eb; }
+    .tb-sep { width: 1px; height: 20px; background: #222; margin: 0 4px; }
+
+    /* Error bar */
+    #error-bar {
+      padding: 8px 12px; background: #7f1d1d; color: #fecaca; font-size: 12px; display: none;
+      cursor: pointer;
+    }
+    #error-bar:hover { background: #991b1b; }
+    #error-bar.visible { display: flex; align-items: center; justify-content: space-between; }
+
+    /* Screen */
+    #screen {
+      flex: 1; width: 100%; background: #000; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #display { position: relative; }
+    #loading {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      text-align: center; color: #555; z-index: 5;
+    }
+    #loading .spinner {
+      width: 40px; height: 40px; border: 3px solid #222; border-top-color: #22c55e;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading .text { font-size: 13px; color: #888; }
+    #loading .subtext { font-size: 11px; margin-top: 6px; color: #555; }
+
+    /* Clipboard panel */
+    #clipboard-panel {
+      display: none; position: absolute; bottom: 0; left: 0; right: 0;
+      background: #0f0f0f; border-top: 1px solid #222; z-index: 25; padding: 12px;
+      animation: slideUp 0.2s ease-out;
+    }
+    #clipboard-panel.open { display: block; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    #clipboard-textarea {
+      width: 100%; height: 80px; background: #1a1a1a; border: 1px solid #2a2a2a;
+      border-radius: 6px; color: #ccc; font-size: 12px; padding: 8px; resize: none;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+    #clipboard-textarea:focus { outline: none; border-color: #22c55e; }
+    .clipboard-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+    /* Guacamole display scaling */
+    #display canvas { cursor: none; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="toolbar">
+      <div class="info">
+        <span id="status-dot"></span>
+        <span id="vm-info">Console</span>
+        <span id="status-text"></span>
+        <span class="badge">Guacamole</span>
+      </div>
+      <div class="vm-actions">
+        <button id="btn-start" class="btn-start" title="Start VM">&#9654;</button>
+        <button id="btn-shutdown" class="btn-shutdown" title="Shutdown (graceful)">&#9211;</button>
+        <button id="btn-stop" class="btn-stop" title="Stop (forced)">&#9632;</button>
+        <button id="btn-pause" class="btn-pause" title="Pause">&#9208;</button>
+      </div>
+      <div class="buttons">
+        <button class="tb" id="btn-cad" disabled title="Send Ctrl+Alt+Del">&#9000; Ctrl+Alt+Del</button>
+        <button class="tb" id="btn-clipboard" title="Clipboard">&#128203;</button>
+        <button class="tb" id="btn-fullscreen" title="Fullscreen">&#9974;</button>
+        <div class="tb-sep"></div>
+        <button class="tb" id="btn-reconnect" title="Reconnect">&#8635; Reconnect</button>
+        <button class="tb" id="btn-novnc" title="Switch to noVNC">noVNC</button>
+        <button class="tb" id="btn-close" title="Close">&#10005;</button>
+      </div>
+    </div>
+    <div id="error-bar" onclick="this.classList.remove('visible')"></div>
+    <div id="screen">
+      <div id="display"></div>
+      <div id="loading">
+        <div class="spinner"></div>
+        <div class="text" id="loading-text">Loading...</div>
+        <div class="subtext" id="loading-subtext"></div>
+      </div>
+
+      <!-- Clipboard panel -->
+      <div id="clipboard-panel">
+        <textarea id="clipboard-textarea" placeholder="Paste text here to send to VM, or copy from VM..."></textarea>
+        <div class="clipboard-actions">
+          <button class="tb" onclick="sendClipboard()">Send to VM</button>
+          <button class="tb" onclick="clearClipboard()">Clear</button>
+          <button class="tb" style="margin-left:auto" onclick="toggleClipboardPanel()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/guacamole/guacamole.bundle.js"></script>
+
+  <script>
+    // ─── State ───────────────────────────────────────────────────────
+    let guacClient = null;
+    let guacTunnel = null;
+    let vmStatus = 'unknown';
+    let clipboardOpen = false;
+    let connected = false;
+
+    // ─── DOM refs ────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const statusDot = $('status-dot');
+    const vmInfo = $('vm-info');
+    const statusText = $('status-text');
+    const errorBar = $('error-bar');
+    const screen = $('screen');
+    const display = $('display');
+    const loading = $('loading');
+    const loadingText = $('loading-text');
+    const loadingSubtext = $('loading-subtext');
+    const btnCad = $('btn-cad');
+    const btnReconnect = $('btn-reconnect');
+    const btnClose = $('btn-close');
+    const btnStart = $('btn-start');
+    const btnShutdown = $('btn-shutdown');
+    const btnStop = $('btn-stop');
+    const btnPause = $('btn-pause');
+    const btnFullscreen = $('btn-fullscreen');
+    const btnClipboard = $('btn-clipboard');
+    const btnNovnc = $('btn-novnc');
+    const clipboardPanel = $('clipboard-panel');
+
+    const params = new URLSearchParams(window.location.search);
+    const connId = params.get('connId') || '1';
+    const type = params.get('type');
+    const node = params.get('node');
+    const vmid = params.get('vmid');
+
+    document.title = `Console - ${type?.toUpperCase()} ${vmid} - ${node}`;
+    vmInfo.textContent = `${type?.toUpperCase()} ${vmid} \u2022 ${node}`;
+
+    // ─── Status helpers ──────────────────────────────────────────────
+    function setStatus(status, text) {
+      statusDot.className = status;
+      statusText.textContent = text ? `\u2022 ${text}` : '';
+    }
+
+    function showError(msg) {
+      errorBar.textContent = msg;
+      errorBar.classList.add('visible');
+    }
+
+    function hideError() {
+      errorBar.classList.remove('visible');
+    }
+
+    // ─── VM status & actions ─────────────────────────────────────────
+    function updateVmButtons() {
+      const isRunning = vmStatus === 'running';
+      const isStopped = vmStatus === 'stopped';
+      btnStart.disabled = isRunning;
+      btnShutdown.disabled = !isRunning;
+      btnStop.disabled = isStopped;
+      btnPause.disabled = !isRunning;
+    }
+
+    async function fetchVmStatus() {
+      try {
+        const apiUrl = `/api/v1/connections/${encodeURIComponent(connId)}/guests/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}/status`;
+        const res = await fetch(apiUrl);
+        if (res.ok) {
+          const json = await res.json();
+          vmStatus = json?.data?.status || 'unknown';
+          updateVmButtons();
+        }
+      } catch (err) {
+        console.error('Failed to fetch VM status:', err);
+      }
+    }
+
+    async function vmAction(action) {
+      const btn = { start: btnStart, shutdown: btnShutdown, stop: btnStop, suspend: btnPause }[action];
+      if (btn) btn.classList.add('loading');
+      try {
+        const apiUrl = `/api/v1/connections/${encodeURIComponent(connId)}/guests/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}/${action}`;
+        const res = await fetch(apiUrl, { method: 'POST' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        setTimeout(fetchVmStatus, 1500);
+        if (action === 'start') setTimeout(connect, 3000);
+      } catch (err) {
+        showError(`Action ${action}: ${err.message}`);
+      } finally {
+        if (btn) btn.classList.remove('loading');
+      }
+    }
+
+    // ─── Clipboard ───────────────────────────────────────────────────
+    function toggleClipboardPanel() {
+      clipboardOpen = !clipboardOpen;
+      clipboardPanel.classList.toggle('open', clipboardOpen);
+      btnClipboard.classList.toggle('active', clipboardOpen);
+    }
+
+    function sendClipboard() {
+      if (!guacClient) return;
+      const text = $('clipboard-textarea').value;
+      if (text) guacClient.setClipboard(text, 'text/plain');
+    }
+
+    function clearClipboard() {
+      $('clipboard-textarea').value = '';
+    }
+
+    // ─── Fullscreen ──────────────────────────────────────────────────
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+        btnFullscreen.classList.add('active');
+      } else {
+        document.exitFullscreen().catch(() => {});
+        btnFullscreen.classList.remove('active');
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      btnFullscreen.classList.toggle('active', !!document.fullscreenElement);
+      if (guacClient) setTimeout(scaleDisplay, 100);
+    });
+
+    // ─── Scale display to fit screen ─────────────────────────────────
+    function scaleDisplay() {
+      if (!guacClient) return;
+      const guacDisplay = guacClient.getDisplay();
+      const screenW = screen.clientWidth;
+      const screenH = screen.clientHeight;
+      const displayW = guacDisplay.getWidth();
+      const displayH = guacDisplay.getHeight();
+
+      if (displayW <= 0 || displayH <= 0) return;
+
+      const scale = Math.min(screenW / displayW, screenH / displayH);
+      guacDisplay.scale(scale);
+    }
+
+    // ─── Connect ─────────────────────────────────────────────────────
+    async function connect() {
+      if (!type || !node || !vmid) { showError('Missing parameters'); setStatus('error', 'Error'); return; }
+
+      // Check if Guacamole library is loaded
+      if (typeof Guacamole === 'undefined') {
+        showError('Guacamole client library not loaded');
+        setStatus('error', 'Error');
+        return;
+      }
+
+      // Disconnect existing
+      if (guacClient) {
+        try { guacClient.disconnect(); } catch {}
+        guacClient = null;
+      }
+
+      hideError();
+      connected = false;
+      setStatus('connecting', 'Connecting...');
+      loading.style.display = 'block';
+      loadingText.textContent = 'Creating Guacamole session...';
+      loadingSubtext.textContent = '';
+
+      try {
+        // Request a Guacamole session token from the API
+        const apiUrl = `/api/v1/connections/${encodeURIComponent(connId)}/guests/${encodeURIComponent(type)}/${encodeURIComponent(node)}/${encodeURIComponent(vmid)}/console/guac`;
+        const res = await fetch(apiUrl, { method: 'POST' });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+
+        const json = await res.json();
+        const { wsPath } = json?.data || {};
+        if (!wsPath) throw new Error('Invalid session — no WebSocket path returned');
+
+        loadingText.textContent = 'Connecting to Guacamole...';
+
+        // Build full WebSocket URL
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}${wsPath}`;
+
+        // Create WebSocket tunnel
+        guacTunnel = new Guacamole.WebSocketTunnel(wsUrl);
+
+        // Create Guacamole client
+        guacClient = new Guacamole.Client(guacTunnel);
+
+        // Clear display area and attach Guacamole display element
+        display.innerHTML = '';
+        display.appendChild(guacClient.getDisplay().getElement());
+
+        // Handle state changes
+        guacClient.onstatechange = function(state) {
+          switch (state) {
+            case 0: // IDLE
+              setStatus('', 'Idle');
+              break;
+            case 1: // CONNECTING
+              setStatus('connecting', 'Connecting...');
+              break;
+            case 2: // WAITING
+              setStatus('connecting', 'Waiting for server...');
+              break;
+            case 3: // CONNECTED
+              connected = true;
+              loading.style.display = 'none';
+              setStatus('connected', 'Connected');
+              btnCad.disabled = false;
+              // Scale display after initial render
+              setTimeout(scaleDisplay, 200);
+              setTimeout(scaleDisplay, 1000);
+              break;
+            case 4: // DISCONNECTING
+              setStatus('', 'Disconnecting...');
+              break;
+            case 5: // DISCONNECTED
+              connected = false;
+              setStatus('', 'Disconnected');
+              btnCad.disabled = true;
+              loading.style.display = 'block';
+              loadingText.textContent = 'Disconnected';
+              loadingSubtext.textContent = 'Click Reconnect to resume';
+              break;
+          }
+        };
+
+        // Handle errors
+        guacClient.onerror = function(error) {
+          console.error('Guacamole error:', error);
+          const msg = error.message || error.toString() || 'Unknown error';
+          showError(`Guacamole: ${msg}`);
+        };
+
+        // Handle clipboard from VM
+        guacClient.onclipboard = function(stream, mimetype) {
+          if (mimetype !== 'text/plain') return;
+          let data = '';
+          const reader = new Guacamole.StringReader(stream);
+          reader.ontext = function(text) { data += text; };
+          reader.onend = function() {
+            $('clipboard-textarea').value = data;
+            if (navigator.clipboard?.writeText) {
+              navigator.clipboard.writeText(data).catch(() => {});
+            }
+          };
+        };
+
+        // Handle display resize
+        guacClient.getDisplay().onresize = function(width, height) {
+          scaleDisplay();
+        };
+
+        // Keyboard input
+        const keyboard = new Guacamole.Keyboard(document);
+        keyboard.onkeydown = function(keysym) {
+          if (guacClient && connected) guacClient.sendKeyEvent(1, keysym);
+        };
+        keyboard.onkeyup = function(keysym) {
+          if (guacClient && connected) guacClient.sendKeyEvent(0, keysym);
+        };
+
+        // Mouse input
+        const mouse = new Guacamole.Mouse(guacClient.getDisplay().getElement());
+        mouse.onEach(['mousedown', 'mousemove', 'mouseup'], function(e) {
+          if (guacClient && connected) {
+            // Scale mouse position
+            const guacDisplay = guacClient.getDisplay();
+            const scale = guacDisplay.getScale();
+            const scaledState = new Guacamole.Mouse.State(
+              e.x / scale,
+              e.y / scale,
+              e.left,
+              e.middle,
+              e.right,
+              e.up,
+              e.down
+            );
+            guacClient.sendMouseState(scaledState);
+          }
+        });
+
+        // Touch input for mobile
+        const touch = new Guacamole.Mouse.Touchpad(guacClient.getDisplay().getElement());
+        touch.onEach(['mousedown', 'mousemove', 'mouseup'], function(e) {
+          if (guacClient && connected) {
+            const guacDisplay = guacClient.getDisplay();
+            const scale = guacDisplay.getScale();
+            const scaledState = new Guacamole.Mouse.State(
+              e.x / scale,
+              e.y / scale,
+              e.left,
+              e.middle,
+              e.right,
+              e.up,
+              e.down
+            );
+            guacClient.sendMouseState(scaledState);
+          }
+        });
+
+        // Connect with screen dimensions
+        const width = screen.clientWidth;
+        const height = screen.clientHeight;
+        guacClient.connect(`width=${width}&height=${height}&dpi=96`);
+
+      } catch (err) {
+        console.error('Guacamole connect error:', err);
+        showError(err.message);
+        setStatus('error', 'Error');
+        loadingText.textContent = 'Connection failed';
+        loadingSubtext.textContent = err.message;
+      }
+    }
+
+    // ─── Send Ctrl+Alt+Del ───────────────────────────────────────────
+    function sendCtrlAltDel() {
+      if (!guacClient || !connected) return;
+      // Key codes for Ctrl, Alt, Delete
+      guacClient.sendKeyEvent(1, 0xFFE3); // Ctrl down
+      guacClient.sendKeyEvent(1, 0xFFE9); // Alt down
+      guacClient.sendKeyEvent(1, 0xFFFF); // Delete down
+      guacClient.sendKeyEvent(0, 0xFFFF); // Delete up
+      guacClient.sendKeyEvent(0, 0xFFE9); // Alt up
+      guacClient.sendKeyEvent(0, 0xFFE3); // Ctrl up
+    }
+
+    // ─── Switch to noVNC ─────────────────────────────────────────────
+    function switchToNoVNC() {
+      const novncUrl = `/novnc/console.html?connId=${encodeURIComponent(connId)}&type=${encodeURIComponent(type)}&node=${encodeURIComponent(node)}&vmid=${encodeURIComponent(vmid)}`;
+      window.location.href = novncUrl;
+    }
+
+    // ─── Window resize handler ───────────────────────────────────────
+    window.addEventListener('resize', function() {
+      if (guacClient && connected) scaleDisplay();
+    });
+
+    // ─── Event listeners ─────────────────────────────────────────────
+    btnCad.addEventListener('click', sendCtrlAltDel);
+    btnStart.addEventListener('click', () => vmAction('start'));
+    btnShutdown.addEventListener('click', () => vmAction('shutdown'));
+    btnStop.addEventListener('click', () => vmAction('stop'));
+    btnPause.addEventListener('click', () => vmAction('suspend'));
+    btnReconnect.addEventListener('click', connect);
+    btnClose.addEventListener('click', () => window.close());
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    btnClipboard.addEventListener('click', toggleClipboardPanel);
+    btnNovnc.addEventListener('click', switchToNoVNC);
+
+    // Keyboard shortcut: Escape closes panels
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && clipboardOpen) toggleClipboardPanel();
+    });
+
+    // ─── Init ────────────────────────────────────────────────────────
+    function init() {
+      loadingText.textContent = 'Loading Guacamole client...';
+
+      if (typeof Guacamole === 'undefined') {
+        loadingText.textContent = 'Error: Guacamole library not loaded';
+        loadingSubtext.textContent = 'Run: node bundle-guacamole.js';
+        setStatus('error', 'Error');
+        return;
+      }
+
+      fetchVmStatus();
+      connect();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

@@ -21,6 +21,9 @@ services:
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - APP_URL=${APP_URL:-http://localhost:3000}
       - ORCHESTRATOR_URL=http://orchestrator:8080
+      # Guacamole support (optional, requires guacd sidecar: --profile guacamole)
+      - GUACD_HOST=${GUACD_HOST:-guacd}
+      - GUACD_PORT=${GUACD_PORT:-4822}
       # GUI update support (mount Docker socket + repo for in-app updates)
       - CFCENTER_REPO_DIR=/repo
       - CFCENTER_CONTAINER_NAME=cfcenter-frontend
@@ -65,6 +68,24 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
+
+  # ========================================
+  # Guacd (Apache Guacamole Daemon) - Optional
+  # Provides server-side VNC/RDP/SSH rendering
+  # for better console performance
+  # ========================================
+  guacd:
+    image: guacamole/guacd:1.5.5
+    container_name: cfcenter-guacd
+    restart: unless-stopped
+    networks:
+      - cfcenter
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 4822 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 # ========================================
 # Networks
