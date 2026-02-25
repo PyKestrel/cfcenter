@@ -102,8 +102,11 @@ function initGuacamoleLite() {
   // Use noServer mode so we control upgrade routing in start.js
   // This prevents guacamole-lite from adding its own upgrade listener
   // to the HTTP server, which would conflict with noVNC/xterm.js routing.
+  // NOTE: We must include `server: null` because guacamole-lite's constructor
+  // adds `port: 8080` as default when wsOptions lacks a `server` property,
+  // and ws throws if both `port` and `noServer` are specified.
   guacServer = new GuacamoleLite(
-    { noServer: true },
+    { server: null, noServer: true },
     guacdOptions,
     clientOptions
   )
