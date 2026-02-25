@@ -42,7 +42,7 @@ const { getRequestHandlers } = require('next/dist/server/lib/start-server')
 const { handleWsConnection } = require('./ws-proxy')
 
 // Import guacd proxy (Apache Guacamole integration)
-const { initGuacamoleLite, handleGuacUpgrade, checkGuacdHealth, GUACD_HOST, GUACD_PORT } = require('./guacd-proxy')
+const { initGuacamoleLite, handleGuacUpgrade, checkGuacdHealth, encryptToken, GUACD_HOST, GUACD_PORT } = require('./guacd-proxy')
 
 // Import VNC relay (bridges Proxmox WebSocket VNC to TCP for guacd)
 const { createVncRelay, closeAllRelays } = require('./vnc-relay')
@@ -74,8 +74,26 @@ async function main() {
         try {
           const params = JSON.parse(body)
           const relay = await createVncRelay(params)
+
+          // Encrypt token using guacamole-lite's own Crypt class (guarantees compatibility)
+          const containerName = process.env.CFCENTER_CONTAINER_NAME || 'cfcenter-frontend'
+          const token = encryptToken({
+            connection: {
+              type: 'vnc',
+              settings: {
+                hostname: containerName,
+                port: String(relay.relayPort),
+                security: 'none',
+                'ignore-cert': true,
+                'enable-audio': false,
+                'cursor': 'remote',
+                'color-depth': 24,
+              },
+            },
+          })
+
           res.writeHead(200, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ relayPort: relay.relayPort, relayId: relay.relayId }))
+          res.end(JSON.stringify({ relayPort: relay.relayPort, relayId: relay.relayId, token }))
         } catch (err) {
           console.error('[start] VNC relay error:', err)
           res.writeHead(500, { 'Content-Type': 'application/json' })

@@ -1,5 +1,3 @@
-import crypto from "crypto"
-
 import { NextResponse } from "next/server"
 
 import { pveFetch } from "@/lib/proxmox/client"
@@ -7,34 +5,6 @@ import { getConnectionById } from "@/lib/connections/getConnection"
 import { checkPermission, buildVmResourceId, PERMISSIONS } from "@/lib/rbac"
 
 export const runtime = "nodejs"
-
-// Derive encryption key from APP_SECRET (must match guacd-proxy.js)
-const APP_SECRET = process.env.APP_SECRET || process.env.NEXTAUTH_SECRET || 'cfcenter-dev-secret-key-change-me'
-
-const ENCRYPTION_KEY = crypto
-  .createHash('sha256')
-  .update(APP_SECRET)
-  .digest()
-  .subarray(0, 32)
-
-const CIPHER = 'aes-256-cbc'
-
-function encryptToken(tokenObject: object): string {
-  const iv = crypto.randomBytes(16)
-  const cipher = crypto.createCipheriv(CIPHER, ENCRYPTION_KEY, iv)
-
-  // Must use 'binary' encoding to match guacamole-lite's Crypt.js decrypt()
-  let encrypted = cipher.update(JSON.stringify(tokenObject), 'utf8', 'binary')
-
-  encrypted += cipher.final('binary')
-
-  const data = {
-    iv: iv.toString('base64'),
-    value: Buffer.from(encrypted, 'binary').toString('base64'),
-  }
-
-  return Buffer.from(JSON.stringify(data)).toString('base64')
-}
 
 const APP_PORT = process.env.PORT || 3000
 const INTERNAL_API_URL = `http://localhost:${APP_PORT}`
@@ -109,24 +79,13 @@ export async function POST(
 
     const relay = await relayRes.json()
 
-    // Create encrypted token for guacamole-lite
-    // guacd connects to the frontend container's relay port via Docker network
-    const containerName = process.env.CFCENTER_CONTAINER_NAME || "cfcenter-frontend"
+    // The internal API also returns the encrypted token (created by guacd-proxy.js
+    // using guacamole-lite's own Crypt class, guaranteeing compatibility)
+    const token = relay.token
 
-    const token = encryptToken({
-      connection: {
-        type: "vnc",
-        settings: {
-          hostname: containerName,
-          port: String(relay.relayPort),
-          security: "none",
-          "ignore-cert": true,
-          "enable-audio": false,
-          "cursor": "remote",
-          "color-depth": 24,
-        },
-      },
-    })
+    if (!token) {
+      throw new Error("Internal API did not return encrypted token")
+    }
 
     return NextResponse.json({
       data: {

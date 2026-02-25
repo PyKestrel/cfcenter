@@ -17,6 +17,7 @@
 
 const crypto = require('crypto')
 const GuacamoleLite = require('guacamole-lite')
+const GuacCrypt = require('guacamole-lite/lib/Crypt')
 
 // ─── Configuration ───────────────────────────────────────────────
 const GUACD_HOST = process.env.GUACD_HOST || 'guacd'
@@ -35,23 +36,18 @@ const CIPHER = 'AES-256-CBC'
 
 // ─── Token helpers ───────────────────────────────────────────────
 
+// Use guacamole-lite's own Crypt class for token encryption
+// This guarantees the encrypt/decrypt roundtrip is always compatible
+const guacCrypt = new GuacCrypt(CIPHER, ENCRYPTION_KEY)
+
 /**
  * Encrypt a connection token for guacamole-lite.
- * Must match the decryption logic in guacamole-lite's Server.decryptToken().
+ * Uses guacamole-lite's own Crypt class to guarantee compatibility.
  * @param {object} tokenObject - { connection: { type, settings } }
  * @returns {string} Base64-encoded encrypted token
  */
 function encryptToken(tokenObject) {
-  const iv = crypto.randomBytes(16)
-  const cipher = crypto.createCipheriv(CIPHER, ENCRYPTION_KEY, iv)
-  // Must use 'binary' encoding to match guacamole-lite's Crypt.js decrypt()
-  let encrypted = cipher.update(JSON.stringify(tokenObject), 'utf8', 'binary')
-  encrypted += cipher.final('binary')
-  const data = {
-    iv: iv.toString('base64'),
-    value: Buffer.from(encrypted, 'binary').toString('base64'),
-  }
-  return Buffer.from(JSON.stringify(data)).toString('base64')
+  return guacCrypt.encrypt(tokenObject)
 }
 
 // ─── guacamole-lite instance ─────────────────────────────────────
