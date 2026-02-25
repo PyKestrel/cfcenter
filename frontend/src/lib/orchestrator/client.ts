@@ -59,11 +59,29 @@ export async function orchestratorFetch<T>(
 
     // Normalize connection errors so route handlers can match on a single string
     if (error.message?.includes('fetch failed') || error.cause?.code === 'ECONNREFUSED') {
-      throw new Error('ECONNREFUSED: Orchestrator unavailable')
+      const err = new Error('ECONNREFUSED: Orchestrator unavailable')
+      ;(err as any).code = 'ECONNREFUSED'
+
+      throw err
     }
 
     throw error
   }
+}
+
+/**
+ * Check if an error is an orchestrator unavailable error.
+ * Use this to silently handle missing orchestrator instead of logging errors.
+ */
+export function isOrchestratorUnavailable(error: any): boolean {
+  if (!error) return false
+  const msg = error?.message || ''
+
+  return msg.includes('ECONNREFUSED') ||
+    msg.includes('Orchestrator unavailable') ||
+    msg.includes('fetch failed') ||
+    msg.includes('Orchestrator request timeout') ||
+    error?.code === 'ECONNREFUSED'
 }
 
 // ============================================

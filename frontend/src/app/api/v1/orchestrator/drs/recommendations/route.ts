@@ -22,9 +22,11 @@ export async function GET(request: NextRequest) {
     // Retourner directement le tableau
     return NextResponse.json(response.data || [])
   } catch (e: any) {
-    console.error("Error fetching DRS recommendations:", e)
+    // Silently return empty array when orchestrator is unavailable
+    if (!e?.message?.includes('ECONNREFUSED') && !e?.message?.includes('Orchestrator unavailable')) {
+      console.error("Error fetching DRS recommendations:", e)
+    }
 
-    // Retourner un tableau vide en cas d'erreur
     return NextResponse.json([])
   }
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 
-// Features disponibles
+// Features disponibles — all always enabled
 export const Features = {
   DRS: 'drs',
   FIREWALL: 'firewall',
@@ -24,117 +24,45 @@ export const Features = {
 
 type FeatureId = typeof Features[keyof typeof Features]
 
-interface LicenseStatus {
-  licensed: boolean
-  expired: boolean
-  edition?: string
-  features?: string[]
-  [key: string]: any
-}
-
-interface Feature {
-  id: string
-  enabled: boolean
-  [key: string]: any
-}
-
 interface LicenseContextValue {
-  status: LicenseStatus | null
+  status: { licensed: boolean; expired: boolean; edition: string; features: string[] } | null
   loading: boolean
   error: string | null
   isLicensed: boolean
   isEnterprise: boolean
-  features: Feature[]
+  features: { id: string; enabled: boolean }[]
   hasFeature: (featureId: FeatureId | string) => boolean
   refresh: () => Promise<void>
 }
 
-const LicenseContext = createContext<LicenseContextValue>({
-  status: null,
-  loading: true,
+// All features always unlocked — no community/enterprise distinction
+const ALL_FEATURES = Object.values(Features)
+
+const ALL_FEATURES_LIST = ALL_FEATURES.map(id => ({ id, enabled: true }))
+
+const STATIC_STATUS = {
+  licensed: true,
+  expired: false,
+  edition: 'enterprise' as const,
+  features: ALL_FEATURES as unknown as string[],
+}
+
+const staticValue: LicenseContextValue = {
+  status: STATIC_STATUS,
+  loading: false,
   error: null,
-  isLicensed: false,
-  isEnterprise: false,
-  features: [],
-  hasFeature: () => false,
+  isLicensed: true,
+  isEnterprise: true,
+  features: ALL_FEATURES_LIST,
+  hasFeature: () => true,
   refresh: async () => {},
-})
+}
+
+const LicenseContext = createContext<LicenseContextValue>(staticValue)
 
 export function LicenseProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<LicenseStatus | null>(null)
-  const [features, setFeatures] = useState<Feature[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const loadLicenseStatus = useCallback(async () => {
-    try {
-      const res = await fetch('/api/v1/license/status')
-      if (res.ok) {
-        const data = await res.json()
-        setStatus(data)
-        setError(null)
-      } else {
-        setError('Failed to load license status')
-      }
-    } catch (e: any) {
-      console.error('Failed to load license status:', e)
-      setError(e?.message || 'Failed to load license status')
-    }
-  }, [])
-
-  const loadFeatures = useCallback(async () => {
-    try {
-      const res = await fetch('/api/v1/license/features')
-      if (res.ok) {
-        const data = await res.json()
-        setFeatures(data.features || [])
-      }
-    } catch (e) {
-      console.error('Failed to load features:', e)
-    }
-  }, [])
-
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    await Promise.all([loadLicenseStatus(), loadFeatures()])
-    setLoading(false)
-  }, [loadLicenseStatus, loadFeatures])
-
-  useEffect(() => {
-    refresh()
-  }, [refresh])
-
-  const isLicensed = Boolean(status?.licensed && !status?.expired)
-  const isEnterprise = status?.edition === 'enterprise'
-
-  const hasFeature = useCallback((featureId: FeatureId | string): boolean => {
-    if (!isLicensed) return false
-
-    // Core Enterprise features — always available with any Enterprise license
-    if (isEnterprise && featureId === Features.ALERTS) return true
-    if (isEnterprise && featureId === Features.TASK_CENTER) return true
-
-    // Si pas de features dans le statut, vérifier dans la liste des features
-    if (status?.features && Array.isArray(status.features)) {
-      return status.features.includes(featureId)
-    }
-
-    // Fallback: vérifier dans la liste des features chargées
-    const feature = features.find(f => f.id === featureId)
-    return feature?.enabled === true
-  }, [isLicensed, isEnterprise, status, features])
-
   return (
-    <LicenseContext.Provider value={{
-      status,
-      loading,
-      error,
-      isLicensed,
-      isEnterprise,
-      features,
-      hasFeature,
-      refresh,
-    }}>
+    <LicenseContext.Provider value={staticValue}>
       {children}
     </LicenseContext.Provider>
   )
@@ -142,9 +70,11 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
 
 export function useLicense() {
   const context = useContext(LicenseContext)
+
   if (!context) {
     throw new Error('useLicense must be used within a LicenseProvider')
   }
+
   return context
 }
 

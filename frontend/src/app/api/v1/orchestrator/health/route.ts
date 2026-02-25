@@ -16,10 +16,8 @@ export async function GET() {
     
 return NextResponse.json(response.data)
   } catch (error: any) {
-    console.error('[orchestrator/health] GET error:', error)
-    
-    // Si l'orchestrator est indisponible, retourner un statut offline
-    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('timeout') || error.message?.includes('fetch failed')) {
+    // Si l'orchestrator est indisponible, retourner un statut offline (silently)
+    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('timeout') || error.message?.includes('fetch failed') || error.message?.includes('Orchestrator unavailable')) {
       const offlineResponse: PulseHealth = {
         status: 'error',
         time: new Date().toISOString(),

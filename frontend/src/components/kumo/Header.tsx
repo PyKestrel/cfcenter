@@ -108,8 +108,8 @@ export default function Header() {
 
       {/* Actions */}
       <div className="pc-header-actions">
-        {/* Orchestrator health indicator */}
-        {isEnterprise && (
+        {/* Orchestrator health indicator — hidden when orchestrator not running */}
+        {false && (
           <Tooltip content={orchestratorHealthy ? t('common.healthy') : t('common.unhealthy')}>
             <span
               className="flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:bg-[var(--pc-border-subtle)] cursor-pointer"
