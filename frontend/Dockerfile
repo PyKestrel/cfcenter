@@ -105,6 +105,11 @@ COPY --from=builder /app/start.js ./start.js
 COPY --from=builder /app/ws-proxy.js ./ws-proxy.js
 COPY --from=builder /app/node_modules/ws ./node_modules/ws
 
+# Copy guacamole-lite proxy and its dependencies
+COPY --from=builder /app/guacd-proxy.js ./guacd-proxy.js
+COPY --from=builder /app/node_modules/guacamole-lite ./node_modules/guacamole-lite
+COPY --from=builder /app/node_modules/deep-extend ./node_modules/deep-extend
+
 # Copy package.json for version display in startup banner
 COPY --from=builder /app/package.json ./package.json
 
