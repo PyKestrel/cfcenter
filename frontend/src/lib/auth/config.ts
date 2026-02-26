@@ -7,6 +7,7 @@ import { nanoid } from "nanoid"
 import { getDb } from "@/lib/db/sqlite"
 import { verifyPassword, hashPassword } from "./password"
 import { authenticateLdap, isLdapEnabled } from "./ldap"
+import { isTotpEnabled, verifyTotpCode, verifyRecoveryCode } from "./totp"
 
 export type UserRole = "super_admin" | "admin" | "operator" | "viewer"
 
@@ -78,6 +79,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        totp_code: { label: "2FA Code", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -129,6 +131,28 @@ export const authOptions: NextAuthOptions = {
         if (!isValid) {
           await logFailure("Mot de passe incorrect")
           throw new Error("Identifiants invalides")
+        }
+
+        // Check 2FA — if enabled, require TOTP code
+        if (isTotpEnabled(user.id)) {
+          const totpCode = credentials.totp_code?.trim()
+
+          if (!totpCode) {
+            // Signal to frontend that 2FA is required
+            throw new Error("TOTP_REQUIRED")
+          }
+
+          // Try TOTP code first, then recovery code
+          const totpValid = verifyTotpCode(user.id, totpCode)
+
+          if (!totpValid) {
+            const recoveryValid = verifyRecoveryCode(user.id, totpCode)
+
+            if (!recoveryValid) {
+              await logFailure("Invalid 2FA code")
+              throw new Error("Invalid 2FA code")
+            }
+          }
         }
 
         // Mettre à jour last_login_at

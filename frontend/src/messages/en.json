@@ -157,6 +157,8 @@
     "drs": "DRS",
     "siteRecovery": "Site Recovery",
     "networkSecurity": "Network Security",
+    "scheduler": "Scheduler",
+    "runbooks": "Runbooks",
     "operations": "Operations",
     "events": "Events",
     "alerts": "Alerts",

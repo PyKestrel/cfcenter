@@ -62,6 +62,8 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+  const [totpRequired, setTotpRequired] = useState(false)
+  const [totpCode, setTotpCode] = useState('')
 
   // Vérifier si le setup initial est requis
   useEffect(() => {
@@ -91,9 +93,16 @@ export default function LoginPage() {
     setError('')
     try {
       const result = authMethod === 'local'
-        ? await signIn('credentials', { email, password, redirect: false, callbackUrl })
+        ? await signIn('credentials', { email, password, totp_code: totpCode || '', redirect: false, callbackUrl })
         : await signIn('ldap', { username, password, redirect: false, callbackUrl })
-      if (result?.error) setError(result.error)
+      if (result?.error) {
+        if (result.error === 'TOTP_REQUIRED' || result.error.includes('TOTP_REQUIRED')) {
+          setTotpRequired(true)
+          setError('')
+        } else {
+          setError(result.error)
+        }
+      }
       else if (result?.ok) { router.push(callbackUrl); router.refresh() }
     } catch { setError(t('auth.loginError')) }
     finally { setLoading(false) }
@@ -234,6 +243,35 @@ export default function LoginPage() {
                   }}
                 />
               </motion.div>
+
+              {/* 2FA TOTP input — shown when server requires it */}
+              <AnimatePresence>
+                {totpRequired && authMethod === 'local' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Alert severity='info' sx={{ mb: 2, borderRadius: 2 }}>
+                      <Typography variant='body2'>
+                        Enter the 6-digit code from your authenticator app, or a recovery code.
+                      </Typography>
+                    </Alert>
+                    <TextField
+                      fullWidth
+                      label='2FA Code'
+                      value={totpCode}
+                      onChange={e => setTotpCode(e.target.value.replace(/\s/g, ''))}
+                      sx={{ mb: 2 }}
+                      required
+                      autoFocus
+                      placeholder='000000'
+                      inputProps={{ maxLength: 19, autoComplete: 'one-time-code', inputMode: 'numeric', style: { letterSpacing: '0.2em', fontFamily: 'JetBrains Mono, monospace', textAlign: 'center', fontSize: '1.1rem' } }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <motion.div variants={staggerItem}>
                 {authMethod === 'local' ? (

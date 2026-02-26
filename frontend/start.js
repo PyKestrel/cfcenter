@@ -203,7 +203,7 @@ function printBanner(guacdAvailable = false) {
   const gitSha = process.env.GIT_SHA
   if (gitSha) appVersion += `-${gitSha.substring(0, 7)}`
 
-  const edition = process.env.ORCHESTRATOR_URL ? 'Enterprise' : 'Community'
+  const edition = 'All features included'
 
   const c = {
     orange: '\x1b[38;5;208m',
@@ -221,7 +221,7 @@ ${c.orange}${c.bold} ██████╗ ██╗  ██╗ █████�
  ██╔═══╝  ██╔██╗ ██║
  ██║     ██╔╝ ██╗╚██████╗
  ╚═╝     ╚═╝  ╚═╝ ╚═════╝${c.reset}
- ${c.bold}CFCenter${c.reset} ${c.dim}v${appVersion}${c.reset} ${c.dim}—${c.reset} ${c.white}${edition} Edition${c.reset}
+ ${c.bold}CFCenter${c.reset} ${c.dim}v${appVersion}${c.reset} ${c.dim}—${c.reset} ${c.white}${edition}${c.reset}
 
  ${c.dim}Unified server on port ${PORT}${c.reset}
  ${c.dim}├─${c.reset} HTTP + WebSocket  ${c.white}http://${hostname}:${PORT}${c.reset}  ${c.green}✓${c.reset}

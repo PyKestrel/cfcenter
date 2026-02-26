@@ -79,7 +79,25 @@ export const menuData = (t = (key) => key) => [
         icon: 'ri-pie-chart-fill',
         href: '/infrastructure/resources',
         permissions: ['vm.view', 'node.view'],
-        requiredFeature: 'green_metrics' // Requires Enterprise license
+        requiredFeature: 'green_metrics'
+      },
+      {
+        label: t('navigation.scheduler'),
+        icon: 'ri-calendar-schedule-line',
+        href: '/automation/scheduler',
+        permissions: ['automation.view']
+      },
+      {
+        label: t('navigation.templates'),
+        icon: 'ri-file-code-line',
+        href: '/automation/templates',
+        permissions: ['vm.view']
+      },
+      {
+        label: t('navigation.runbooks'),
+        icon: 'ri-play-list-add-line',
+        href: '/automation/runbooks',
+        permissions: ['automation.view']
       }
     ]
   },

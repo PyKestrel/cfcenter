@@ -327,6 +327,211 @@ return
           </Card>
         )}
       </Box>
+
+      {/* Two-Factor Authentication */}
+      {user?.authProvider !== 'ldap' && <TwoFactorSection />}
     </Box>
+  )
+}
+
+// ============================================
+// Two-Factor Authentication Section
+// ============================================
+
+function TwoFactorSection() {
+  const [status, setStatus] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [enrolling, setEnrolling] = useState(false)
+  const [enrollData, setEnrollData] = useState(null)
+  const [totpCode, setTotpCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [recoveryCodes, setRecoveryCodes] = useState(null)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  // Fetch current 2FA status
+  useEffect(() => {
+    fetch('/api/v1/auth/totp/setup')
+      .then(r => r.json())
+      .then(data => { setStatus(data.data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const handleBeginSetup = async () => {
+    setEnrolling(true)
+    setError('')
+    try {
+      const res = await fetch('/api/v1/auth/totp/setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setEnrollData(data.data)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setEnrolling(false)
+    }
+  }
+
+  const handleVerify = async () => {
+    setVerifying(true)
+    setError('')
+    try {
+      const res = await fetch('/api/v1/auth/totp/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: totpCode }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Verification failed')
+      setRecoveryCodes(data.data.recovery_codes)
+      setSuccess('Two-factor authentication enabled!')
+      setEnrollData(null)
+      setStatus({ ...status, enabled: true })
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  const handleDisable = async () => {
+    if (!confirm('Disable two-factor authentication? You will no longer need a code to sign in.')) return
+    setError('')
+    try {
+      const res = await fetch('/api/v1/auth/totp/setup', { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to disable 2FA')
+      setStatus({ enabled: false, verified: false, enabled_at: null, recovery_codes_remaining: 0 })
+      setSuccess('Two-factor authentication disabled.')
+      setRecoveryCodes(null)
+      setEnrollData(null)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  if (loading) return null
+
+  return (
+    <Card variant='outlined'>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+          <Box sx={{
+            width: 40, height: 40, borderRadius: 1.5,
+            background: status?.enabled ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <i className='ri-shield-keyhole-line' style={{ fontSize: 20, color: 'white' }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant='h6' fontWeight={600}>Two-Factor Authentication</Typography>
+            <Typography variant='caption' sx={{ opacity: 0.5 }}>
+              {status?.enabled ? 'Enabled' : 'Not enabled'}{status?.enabled && status?.recovery_codes_remaining > 0 ? ` • ${status.recovery_codes_remaining} recovery codes remaining` : ''}
+            </Typography>
+          </Box>
+          {status?.enabled && (
+            <Button variant='outlined' color='error' size='small' onClick={handleDisable}>
+              Disable 2FA
+            </Button>
+          )}
+        </Box>
+
+        {error && <Alert severity='error' sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity='success' sx={{ mb: 2 }}>{success}</Alert>}
+
+        {/* Recovery codes display (shown once after enrollment) */}
+        {recoveryCodes && (
+          <Alert severity='warning' sx={{ mb: 2 }}>
+            <Typography variant='subtitle2' fontWeight={700} sx={{ mb: 1 }}>
+              Save your recovery codes!
+            </Typography>
+            <Typography variant='body2' sx={{ mb: 1.5 }}>
+              These codes can be used to access your account if you lose your authenticator device. Each code can only be used once. Store them in a safe place.
+            </Typography>
+            <Box sx={{
+              display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0.5,
+              p: 1.5, borderRadius: 1, bgcolor: 'rgba(0,0,0,0.05)', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.85rem',
+            }}>
+              {recoveryCodes.map((code, i) => (
+                <Typography key={i} variant='body2' fontFamily='inherit'>{code}</Typography>
+              ))}
+            </Box>
+            <Button
+              size='small' sx={{ mt: 1.5 }}
+              onClick={() => {
+                navigator.clipboard.writeText(recoveryCodes.join('\n'))
+                setSuccess('Recovery codes copied to clipboard!')
+              }}
+              startIcon={<i className='ri-file-copy-line' />}
+            >
+              Copy to clipboard
+            </Button>
+          </Alert>
+        )}
+
+        {/* Not enabled — show setup button */}
+        {!status?.enabled && !enrollData && (
+          <Button
+            variant='contained'
+            onClick={handleBeginSetup}
+            disabled={enrolling}
+            startIcon={<i className='ri-shield-keyhole-line' />}
+          >
+            {enrolling ? 'Setting up...' : 'Enable Two-Factor Authentication'}
+          </Button>
+        )}
+
+        {/* Enrollment in progress — show QR code and verification */}
+        {enrollData && (
+          <Box>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant='subtitle2' fontWeight={600} sx={{ mb: 1 }}>
+              Step 1: Scan this QR code with your authenticator app
+            </Typography>
+            <Typography variant='body2' sx={{ opacity: 0.6, mb: 2 }}>
+              Use Google Authenticator, Authy, 1Password, or any TOTP-compatible app.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 3 }}>
+              {enrollData.qr_code && (
+                <Box sx={{ p: 1, bgcolor: 'white', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                  <img src={enrollData.qr_code} alt='QR Code' width={200} height={200} />
+                </Box>
+              )}
+              <Box>
+                <Typography variant='caption' sx={{ opacity: 0.5, display: 'block', mb: 0.5 }}>
+                  Or enter this key manually:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', p: 1, borderRadius: 1, bgcolor: 'action.hover', wordBreak: 'break-all', maxWidth: 280 }}
+                >
+                  {enrollData.secret}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Typography variant='subtitle2' fontWeight={600} sx={{ mb: 1 }}>
+              Step 2: Enter the code from your authenticator app
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+              <TextField
+                label='6-digit code'
+                value={totpCode}
+                onChange={e => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                size='small'
+                placeholder='000000'
+                inputProps={{ maxLength: 6, inputMode: 'numeric', style: { letterSpacing: '0.3em', fontFamily: 'JetBrains Mono, monospace', textAlign: 'center' } }}
+                sx={{ width: 180 }}
+              />
+              <Button variant='contained' onClick={handleVerify} disabled={verifying || totpCode.length !== 6}>
+                {verifying ? 'Verifying...' : 'Verify & Enable'}
+              </Button>
+              <Button variant='outlined' onClick={() => { setEnrollData(null); setTotpCode('') }}>
+                Cancel
+              </Button>
+            </Box>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
   )
 }
