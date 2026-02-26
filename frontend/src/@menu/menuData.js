@@ -86,7 +86,14 @@ export const menuData = (t = (key) => key) => [
         icon: 'ri-calendar-schedule-line',
         href: '/automation/scheduler',
         permissions: ['automation.view']
-      },
+      }
+    ]
+  },
+
+  {
+    isSection: true,
+    label: t('navigation.automation'),
+    children: [
       {
         label: t('navigation.templates'),
         icon: 'ri-file-code-line',

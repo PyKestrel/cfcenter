@@ -158,6 +158,7 @@
     "siteRecovery": "Site Recovery",
     "networkSecurity": "Network Security",
     "scheduler": "Scheduler",
+    "automation": "Automation",
     "runbooks": "Runbooks",
     "operations": "Operations",
     "events": "Events",
