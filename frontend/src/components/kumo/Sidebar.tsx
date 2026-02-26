@@ -26,6 +26,9 @@ import {
   FileMagnifyingGlass,
   Gear,
   CaretLeft,
+  FileCode,
+  Notebook,
+  CalendarDots,
   CaretRight,
   List,
 } from '@phosphor-icons/react'
@@ -54,6 +57,9 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   'ri-lock-2-line': Lock,
   'ri-file-search-line': FileMagnifyingGlass,
   'ri-settings-3-line': Gear,
+  'ri-file-code-line': FileCode,
+  'ri-play-list-add-line': Notebook,
+  'ri-calendar-schedule-line': CalendarDots,
 }
 
 // Logo SVG — CFCenter crosshair/target
@@ -114,6 +120,15 @@ function useNavData(): NavItemDef[] {
         { label: t('navigation.siteRecovery'), icon: 'ri-shield-star-line', href: '/automation/site-recovery', permissions: ['vm.config'], requiredFeature: 'ceph_replication' },
         { label: t('navigation.networkSecurity'), icon: 'ri-shield-flash-fill', href: '/automation/network', permissions: ['admin.settings'], requiredFeature: 'microsegmentation' },
         { label: t('navigation.resources'), icon: 'ri-pie-chart-fill', href: '/infrastructure/resources', permissions: ['vm.view', 'node.view'], requiredFeature: 'green_metrics' },
+        { label: t('navigation.scheduler'), icon: 'ri-calendar-schedule-line', href: '/automation/scheduler', permissions: ['automation.view'] },
+      ],
+    },
+    {
+      isSection: true,
+      label: t('navigation.automation'),
+      children: [
+        { label: t('navigation.templates'), icon: 'ri-file-code-line', href: '/automation/templates', permissions: ['vm.view'] },
+        { label: t('navigation.runbooks'), icon: 'ri-play-list-add-line', href: '/automation/runbooks', permissions: ['automation.view'] },
       ],
     },
     {
