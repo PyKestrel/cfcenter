@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 import {
   Box, Typography, Button, Card, CardContent, Chip, IconButton,
@@ -8,6 +8,7 @@ import {
   TextField, MenuItem, Alert, Tabs, Tab, Divider,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Collapse, Select, InputLabel, FormControl, LinearProgress,
+  Popper, ClickAwayListener,
 } from '@mui/material'
 import useSWR, { mutate as globalMutate } from 'swr'
 import { useTranslations } from 'next-intl'
@@ -113,6 +114,204 @@ function formatDuration(ms: number | null): string {
 
 function generateStepId(): string {
   return `s_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+}
+
+// ============================================
+// Built-in Variables (for autocomplete)
+// ============================================
+
+interface BuiltinVar { name: string; insert: string; description: string; example: string; category: 'time' | 'random' | 'sequence' | 'system' | 'user' }
+
+const BUILTIN_VARS: BuiltinVar[] = [
+  { name: 'date', insert: '{{date}}', description: 'Current date (YYYY-MM-DD)', example: '2026-02-27', category: 'time' },
+  { name: 'time', insert: '{{time}}', description: 'Current time (HH-MM-SS)', example: '14-30-00', category: 'time' },
+  { name: 'datetime', insert: '{{datetime}}', description: 'Current datetime', example: '2026-02-27_14-30-00', category: 'time' },
+  { name: 'timestamp', insert: '{{timestamp}}', description: 'Unix timestamp (seconds)', example: '1772234400', category: 'time' },
+  { name: 'timestamp_ms', insert: '{{timestamp_ms}}', description: 'Unix timestamp (ms)', example: '1772234400000', category: 'time' },
+  { name: 'uuid', insert: '{{uuid}}', description: 'Random UUID v4', example: 'a1b2c3d4-...', category: 'random' },
+  { name: 'random:4', insert: '{{random:4}}', description: 'Random N-digit number', example: '7293', category: 'random' },
+  { name: 'hex:6', insert: '{{hex:6}}', description: 'Random N-char hex', example: 'a3f1c9', category: 'random' },
+  { name: 'alpha:4', insert: '{{alpha:4}}', description: 'Random N-char alpha', example: 'kzqm', category: 'random' },
+  { name: 'seq:3', insert: '{{seq:3}}', description: 'Auto-increment (padded)', example: '001, 002...', category: 'sequence' },
+  { name: 'seq:3:web', insert: '{{seq:3:web}}', description: 'Named sequence counter', example: '001', category: 'sequence' },
+  { name: 'env.hostname', insert: '{{env.hostname}}', description: 'System hostname', example: 'pve-node1', category: 'system' },
+]
+
+const CATEGORY_ICONS_VAR: Record<string, string> = {
+  time: 'ri-time-line',
+  random: 'ri-dice-line',
+  sequence: 'ri-sort-number-asc',
+  system: 'ri-computer-line',
+  user: 'ri-user-line',
+}
+
+const CATEGORY_COLORS_VAR: Record<string, string> = {
+  time: '#2979ff',
+  random: '#ff6d00',
+  sequence: '#00c853',
+  system: '#9c27b0',
+  user: '#7c4dff',
+}
+
+// ============================================
+// Variable-aware TextField with autocomplete
+// ============================================
+
+function VariableTextField({
+  value,
+  onChange,
+  variables,
+  ...textFieldProps
+}: {
+  value: string
+  onChange: (val: string) => void
+  variables: Record<string, any>
+} & Omit<React.ComponentProps<typeof TextField>, 'value' | 'onChange'>) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const [suggestions, setSuggestions] = useState<BuiltinVar[]>([])
+  const [cursorPos, setCursorPos] = useState(0)
+  const [selectedIdx, setSelectedIdx] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Build full suggestion list: built-ins + user variables
+  const allSuggestions: BuiltinVar[] = [
+    ...BUILTIN_VARS,
+    ...Object.keys(variables).map(k => ({
+      name: k,
+      insert: `{{${k}}}`,
+      description: `User variable`,
+      example: String(variables[k] ?? ''),
+      category: 'user' as const,
+    })),
+  ]
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    const pos = e.target.selectionStart || 0
+
+    onChange(val)
+    setCursorPos(pos)
+
+    // Check if cursor is inside {{ ... }}
+    const before = val.substring(0, pos)
+    const openIdx = before.lastIndexOf('{{')
+    const closeIdx = before.lastIndexOf('}}')
+
+    if (openIdx !== -1 && openIdx > closeIdx) {
+      const partial = before.substring(openIdx + 2).toLowerCase()
+      const filtered = allSuggestions.filter(s =>
+        s.name.toLowerCase().includes(partial) || s.description.toLowerCase().includes(partial)
+      )
+
+      if (filtered.length > 0) {
+        setSuggestions(filtered)
+        setAnchorEl(e.target)
+        setSelectedIdx(0)
+
+        return
+      }
+    }
+
+    setSuggestions([])
+    setAnchorEl(null)
+  }
+
+  const insertSuggestion = (suggestion: BuiltinVar) => {
+    const before = value.substring(0, cursorPos)
+    const after = value.substring(cursorPos)
+    const openIdx = before.lastIndexOf('{{')
+    const newValue = before.substring(0, openIdx) + suggestion.insert + after
+
+    onChange(newValue)
+    setSuggestions([])
+    setAnchorEl(null)
+
+    // Focus back and set cursor position after insertion
+    setTimeout(() => {
+      if (inputRef.current) {
+        const newPos = openIdx + suggestion.insert.length
+
+        inputRef.current.focus()
+        inputRef.current.setSelectionRange(newPos, newPos)
+      }
+    }, 0)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!anchorEl || suggestions.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIdx(prev => Math.min(prev + 1, suggestions.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIdx(prev => Math.max(prev - 1, 0))
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      insertSuggestion(suggestions[selectedIdx])
+    } else if (e.key === 'Escape') {
+      setSuggestions([])
+      setAnchorEl(null)
+    }
+  }
+
+  const open = Boolean(anchorEl) && suggestions.length > 0
+
+  return (
+    <ClickAwayListener onClickAway={() => { setSuggestions([]); setAnchorEl(null) }}>
+      <Box sx={{ position: 'relative', display: 'inline-flex', flex: textFieldProps.sx && typeof textFieldProps.sx === 'object' && 'flex' in textFieldProps.sx ? (textFieldProps.sx as any).flex : undefined, minWidth: textFieldProps.sx && typeof textFieldProps.sx === 'object' && 'minWidth' in textFieldProps.sx ? (textFieldProps.sx as any).minWidth : undefined, width: textFieldProps.sx && typeof textFieldProps.sx === 'object' && 'width' in textFieldProps.sx ? (textFieldProps.sx as any).width : undefined }}>
+        <TextField
+          {...textFieldProps}
+          value={value}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          inputRef={inputRef}
+          sx={{ ...((textFieldProps.sx as any) || {}), flex: 1 }}
+          slotProps={{
+            input: {
+              ...(textFieldProps.slotProps as any)?.input,
+              endAdornment: (
+                <Tooltip title="Type {{ to see available variables">
+                  <Box sx={{ cursor: 'help', opacity: 0.4, fontSize: 14, display: 'flex' }}>
+                    <i className="ri-code-s-slash-line" />
+                  </Box>
+                </Tooltip>
+              ),
+            },
+          }}
+        />
+        <Popper open={open} anchorEl={anchorEl} placement="bottom-start" sx={{ zIndex: 1500 }}>
+          <Paper elevation={8} sx={{ maxHeight: 240, overflow: 'auto', minWidth: 280, mt: 0.5, border: '1px solid', borderColor: 'divider' }}>
+            {suggestions.map((s, i) => {
+              const catColor = CATEGORY_COLORS_VAR[s.category] || '#666'
+              const catIcon = CATEGORY_ICONS_VAR[s.category] || 'ri-code-line'
+
+              return (
+                <Box
+                  key={s.name}
+                  onClick={() => insertSuggestion(s)}
+                  sx={{
+                    px: 1.5, py: 0.75, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 1.5,
+                    bgcolor: i === selectedIdx ? 'action.selected' : 'transparent',
+                    '&:hover': { bgcolor: 'action.hover' },
+                  }}
+                >
+                  <Box sx={{ width: 24, height: 24, borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: `${catColor}18`, flexShrink: 0 }}>
+                    <i className={catIcon} style={{ fontSize: 13, color: catColor }} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace', fontSize: 12 }}>{s.insert}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>{s.description}</Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: 10, opacity: 0.6 }}>{s.example}</Typography>
+                </Box>
+              )
+            })}
+          </Paper>
+        </Popper>
+      </Box>
+    </ClickAwayListener>
+  )
 }
 
 // ============================================
@@ -589,7 +788,7 @@ function RunbookEditorDialog({ open, runbook, onClose, onSuccess, onError }: {
                     </Box>
 
                     {/* Type-specific params */}
-                    <StepParamsEditor step={step} onUpdate={(params) => updateStep(i, { params })} />
+                    <StepParamsEditor step={step} onUpdate={(params) => updateStep(i, { params })} variables={variables} />
                   </CardContent>
                 </Card>
               ))}
@@ -603,16 +802,47 @@ function RunbookEditorDialog({ open, runbook, onClose, onSuccess, onError }: {
           {activeSection === 2 && (
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Define default variables as JSON. Use {"{{variable_name}}"} in step params to reference them.
+                Define default variables as JSON. Use {"{{variable_name}}"} in step params to reference them. Type {"{{ "} in any step field for autocomplete.
               </Typography>
-              <TextField
-                multiline
-                rows={10}
-                fullWidth
-                value={varsText}
-                onChange={e => setVarsText(e.target.value)}
-                sx={{ fontFamily: 'monospace', fontSize: 12 }}
-              />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  multiline
+                  rows={12}
+                  value={varsText}
+                  onChange={e => setVarsText(e.target.value)}
+                  sx={{ fontFamily: 'monospace', fontSize: 12, flex: 1 }}
+                />
+                <Box sx={{ width: 280, flexShrink: 0 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <i className="ri-code-s-slash-line" style={{ fontSize: 16 }} /> Built-in Variables
+                  </Typography>
+                  <Paper variant="outlined" sx={{ maxHeight: 340, overflow: 'auto' }}>
+                    {(['time', 'random', 'sequence', 'system'] as const).map(cat => (
+                      <Box key={cat}>
+                        <Box sx={{ px: 1.5, py: 0.5, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <i className={CATEGORY_ICONS_VAR[cat]} style={{ fontSize: 12, color: CATEGORY_COLORS_VAR[cat] }} />
+                          <Typography variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: 9, letterSpacing: 0.5 }}>
+                            {cat}
+                          </Typography>
+                        </Box>
+                        {BUILTIN_VARS.filter(v => v.category === cat).map(v => (
+                          <Box key={v.name} sx={{ px: 1.5, py: 0.5, borderBottom: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover' } }}>
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 600, color: CATEGORY_COLORS_VAR[cat] }}>
+                              {v.insert}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
+                              {v.description} — <em>{v.example}</em>
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    ))}
+                  </Paper>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', fontSize: 10 }}>
+                    Your defined variables above also appear in autocomplete when you type {"{{ "} in step fields.
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           )}
         </Box>
@@ -631,7 +861,7 @@ function RunbookEditorDialog({ open, runbook, onClose, onSuccess, onError }: {
 // Step Params Editor
 // ============================================
 
-function StepParamsEditor({ step, onUpdate }: { step: RunbookStep; onUpdate: (params: Record<string, any>) => void }) {
+function StepParamsEditor({ step, onUpdate, variables }: { step: RunbookStep; onUpdate: (params: Record<string, any>) => void; variables: Record<string, any> }) {
   const p = step.params
 
   const set = (key: string, value: any) => onUpdate({ ...p, [key]: value })
@@ -640,17 +870,17 @@ function StepParamsEditor({ step, onUpdate }: { step: RunbookStep; onUpdate: (pa
     case 'clone_template':
       return (
         <Box sx={{ display: 'flex', gap: 1.5, mt: 1, flexWrap: 'wrap' }}>
-          <TextField size="small" label="Template ID" value={p.template_id || ''} onChange={e => set('template_id', e.target.value)} sx={{ flex: 1, minWidth: 150 }} placeholder="tpl_builtin_..." />
-          <TextField size="small" label="New VM Name" value={p.new_name || ''} onChange={e => set('new_name', e.target.value)} sx={{ flex: 1, minWidth: 150 }} placeholder="{{hostname}}" />
-          <TextField size="small" label="Target Node" value={p.target_node || ''} onChange={e => set('target_node', e.target.value)} sx={{ width: 140 }} placeholder="{{target_node}}" />
+          <VariableTextField size="small" label="Template ID" value={p.template_id || ''} onChange={v => set('template_id', v)} variables={variables} sx={{ flex: 1, minWidth: 150 }} placeholder="tpl_builtin_..." />
+          <VariableTextField size="small" label="New VM Name" value={p.new_name || ''} onChange={v => set('new_name', v)} variables={variables} sx={{ flex: 1, minWidth: 150 }} placeholder="web-{{seq:3}}" />
+          <VariableTextField size="small" label="Target Node" value={p.target_node || ''} onChange={v => set('target_node', v)} variables={variables} sx={{ width: 140 }} placeholder="{{target_node}}" />
         </Box>
       )
     case 'apply_config':
       return (
         <Box sx={{ display: 'flex', gap: 1.5, mt: 1, flexWrap: 'wrap' }}>
-          <TextField size="small" label="Cores" type="number" value={p.cores || ''} onChange={e => set('cores', e.target.value)} sx={{ width: 90 }} />
-          <TextField size="small" label="Memory (MB)" type="number" value={p.memory || ''} onChange={e => set('memory', e.target.value)} sx={{ width: 120 }} />
-          <TextField size="small" label="Extra (JSON)" value={p.extra || ''} onChange={e => set('extra', e.target.value)} sx={{ flex: 1, minWidth: 150 }} placeholder='{"tags":"web"}' />
+          <VariableTextField size="small" label="Cores" value={String(p.cores || '')} onChange={v => set('cores', v)} variables={variables} sx={{ width: 90 }} />
+          <VariableTextField size="small" label="Memory (MB)" value={String(p.memory || '')} onChange={v => set('memory', v)} variables={variables} sx={{ width: 120 }} />
+          <VariableTextField size="small" label="Extra (JSON)" value={p.extra || ''} onChange={v => set('extra', v)} variables={variables} sx={{ flex: 1, minWidth: 150 }} placeholder='{"tags":"web"}' />
         </Box>
       )
     case 'power_action':
@@ -669,8 +899,8 @@ function StepParamsEditor({ step, onUpdate }: { step: RunbookStep; onUpdate: (pa
     case 'snapshot':
       return (
         <Box sx={{ display: 'flex', gap: 1.5, mt: 1, flexWrap: 'wrap' }}>
-          <TextField size="small" label="Snapshot Name" value={p.name || ''} onChange={e => set('name', e.target.value)} sx={{ flex: 1, minWidth: 200 }} placeholder="pre-deploy-{{date}}" />
-          <TextField size="small" label="Description" value={p.description || ''} onChange={e => set('description', e.target.value)} sx={{ flex: 1, minWidth: 200 }} />
+          <VariableTextField size="small" label="Snapshot Name" value={p.name || ''} onChange={v => set('name', v)} variables={variables} sx={{ flex: 1, minWidth: 200 }} placeholder="pre-deploy-{{date}}" />
+          <VariableTextField size="small" label="Description" value={p.description || ''} onChange={v => set('description', v)} variables={variables} sx={{ flex: 1, minWidth: 200 }} />
         </Box>
       )
     case 'wait':
@@ -687,14 +917,14 @@ function StepParamsEditor({ step, onUpdate }: { step: RunbookStep; onUpdate: (pa
             <MenuItem value="POST">POST</MenuItem>
             <MenuItem value="PUT">PUT</MenuItem>
           </TextField>
-          <TextField size="small" label="URL" value={p.url || ''} onChange={e => set('url', e.target.value)} sx={{ flex: 1, minWidth: 200 }} placeholder="https://hooks.slack.com/..." />
-          <TextField size="small" label="Body (JSON)" value={p.body || ''} onChange={e => set('body', e.target.value)} sx={{ flex: 1, minWidth: 200 }} placeholder='{"text":"deploy done"}' />
+          <VariableTextField size="small" label="URL" value={p.url || ''} onChange={v => set('url', v)} variables={variables} sx={{ flex: 1, minWidth: 200 }} placeholder="https://hooks.slack.com/..." />
+          <VariableTextField size="small" label="Body (JSON)" value={p.body || ''} onChange={v => set('body', v)} variables={variables} sx={{ flex: 1, minWidth: 200 }} placeholder='{"text":"{{project}} deployed"}' />
         </Box>
       )
     case 'note':
       return (
         <Box sx={{ mt: 1 }}>
-          <TextField size="small" label="Note text" value={p.text || ''} onChange={e => set('text', e.target.value)} fullWidth multiline rows={2} />
+          <VariableTextField size="small" label="Note text" value={p.text || ''} onChange={v => set('text', v)} variables={variables} fullWidth multiline rows={2} />
         </Box>
       )
     default:

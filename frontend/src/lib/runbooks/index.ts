@@ -291,6 +291,151 @@ export function updateExecution(id: string, updates: {
 }
 
 // ============================================
+// Variable resolver
+// ============================================
+
+// Sequence counter — persists across steps within one execution, resets per execution
+let _seqCounters: Record<string, number> = {}
+
+function resetSequenceCounters() {
+  _seqCounters = {}
+}
+
+function nextSequence(key: string, padding: number): string {
+  if (!_seqCounters[key]) _seqCounters[key] = 0
+  _seqCounters[key]++
+
+  return String(_seqCounters[key]).padStart(padding, '0')
+}
+
+// All available built-in variable definitions (exported for UI autocomplete)
+export const BUILTIN_VARIABLES: { name: string; description: string; example: string; category: 'time' | 'random' | 'sequence' | 'system' }[] = [
+  { name: '{{date}}', description: 'Current date (YYYY-MM-DD)', example: '2026-02-27', category: 'time' },
+  { name: '{{time}}', description: 'Current time (HH-MM-SS)', example: '14-30-00', category: 'time' },
+  { name: '{{datetime}}', description: 'Current datetime (YYYY-MM-DD_HH-MM-SS)', example: '2026-02-27_14-30-00', category: 'time' },
+  { name: '{{timestamp}}', description: 'Unix timestamp in seconds', example: '1772234400', category: 'time' },
+  { name: '{{timestamp_ms}}', description: 'Unix timestamp in milliseconds', example: '1772234400000', category: 'time' },
+  { name: '{{uuid}}', description: 'Random UUID v4', example: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d', category: 'random' },
+  { name: '{{random:N}}', description: 'Random N-digit number (1-10 digits)', example: '{{random:4}} → 7293', category: 'random' },
+  { name: '{{hex:N}}', description: 'Random N-char hex string (1-16 chars)', example: '{{hex:6}} → a3f1c9', category: 'random' },
+  { name: '{{alpha:N}}', description: 'Random N-char lowercase alpha string (1-16 chars)', example: '{{alpha:4}} → kzqm', category: 'random' },
+  { name: '{{seq:N}}', description: 'Auto-incrementing sequence, zero-padded to N digits', example: '{{seq:3}} → 001, 002, 003...', category: 'sequence' },
+  { name: '{{seq:N:key}}', description: 'Named sequence counter (separate counters per key)', example: '{{seq:3:web}} → 001', category: 'sequence' },
+  { name: '{{env.hostname}}', description: 'System hostname', example: 'pve-node1', category: 'system' },
+  { name: '{{step_N_field}}', description: 'Output from step N (auto-populated)', example: '{{step_0_vmid}} → 105', category: 'system' },
+]
+
+/**
+ * Resolve all {{variable}} placeholders in a string.
+ * Supports:
+ *  - User-defined variables: {{hostname}}, {{project}}, etc.
+ *  - Built-in time:     {{date}}, {{time}}, {{datetime}}, {{timestamp}}, {{timestamp_ms}}
+ *  - Built-in random:   {{uuid}}, {{random:N}}, {{hex:N}}, {{alpha:N}}
+ *  - Built-in sequence: {{seq:N}}, {{seq:N:key}}
+ *  - Step outputs:      {{step_0_vmid}}, etc.
+ */
+export function resolveString(template: string, vars: Record<string, any>): string {
+  if (typeof template !== 'string') return template
+
+  return template.replace(/\{\{([^}]+)\}\}/g, (_match, expr: string) => {
+    const trimmed = expr.trim()
+
+    // Built-in: date/time
+    if (trimmed === 'date') return new Date().toISOString().split('T')[0]
+    if (trimmed === 'time') return new Date().toISOString().split('T')[1].split('.')[0].replace(/:/g, '-')
+    if (trimmed === 'datetime') {
+      const now = new Date().toISOString()
+
+      return now.split('T')[0] + '_' + now.split('T')[1].split('.')[0].replace(/:/g, '-')
+    }
+    if (trimmed === 'timestamp') return String(Math.floor(Date.now() / 1000))
+    if (trimmed === 'timestamp_ms') return String(Date.now())
+
+    // Built-in: uuid
+    if (trimmed === 'uuid') {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0
+
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+      })
+    }
+
+    // Built-in: random:N
+    const randomMatch = trimmed.match(/^random:(\d+)$/)
+    if (randomMatch) {
+      const digits = Math.min(Math.max(parseInt(randomMatch[1], 10), 1), 10)
+      const min = Math.pow(10, digits - 1)
+      const max = Math.pow(10, digits) - 1
+
+      return String(Math.floor(Math.random() * (max - min + 1)) + min)
+    }
+
+    // Built-in: hex:N
+    const hexMatch = trimmed.match(/^hex:(\d+)$/)
+    if (hexMatch) {
+      const len = Math.min(Math.max(parseInt(hexMatch[1], 10), 1), 16)
+      let hex = ''
+
+      for (let i = 0; i < len; i++) hex += Math.floor(Math.random() * 16).toString(16)
+
+      return hex
+    }
+
+    // Built-in: alpha:N
+    const alphaMatch = trimmed.match(/^alpha:(\d+)$/)
+    if (alphaMatch) {
+      const len = Math.min(Math.max(parseInt(alphaMatch[1], 10), 1), 16)
+      const chars = 'abcdefghijklmnopqrstuvwxyz'
+      let result = ''
+
+      for (let i = 0; i < len; i++) result += chars[Math.floor(Math.random() * chars.length)]
+
+      return result
+    }
+
+    // Built-in: seq:N or seq:N:key
+    const seqMatch = trimmed.match(/^seq:(\d+)(?::(.+))?$/)
+    if (seqMatch) {
+      const padding = Math.min(Math.max(parseInt(seqMatch[1], 10), 1), 10)
+      const key = seqMatch[2] || '_default'
+
+      return nextSequence(key, padding)
+    }
+
+    // Built-in: env.hostname
+    if (trimmed === 'env.hostname') {
+      try { return require('os').hostname() } catch { return 'unknown' }
+    }
+
+    // User-defined variable
+    if (trimmed in vars) return String(vars[trimmed])
+
+    // Unresolved — leave as-is
+    return _match
+  })
+}
+
+/**
+ * Deep-resolve all {{variable}} placeholders in an object or value.
+ * Recurses into objects and arrays.
+ */
+export function resolveVariables(value: any, vars: Record<string, any>): any {
+  if (typeof value === 'string') return resolveString(value, vars)
+  if (Array.isArray(value)) return value.map(item => resolveVariables(item, vars))
+  if (value && typeof value === 'object') {
+    const resolved: Record<string, any> = {}
+
+    for (const [k, v] of Object.entries(value)) {
+      resolved[k] = resolveVariables(v, vars)
+    }
+
+    return resolved
+  }
+
+  return value
+}
+
+// ============================================
 // Execution engine
 // ============================================
 
@@ -309,6 +454,9 @@ export async function executeRunbook(
   const defaultVars = JSON.parse(runbook.variables)
   const mergedVars = { ...defaultVars, ...variableOverrides }
 
+  // Reset sequence counters for fresh execution
+  resetSequenceCounters()
+
   const exec = createExecution(runbookId, mergedVars, triggeredBy)
   const startTime = Date.now()
   const stepResults: StepResult[] = []
@@ -319,6 +467,10 @@ export async function executeRunbook(
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]
+
+    // Resolve {{variable}} placeholders in step params
+    const resolvedParams = resolveVariables(step.params, mergedVars)
+    const resolvedStep: RunbookStep = { ...step, params: resolvedParams }
 
     // Check condition
     if (step.condition) {
@@ -356,16 +508,16 @@ export async function executeRunbook(
       // Handle built-in step types
       let result: { success: boolean; output?: any; error?: string }
 
-      if (step.type === 'wait') {
-        const waitMs = (step.params.seconds || 5) * 1000
+      if (resolvedStep.type === 'wait') {
+        const waitMs = (resolvedStep.params.seconds || 5) * 1000
 
         await new Promise(resolve => setTimeout(resolve, Math.min(waitMs, 300000)))
-        result = { success: true, output: { waited_seconds: step.params.seconds } }
-      } else if (step.type === 'note') {
-        result = { success: true, output: { note: step.params.text || step.description } }
+        result = { success: true, output: { waited_seconds: resolvedStep.params.seconds } }
+      } else if (resolvedStep.type === 'note') {
+        result = { success: true, output: { note: resolvedStep.params.text || resolvedStep.description } }
       } else if (stepExecutor) {
         result = await Promise.race([
-          stepExecutor(step, mergedVars),
+          stepExecutor(resolvedStep, mergedVars),
           new Promise<{ success: boolean; error: string }>((_, reject) =>
             setTimeout(() => reject({ success: false, error: `Step timeout (${step.timeout_seconds}s)` }), (step.timeout_seconds || 300) * 1000)
           ),
