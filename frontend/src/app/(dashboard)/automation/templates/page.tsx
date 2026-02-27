@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Box, Typography, Button, Card, CardContent, Chip, IconButton,
   Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, MenuItem, Alert, Grid, Tabs, Tab,
+  TextField, MenuItem, Alert, Tabs, Tab,
   InputAdornment, Divider, CardActions,
 } from '@mui/material'
 import useSWR, { mutate as globalMutate } from 'swr'
@@ -122,17 +122,25 @@ export default function TemplatesPage() {
     refreshInterval: 30000,
   })
 
-  const templates: VmTemplate[] = templatesRes?.data || []
+  const templates: VmTemplate[] = Array.isArray(templatesRes?.data) ? templatesRes.data : []
 
-  const categories = ['all', ...Array.from(new Set(templates.map(t => t.category)))]
+  const categorySet = new Set<string>()
+
+  for (const tpl of templates) {
+    if (tpl.category) categorySet.add(tpl.category)
+  }
+
+  const categories = ['all', ...Array.from(categorySet)]
   const tabCategory = categories[activeTab] || 'all'
 
   const filtered = templates.filter(tpl => {
     if (tabCategory !== 'all' && tpl.category !== tabCategory) return false
+
     if (search) {
       const q = search.toLowerCase()
       const meta = parseMeta(tpl.metadata)
-      const searchable = [tpl.name, tpl.description, tpl.category, ...(meta.tags || [])].join(' ').toLowerCase()
+      const tags = Array.isArray(meta.tags) ? meta.tags : []
+      const searchable = [tpl.name, tpl.description, tpl.category, ...tags].join(' ').toLowerCase()
 
       return searchable.includes(q)
     }
@@ -145,9 +153,9 @@ export default function TemplatesPage() {
       const res = await fetch(`/api/v1/templates/${tpl.id}`, { method: 'DELETE' })
 
       if (!res.ok) {
-        const data = await res.json()
+        const body = await res.json()
 
-        throw new Error(data.error || 'Delete failed')
+        throw new Error(body.error || 'Delete failed')
       }
 
       setSuccess(`Template "${tpl.name}" deleted`)
@@ -161,6 +169,7 @@ export default function TemplatesPage() {
   const handleDownloadJSON = useCallback((tpl: VmTemplate) => {
     const config = parseConfig(tpl.config)
     const metadata = parseMeta(tpl.metadata)
+
     const exportData = {
       name: tpl.name,
       description: tpl.description,
@@ -169,6 +178,7 @@ export default function TemplatesPage() {
       config,
       metadata,
     }
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -180,10 +190,10 @@ export default function TemplatesPage() {
   }, [])
 
   // Stats
-  const builtinCount = templates.filter(t => t.is_builtin).length
-  const customCount = templates.filter(t => !t.is_builtin).length
-  const qemuCount = templates.filter(t => t.type === 'qemu').length
-  const lxcCount = templates.filter(t => t.type === 'lxc').length
+  const builtinCount = templates.filter(tpl => tpl.is_builtin).length
+  const customCount = templates.filter(tpl => !tpl.is_builtin).length
+  const qemuCount = templates.filter(tpl => tpl.type === 'qemu').length
+  const lxcCount = templates.filter(tpl => tpl.type === 'lxc').length
 
   return (
     <Box sx={{ p: 3 }}>
@@ -196,28 +206,26 @@ export default function TemplatesPage() {
       )}
 
       {/* Stats Row */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 3 }}>
         {[
           { label: 'Total Templates', value: templates.length, icon: 'ri-file-code-line', color: '#7c4dff' },
           { label: 'Marketplace', value: builtinCount, icon: 'ri-store-2-line', color: '#00bfa5' },
           { label: 'Custom', value: customCount, icon: 'ri-user-settings-line', color: '#ff6d00' },
           { label: 'QEMU / LXC', value: `${qemuCount} / ${lxcCount}`, icon: 'ri-computer-line', color: '#2979ff' },
         ].map((stat, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card variant="outlined">
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-                <Box sx={{ width: 44, height: 44, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: `${stat.color}18` }}>
-                  <i className={stat.icon} style={{ fontSize: 22, color: stat.color }} />
-                </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight={700}>{stat.value}</Typography>
-                  <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card variant="outlined" key={i}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
+              <Box sx={{ width: 44, height: 44, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: `${stat.color}18` }}>
+                <i className={stat.icon} style={{ fontSize: 22, color: stat.color }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" fontWeight={700}>{stat.value}</Typography>
+                <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
 
       {/* Toolbar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
@@ -248,14 +256,14 @@ export default function TemplatesPage() {
 
       {/* Category Tabs */}
       <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 3 }}>
-        {categories.map((cat, i) => (
+        {categories.map((cat) => (
           <Tab
             key={cat}
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {cat !== 'all' && <i className={CATEGORY_ICONS[cat] || 'ri-folder-line'} style={{ fontSize: 16 }} />}
                 {cat === 'all' ? 'All' : CATEGORY_LABELS[cat] || cat}
-                <Chip label={cat === 'all' ? templates.length : templates.filter(t => t.category === cat).length} size="small" sx={{ height: 20, fontSize: 11 }} />
+                <Chip label={cat === 'all' ? templates.length : templates.filter(tpl => tpl.category === cat).length} size="small" sx={{ height: 20, fontSize: 11 }} />
               </Box>
             }
           />
@@ -273,19 +281,18 @@ export default function TemplatesPage() {
           <Typography color="text.secondary" sx={{ mt: 1 }}>No templates found</Typography>
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr', lg: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
           {filtered.map((tpl, i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={tpl.id}>
-              <TemplateCard
-                template={tpl}
-                index={i}
-                onViewConfig={() => setViewConfigTemplate(tpl)}
-                onDownload={() => handleDownloadJSON(tpl)}
-                onDelete={() => setDeleteConfirm(tpl)}
-              />
-            </Grid>
+            <TemplateCard
+              key={tpl.id}
+              template={tpl}
+              index={i}
+              onViewConfig={() => setViewConfigTemplate(tpl)}
+              onDownload={() => handleDownloadJSON(tpl)}
+              onDelete={() => setDeleteConfirm(tpl)}
+            />
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* View Config Dialog */}
@@ -329,77 +336,77 @@ function TemplateCard({ template, index, onViewConfig, onDownload, onDelete }: {
 
   return (
     <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', transition: 'border-color 0.2s, box-shadow 0.2s', '&:hover': { borderColor: 'primary.main', boxShadow: 2 } }}>
-        <CardContent sx={{ flex: 1, pb: 1 }}>
-          {/* Header */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.5 }}>
-            <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: template.type === 'lxc' ? '#00bfa518' : '#7c4dff18', flexShrink: 0 }}>
-              <i className={iconClass} style={{ fontSize: 20, color: template.type === 'lxc' ? '#00bfa5' : '#7c4dff' }} />
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="subtitle2" fontWeight={700} noWrap>{template.name}</Typography>
-              <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                <Chip label={template.type.toUpperCase()} size="small" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} color={template.type === 'lxc' ? 'success' : 'primary'} variant="outlined" />
-                {template.is_builtin && <Chip label="Marketplace" size="small" sx={{ height: 18, fontSize: 10 }} color="info" variant="outlined" />}
-              </Box>
+      <CardContent sx={{ flex: 1, pb: 1 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.5 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: template.type === 'lxc' ? '#00bfa518' : '#7c4dff18', flexShrink: 0 }}>
+            <i className={iconClass} style={{ fontSize: 20, color: template.type === 'lxc' ? '#00bfa5' : '#7c4dff' }} />
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle2" fontWeight={700} noWrap>{template.name}</Typography>
+            <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+              <Chip label={template.type.toUpperCase()} size="small" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} color={template.type === 'lxc' ? 'success' : 'primary'} variant="outlined" />
+              {template.is_builtin && <Chip label="Marketplace" size="small" sx={{ height: 18, fontSize: 10 }} color="info" variant="outlined" />}
             </Box>
           </Box>
+        </Box>
 
-          {/* Description */}
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 12, lineHeight: 1.5 }}>
-            {template.description || 'No description'}
-          </Typography>
+        {/* Description */}
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 12, lineHeight: 1.5 }}>
+          {template.description || 'No description'}
+        </Typography>
 
-          {/* Specs */}
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            {(config.cores || meta.recommended_cores) && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <i className="ri-cpu-line" style={{ fontSize: 14, opacity: 0.6 }} />
-                <Typography variant="caption" color="text.secondary">{config.cores || meta.recommended_cores} cores</Typography>
-              </Box>
-            )}
-            {(config.memory || meta.min_memory_mb) && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <i className="ri-ram-line" style={{ fontSize: 14, opacity: 0.6 }} />
-                <Typography variant="caption" color="text.secondary">{formatMemory(config.memory || meta.min_memory_mb)}</Typography>
-              </Box>
-            )}
-            {meta.min_disk_gb && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <i className="ri-hard-drive-3-line" style={{ fontSize: 14, opacity: 0.6 }} />
-                <Typography variant="caption" color="text.secondary">{meta.min_disk_gb} GB</Typography>
-              </Box>
-            )}
-          </Box>
-
-          {/* Tags */}
-          {meta.tags && meta.tags.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
-              {meta.tags.slice(0, 4).map(tag => (
-                <Chip key={tag} label={tag} size="small" sx={{ height: 18, fontSize: 10 }} variant="outlined" />
-              ))}
-              {meta.tags.length > 4 && <Typography variant="caption" color="text.secondary">+{meta.tags.length - 4}</Typography>}
+        {/* Specs */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {(config.cores || meta.recommended_cores) && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <i className="ri-cpu-line" style={{ fontSize: 14, opacity: 0.6 }} />
+              <Typography variant="caption" color="text.secondary">{config.cores || meta.recommended_cores} cores</Typography>
             </Box>
           )}
-        </CardContent>
+          {(config.memory || meta.min_memory_mb) && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <i className="ri-ram-line" style={{ fontSize: 14, opacity: 0.6 }} />
+              <Typography variant="caption" color="text.secondary">{formatMemory(config.memory || meta.min_memory_mb)}</Typography>
+            </Box>
+          )}
+          {meta.min_disk_gb && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <i className="ri-hard-drive-3-line" style={{ fontSize: 14, opacity: 0.6 }} />
+              <Typography variant="caption" color="text.secondary">{meta.min_disk_gb} GB</Typography>
+            </Box>
+          )}
+        </Box>
 
-        <Divider />
-
-        <CardActions sx={{ px: 2, py: 1, justifyContent: 'space-between' }}>
-          <Box>
-            <Tooltip title="View configuration">
-              <IconButton size="small" onClick={onViewConfig}><i className="ri-code-s-slash-line" style={{ fontSize: 16 }} /></IconButton>
-            </Tooltip>
-            <Tooltip title="Download as JSON">
-              <IconButton size="small" onClick={onDownload}><i className="ri-download-line" style={{ fontSize: 16 }} /></IconButton>
-            </Tooltip>
-            {!template.is_builtin && (
-              <Tooltip title="Delete">
-                <IconButton size="small" color="error" onClick={onDelete}><i className="ri-delete-bin-line" style={{ fontSize: 16 }} /></IconButton>
-              </Tooltip>
-            )}
+        {/* Tags */}
+        {Array.isArray(meta.tags) && meta.tags.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
+            {meta.tags.slice(0, 4).map(tag => (
+              <Chip key={tag} label={tag} size="small" sx={{ height: 18, fontSize: 10 }} variant="outlined" />
+            ))}
+            {meta.tags.length > 4 && <Typography variant="caption" color="text.secondary">+{meta.tags.length - 4}</Typography>}
           </Box>
-        </CardActions>
-      </Card>
+        )}
+      </CardContent>
+
+      <Divider />
+
+      <CardActions sx={{ px: 2, py: 1, justifyContent: 'space-between' }}>
+        <Box>
+          <Tooltip title="View configuration">
+            <IconButton size="small" onClick={onViewConfig}><i className="ri-code-s-slash-line" style={{ fontSize: 16 }} /></IconButton>
+          </Tooltip>
+          <Tooltip title="Download as JSON">
+            <IconButton size="small" onClick={onDownload}><i className="ri-download-line" style={{ fontSize: 16 }} /></IconButton>
+          </Tooltip>
+          {!template.is_builtin && (
+            <Tooltip title="Delete">
+              <IconButton size="small" color="error" onClick={onDelete}><i className="ri-delete-bin-line" style={{ fontSize: 16 }} /></IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      </CardActions>
+    </Card>
   )
 }
 
@@ -466,9 +473,9 @@ function ImportTemplateDialog({ open, onClose, onSuccess, onError }: {
       })
 
       if (!res.ok) {
-        const data = await res.json()
+        const body = await res.json()
 
-        throw new Error(data.error || 'Import failed')
+        throw new Error(body.error || 'Import failed')
       }
 
       onSuccess(`Template "${name}" imported successfully`)
@@ -491,6 +498,7 @@ function ImportTemplateDialog({ open, onClose, onSuccess, onError }: {
     reader.onload = (ev) => {
       setJsonText(ev.target?.result as string || '')
     }
+
     reader.readAsText(file)
   }
 
@@ -545,19 +553,23 @@ function ExportFromVmDialog({ open, onClose, onSuccess, onError }: {
   // Flatten inventory into VM options
   const vmOptions: { label: string; value: string; connection_id: string; type: string; node: string; vmid: string }[] = []
 
-  if (inventoryRes?.data) {
-    for (const conn of inventoryRes.data) {
-      for (const node of (conn.nodes || [])) {
-        for (const guest of [...(node.qemu || []), ...(node.lxc || [])]) {
-          vmOptions.push({
-            label: `${guest.name || guest.vmid} (${guest.vmid}) — ${node.node}@${conn.name}`,
-            value: `${conn.id}|${guest.type || (node.lxc?.includes(guest) ? 'lxc' : 'qemu')}|${node.node}|${guest.vmid}`,
-            connection_id: conn.id,
-            type: guest.type || 'qemu',
-            node: node.node,
-            vmid: String(guest.vmid),
-          })
-        }
+  const clusters = Array.isArray(inventoryRes?.data?.clusters) ? inventoryRes.data.clusters : []
+
+  for (const conn of clusters) {
+    const nodes = Array.isArray(conn?.nodes) ? conn.nodes : []
+
+    for (const node of nodes) {
+      const guests = Array.isArray(node?.guests) ? node.guests : []
+
+      for (const guest of guests) {
+        vmOptions.push({
+          label: `${guest.name || guest.vmid} (${guest.vmid}) — ${node.node}@${conn.name}`,
+          value: `${conn.id}|${guest.type || 'qemu'}|${node.node}|${guest.vmid}`,
+          connection_id: conn.id,
+          type: guest.type || 'qemu',
+          node: node.node,
+          vmid: String(guest.vmid),
+        })
       }
     }
   }
@@ -585,9 +597,9 @@ function ExportFromVmDialog({ open, onClose, onSuccess, onError }: {
       })
 
       if (!res.ok) {
-        const data = await res.json()
+        const body = await res.json()
 
-        throw new Error(data.error || 'Export failed')
+        throw new Error(body.error || 'Export failed')
       }
 
       onSuccess(`Template "${templateName}" exported from VM ${vm.vmid}`)

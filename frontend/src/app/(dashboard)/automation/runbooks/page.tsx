@@ -11,7 +11,6 @@ import {
 } from '@mui/material'
 import useSWR, { mutate as globalMutate } from 'swr'
 import { useTranslations } from 'next-intl'
-import Grid from '@mui/material/Grid'
 
 import { usePageTitle } from '@/contexts/PageTitleContext'
 
@@ -141,7 +140,7 @@ export default function RunbooksPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<Runbook | null>(null)
 
   const { data: runbooksRes, isLoading } = useSWR('/api/v1/runbooks', fetcher, { refreshInterval: 15000 })
-  const runbooks: Runbook[] = runbooksRes?.data || []
+  const runbooks: Runbook[] = Array.isArray(runbooksRes?.data) ? runbooksRes.data : []
 
   const tabStatuses: (RunbookStatus | 'all')[] = ['all', 'published', 'draft', 'archived']
   const tabStatus = tabStatuses[activeTab] || 'all'
@@ -194,28 +193,26 @@ export default function RunbooksPage() {
       )}
 
       {/* Stats Row */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 3 }}>
         {[
           { label: 'Total Runbooks', value: runbooks.length, icon: 'ri-play-list-add-line', color: '#7c4dff' },
           { label: 'Published', value: publishedCount, icon: 'ri-check-double-line', color: '#00c853' },
           { label: 'Drafts', value: draftCount, icon: 'ri-draft-line', color: '#ff6d00' },
           { label: 'Categories', value: new Set(runbooks.map(r => r.category)).size, icon: 'ri-folder-line', color: '#2979ff' },
         ].map((stat, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card variant="outlined">
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-                <Box sx={{ width: 44, height: 44, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: `${stat.color}18` }}>
-                  <i className={stat.icon} style={{ fontSize: 22, color: stat.color }} />
-                </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight={700}>{stat.value}</Typography>
-                  <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card variant="outlined" key={i}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
+              <Box sx={{ width: 44, height: 44, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: `${stat.color}18` }}>
+                <i className={stat.icon} style={{ fontSize: 22, color: stat.color }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" fontWeight={700}>{stat.value}</Typography>
+                <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
 
       {/* Toolbar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
