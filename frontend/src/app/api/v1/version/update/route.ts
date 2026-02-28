@@ -120,7 +120,7 @@ function spawnWithLogs(cmd: string, args: string[], cwd?: string): Promise<{ cod
     const child = spawn(cmd, args, {
       cwd: cwd || REPO_DIR,
       shell: true,
-      env: { ...process.env, DOCKER_BUILDKIT: '1' }
+      env: { ...process.env, DOCKER_BUILDKIT: '0' }
     })
 
     let output = ''
