@@ -353,10 +353,11 @@ EOF
         -e GUACD_HOST="$GUACD_CONTAINER" \
         -e GUACD_PORT=4822 \
         -e CFCENTER_REPO_DIR=/repo \
+        -e CFCENTER_HOST_REPO_DIR="$INSTALL_DIR" \
         -e CFCENTER_CONTAINER_NAME="$CONTAINER_NAME" \
         -e CFCENTER_IMAGE_NAME="$IMAGE_NAME" \
         -v "$DATA_VOLUME":/app/data \
-        -v /var/run/docker.sock:/var/run/docker.sock:ro \
+        -v /var/run/docker.sock:/var/run/docker.sock \
         -v "$INSTALL_DIR":/repo \
         --restart unless-stopped \
         "$IMAGE_NAME"
@@ -505,10 +506,11 @@ do_update() {
         -e GUACD_HOST="$GUACD_CONTAINER" \
         -e GUACD_PORT=4822 \
         -e CFCENTER_REPO_DIR=/repo \
+        -e CFCENTER_HOST_REPO_DIR="$REPO_DIR" \
         -e CFCENTER_CONTAINER_NAME="$CONTAINER_NAME" \
         -e CFCENTER_IMAGE_NAME="$IMAGE_NAME" \
         -v "$DATA_VOLUME":/app/data \
-        -v /var/run/docker.sock:/var/run/docker.sock:ro \
+        -v /var/run/docker.sock:/var/run/docker.sock \
         -v "$REPO_DIR":/repo \
         --restart unless-stopped \
         "$IMAGE_NAME"

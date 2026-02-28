@@ -68,7 +68,7 @@ ENV GIT_SHA=${GIT_SHA}
 
 # Install runtime dependencies
 # docker-cli + git are needed for GUI self-update (git pull + docker build from /repo)
-RUN apk add --no-cache sqlite-dev docker-cli git
+RUN apk add --no-cache sqlite-dev docker-cli git su-exec
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
@@ -118,8 +118,8 @@ COPY --from=builder /app/package.json ./package.json
 
 # No extra runtime dependencies — start.js runs as single process
 
-# Switch to non-root user
-USER nextjs
+# NOTE: No USER directive here — entrypoint runs as root to fix Docker socket
+# and /repo permissions, then drops to nextjs via su-exec before starting the app.
 
 # Expose port (unified HTTP + WebSocket)
 EXPOSE 3000
