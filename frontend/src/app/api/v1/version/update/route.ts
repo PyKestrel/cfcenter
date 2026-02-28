@@ -29,6 +29,7 @@ interface UpdateState {
   completedAt: string | null
   error: string | null
   newVersion: string | null
+  branch: string | null
 }
 
 let updateState: UpdateState = {
@@ -39,7 +40,8 @@ let updateState: UpdateState = {
   startedAt: null,
   completedAt: null,
   error: null,
-  newVersion: null
+  newVersion: null,
+  branch: null
 }
 
 function resetState() {
@@ -51,7 +53,8 @@ function resetState() {
     startedAt: null,
     completedAt: null,
     error: null,
-    newVersion: null
+    newVersion: null,
+    branch: null
   }
 }
 
@@ -146,15 +149,33 @@ async function performUpdate() {
     }
     addLog('Prerequisites OK — Docker socket and repo available')
 
-    // Step 1: Git pull
+    // Step 1: Git fetch + hard reset (handles overwritten local files like install.sh)
     updateState.status = 'pulling'
     updateState.progress = 10
-    addLog('Pulling latest code from repository...')
+    const branch = updateState.branch || 'main'
+    addLog(`Fetching latest code from origin/${branch}...`)
 
-    const gitResult = await spawnWithLogs('git', ['pull', 'origin', 'main'], REPO_DIR)
-    if (gitResult.code !== 0) {
-      throw new Error(`Git pull failed (exit code ${gitResult.code})`)
+    const fetchResult = await spawnWithLogs('git', ['fetch', 'origin', branch], REPO_DIR)
+    if (fetchResult.code !== 0) {
+      throw new Error(`Git fetch failed (exit code ${fetchResult.code})`)
     }
+
+    updateState.progress = 15
+    addLog(`Resetting to origin/${branch}...`)
+    const resetResult = await spawnWithLogs('git', ['reset', '--hard', `origin/${branch}`], REPO_DIR)
+    if (resetResult.code !== 0) {
+      throw new Error(`Git reset failed (exit code ${resetResult.code})`)
+    }
+
+    // Clean untracked files
+    await spawnWithLogs('git', ['clean', '-fd'], REPO_DIR).catch(() => {})
+
+    // Restore execute permission on install script
+    try {
+      fs.chmodSync(path.join(REPO_DIR, 'install.sh'), 0o755)
+      addLog('Restored install.sh permissions')
+    } catch { /* may not exist in all setups */ }
+
     addLog('Code updated successfully')
 
     // Read new version from package.json
@@ -261,7 +282,7 @@ async function performUpdate() {
 }
 
 // POST — Start the update process
-export async function POST() {
+export async function POST(request: Request) {
   // Check if already updating
   if (updateState.status !== 'idle' && updateState.status !== 'completed' && updateState.status !== 'error') {
     return NextResponse.json(
@@ -279,14 +300,25 @@ export async function POST() {
     )
   }
 
+  // Parse branch from request body
+  let branch = 'main'
+  try {
+    const body = await request.json()
+    if (body.branch && typeof body.branch === 'string') {
+      branch = body.branch.trim()
+    }
+  } catch { /* no body or invalid JSON — use default */ }
+
   // Reset and start
   resetState()
+  updateState.branch = branch
 
   // Start update in background (don't await)
   performUpdate()
 
   return NextResponse.json({
     message: 'Update started',
+    branch,
     state: updateState
   })
 }
@@ -295,13 +327,43 @@ export async function POST() {
 export async function GET() {
   const prereqs = checkPrerequisites()
 
+  // Try to get current git branch and available remote branches
+  let currentBranch = 'main'
+  let availableBranches: string[] = ['main']
+  try {
+    if (prereqs.ok) {
+      const { stdout: branchOut } = await execAsync('git rev-parse --abbrev-ref HEAD', { cwd: REPO_DIR })
+      currentBranch = branchOut.trim() || 'main'
+
+      const { stdout: remoteBranches } = await execAsync('git branch -r --no-color', { cwd: REPO_DIR })
+      availableBranches = remoteBranches
+        .split('\n')
+        .map(b => b.trim().replace('origin/', ''))
+        .filter(b => b && !b.includes('HEAD') && !b.includes('->'))
+      if (!availableBranches.includes('main')) availableBranches.unshift('main')
+    }
+  } catch { /* git not available or not a repo */ }
+
+  // Get last commit info
+  let lastCommit: { hash: string; message: string; date: string } | null = null
+  try {
+    if (prereqs.ok) {
+      const { stdout } = await execAsync('git log -1 --format="%h|||%s|||%ci"', { cwd: REPO_DIR })
+      const [hash, message, date] = stdout.trim().split('|||')
+      lastCommit = { hash, message, date }
+    }
+  } catch { /* ignore */ }
+
   return NextResponse.json({
     state: updateState,
     updateSupported: prereqs.ok,
     unsupportedReason: prereqs.error || null,
     currentVersion: VERSION,
     containerName: CONTAINER_NAME,
-    repoDir: REPO_DIR
+    repoDir: REPO_DIR,
+    currentBranch,
+    availableBranches,
+    lastCommit
   })
 }
 

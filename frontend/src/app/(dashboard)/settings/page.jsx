@@ -57,6 +57,11 @@ const LdapConfigTab = dynamic(() => import('@/components/settings/LdapConfigTab'
   loading: () => <Box sx={{ p: 3, textAlign: 'center' }}><LinearProgress /></Box>
 })
 
+const SoftwareUpdateTab = dynamic(() => import('@/components/settings/SoftwareUpdateTab'), {
+  ssr: false,
+  loading: () => <Box sx={{ p: 3, textAlign: 'center' }}><LinearProgress /></Box>
+})
+
 const ConnectionDialog = dynamic(() => import('@/components/settings/ConnectionDialog'), {
   ssr: false
 })
@@ -1747,6 +1752,7 @@ export default function SettingsPage() {
     { label: 'LDAP / Active Directory', icon: 'ri-server-line', component: LdapConfigTab, requiredFeature: Features.LDAP },
     { label: t('settings.ai'), icon: 'ri-robot-line', component: AITab, requiredFeature: Features.AI_INSIGHTS },
     { label: 'RSE / Green IT', icon: 'ri-leaf-line', component: GreenTab, requiredFeature: Features.GREEN_METRICS },
+    { label: 'Software Update', icon: 'ri-download-2-line', component: SoftwareUpdateTab },
   ]
 
   return (

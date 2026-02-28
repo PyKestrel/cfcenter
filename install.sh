@@ -274,7 +274,10 @@ do_install() {
     if [ -d "$INSTALL_DIR/.git" ]; then
         log_info "Repository already exists at $INSTALL_DIR, pulling latest..."
         cd "$INSTALL_DIR"
-        git pull origin "$REPO_BRANCH"
+        git fetch origin "$REPO_BRANCH"
+        git reset --hard "origin/$REPO_BRANCH"
+        git clean -fd 2>/dev/null || true
+        chmod +x "$INSTALL_DIR/install.sh" 2>/dev/null || true
     else
         log_info "Cloning repository into $INSTALL_DIR..."
         git clone --branch "$REPO_BRANCH" "$REPO_URL" "$INSTALL_DIR"
@@ -445,10 +448,14 @@ do_update() {
     echo "  NEXTAUTH_URL: $nextauth_url"
     echo ""
 
-    # --- Pull latest code ---
-    log_info "[1/6] Pulling latest code..."
+    # --- Pull latest code (fetch + hard reset to handle overwritten files) ---
+    log_info "[1/6] Pulling latest code (branch: $REPO_BRANCH)..."
     cd "$REPO_DIR"
-    git pull origin "$REPO_BRANCH"
+    git fetch origin "$REPO_BRANCH"
+    git reset --hard "origin/$REPO_BRANCH"
+    git clean -fd 2>/dev/null || true
+    # Restore execute permission on install script (may be lost after reset)
+    chmod +x "$REPO_DIR/install.sh" 2>/dev/null || true
     echo ""
 
     # --- Pull guacd image ---
