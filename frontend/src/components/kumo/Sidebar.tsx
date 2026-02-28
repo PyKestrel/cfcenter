@@ -129,6 +129,7 @@ function useNavData(): NavItemDef[] {
       children: [
         { label: t('navigation.templates'), icon: 'ri-file-code-line', href: '/automation/templates', permissions: ['vm.view'] },
         { label: t('navigation.runbooks'), icon: 'ri-play-list-add-line', href: '/automation/runbooks', permissions: ['automation.view'] },
+        { label: 'Terraform', icon: 'ri-terminal-box-line', href: '/automation/terraform', permissions: ['automation.view'] },
       ],
     },
     {
@@ -149,6 +150,7 @@ function useNavData(): NavItemDef[] {
         { label: t('navigation.users'), icon: 'ri-user-line', href: '/security/users', permissions: ['admin.users'] },
         { label: t('navigation.rbacRoles'), icon: 'ri-lock-2-line', href: '/security/rbac', permissions: ['admin.rbac'], requiredFeature: 'rbac' },
         { label: t('navigation.auditLogs'), icon: 'ri-file-search-line', href: '/security/audit', permissions: ['admin.audit'] },
+        { label: 'CVE Scanner', icon: 'ri-shield-check-line', href: '/security/cve-scanner', requiredFeature: 'cve_scanner' },
       ],
     },
     {

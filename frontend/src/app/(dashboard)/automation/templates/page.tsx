@@ -117,6 +117,7 @@ export default function TemplatesPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<VmTemplate | null>(null)
+  const [deployTemplate, setDeployTemplate] = useState<VmTemplate | null>(null)
 
   const { data: templatesRes, isLoading } = useSWR('/api/v1/templates', fetcher, {
     refreshInterval: 30000,
@@ -289,6 +290,7 @@ export default function TemplatesPage() {
               index={i}
               onViewConfig={() => setViewConfigTemplate(tpl)}
               onDownload={() => handleDownloadJSON(tpl)}
+              onDeploy={() => setDeployTemplate(tpl)}
               onDelete={() => setDeleteConfirm(tpl)}
             />
           ))}
@@ -303,6 +305,14 @@ export default function TemplatesPage() {
 
       {/* Export from VM Dialog */}
       <ExportFromVmDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} onSuccess={(msg) => { setSuccess(msg); globalMutate('/api/v1/templates') }} onError={setError} />
+
+      {/* Deploy from Template Dialog */}
+      <DeployFromTemplateDialog
+        template={deployTemplate}
+        onClose={() => setDeployTemplate(null)}
+        onSuccess={(msg) => { setSuccess(msg) }}
+        onError={setError}
+      />
 
       {/* Delete Confirm */}
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>
@@ -323,11 +333,12 @@ export default function TemplatesPage() {
 // Template Card
 // ============================================
 
-function TemplateCard({ template, index, onViewConfig, onDownload, onDelete }: {
+function TemplateCard({ template, index, onViewConfig, onDownload, onDeploy, onDelete }: {
   template: VmTemplate
   index: number
   onViewConfig: () => void
   onDownload: () => void
+  onDeploy: () => void
   onDelete: () => void
 }) {
   const meta = parseMeta(template.metadata)
@@ -405,6 +416,11 @@ function TemplateCard({ template, index, onViewConfig, onDownload, onDelete }: {
             </Tooltip>
           )}
         </Box>
+        <Tooltip title="Deploy VM from this template">
+          <Button size="small" variant="contained" startIcon={<i className="ri-play-line" style={{ fontSize: 14 }} />} onClick={onDeploy} sx={{ fontSize: 11, textTransform: 'none' }}>
+            Deploy
+          </Button>
+        </Tooltip>
       </CardActions>
     </Card>
   )
@@ -652,6 +668,235 @@ function ExportFromVmDialog({ open, onClose, onSuccess, onError }: {
         <Button onClick={onClose}>Cancel</Button>
         <Button variant="contained" onClick={handleExport} disabled={loading || !selectedVm || !templateName.trim()}>
           {loading ? 'Exporting...' : 'Export as Template'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+// ============================================
+// Deploy from Template Dialog
+// ============================================
+
+function DeployFromTemplateDialog({ template, onClose, onSuccess, onError }: {
+  template: VmTemplate | null
+  onClose: () => void
+  onSuccess: (msg: string) => void
+  onError: (msg: string) => void
+}) {
+  const [vmName, setVmName] = useState('')
+  const [targetNode, setTargetNode] = useState('')
+  const [selectedConnection, setSelectedConnection] = useState('')
+  const [storage, setStorage] = useState('')
+  const [pool, setPool] = useState('')
+  const [startAfter, setStartAfter] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [overrideCores, setOverrideCores] = useState('')
+  const [overrideMemory, setOverrideMemory] = useState('')
+
+  const { data: inventoryRes } = useSWR(template ? '/api/v1/inventory' : null, fetcher)
+
+  // Extract connections and nodes from inventory
+  const connections: { id: string; name: string; nodes: string[] }[] = []
+  const clusters = Array.isArray(inventoryRes?.data?.clusters) ? inventoryRes.data.clusters : []
+
+  for (const conn of clusters) {
+    const nodes = Array.isArray(conn?.nodes) ? conn.nodes : []
+
+    connections.push({
+      id: conn.id,
+      name: conn.name,
+      nodes: nodes.map((n: any) => n.node),
+    })
+  }
+
+  const selectedConn = connections.find(c => c.id === selectedConnection)
+  const nodeOptions = selectedConn?.nodes || []
+
+  // Reset fields when template changes
+  useEffect(() => {
+    if (template) {
+      setVmName(template.name.replace(/\s+/g, '-').toLowerCase())
+      setTargetNode('')
+      setSelectedConnection(connections.length === 1 ? connections[0].id : '')
+      setStorage('')
+      setPool('')
+      setStartAfter(false)
+      setOverrideCores('')
+      setOverrideMemory('')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [template?.id])
+
+  const handleDeploy = async () => {
+    try {
+      setLoading(true)
+
+      if (!selectedConnection) throw new Error('Select a connection')
+      if (!targetNode) throw new Error('Select a target node')
+
+      const overrides: Record<string, any> = {}
+
+      if (overrideCores) overrides.cores = parseInt(overrideCores, 10)
+      if (overrideMemory) overrides.memory = parseInt(overrideMemory, 10)
+
+      const res = await fetch('/api/v1/templates/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_id: template!.id,
+          connection_id: selectedConnection,
+          target_node: targetNode,
+          vm_name: vmName.trim() || undefined,
+          storage: storage.trim() || undefined,
+          pool: pool.trim() || undefined,
+          start_after_create: startAfter,
+          overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+        }),
+      })
+
+      if (!res.ok) {
+        const body = await res.json()
+
+        throw new Error(body.error || 'Deploy failed')
+      }
+
+      const result = await res.json()
+
+      onSuccess(`VM ${result.data.name} (${result.data.vmid}) deployed on ${result.data.node}`)
+      onClose()
+    } catch (e: any) {
+      onError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!template) return null
+
+  const config = parseConfig(template.config)
+  const meta = parseMeta(template.metadata)
+
+  return (
+    <Dialog open={!!template} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <i className="ri-play-line" style={{ fontSize: 20, color: '#7c4dff' }} />
+        Deploy from Template
+      </DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
+        {/* Template summary */}
+        <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: template.type === 'lxc' ? '#00bfa518' : '#7c4dff18' }}>
+            <i className={ICON_MAP[template.icon || ''] || 'ri-file-code-line'} style={{ fontSize: 20, color: template.type === 'lxc' ? '#00bfa5' : '#7c4dff' }} />
+          </Box>
+          <Box>
+            <Typography variant="subtitle2" fontWeight={700}>{template.name}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {template.type.toUpperCase()} &bull; {config.cores || meta.recommended_cores || '?'} cores &bull; {formatMemory(config.memory || meta.min_memory_mb)}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Connection */}
+        <TextField
+          select
+          label="Connection"
+          value={selectedConnection}
+          onChange={e => { setSelectedConnection(e.target.value); setTargetNode('') }}
+          fullWidth
+          size="small"
+          required
+        >
+          {connections.length === 0 && <MenuItem disabled>Loading connections...</MenuItem>}
+          {connections.map(c => (
+            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+          ))}
+        </TextField>
+
+        {/* Target Node */}
+        <TextField
+          select
+          label="Target Node"
+          value={targetNode}
+          onChange={e => setTargetNode(e.target.value)}
+          fullWidth
+          size="small"
+          required
+          disabled={!selectedConnection}
+        >
+          {nodeOptions.length === 0 && <MenuItem disabled>Select connection first</MenuItem>}
+          {nodeOptions.map((n: string) => (
+            <MenuItem key={n} value={n}>{n}</MenuItem>
+          ))}
+        </TextField>
+
+        {/* VM Name */}
+        <TextField
+          label="VM Name"
+          value={vmName}
+          onChange={e => setVmName(e.target.value)}
+          fullWidth
+          size="small"
+          placeholder={template.name}
+        />
+
+        {/* Overrides row */}
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            label="Cores (override)"
+            value={overrideCores}
+            onChange={e => setOverrideCores(e.target.value)}
+            size="small"
+            type="number"
+            placeholder={String(config.cores || '')}
+            sx={{ flex: 1 }}
+          />
+          <TextField
+            label="Memory MB (override)"
+            value={overrideMemory}
+            onChange={e => setOverrideMemory(e.target.value)}
+            size="small"
+            type="number"
+            placeholder={String(config.memory || '')}
+            sx={{ flex: 1 }}
+          />
+        </Box>
+
+        {/* Storage & Pool */}
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            label="Storage (optional)"
+            value={storage}
+            onChange={e => setStorage(e.target.value)}
+            size="small"
+            placeholder="local-lvm"
+            sx={{ flex: 1 }}
+          />
+          <TextField
+            label="Pool (optional)"
+            value={pool}
+            onChange={e => setPool(e.target.value)}
+            size="small"
+            placeholder=""
+            sx={{ flex: 1 }}
+          />
+        </Box>
+
+        {/* Start after create */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <input type="checkbox" id="start-after" checked={startAfter} onChange={e => setStartAfter(e.target.checked)} />
+          <label htmlFor="start-after" style={{ fontSize: 14 }}>Start VM after creation</label>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="contained"
+          onClick={handleDeploy}
+          disabled={loading || !selectedConnection || !targetNode}
+          startIcon={loading ? undefined : <i className="ri-play-line" />}
+        >
+          {loading ? 'Deploying...' : 'Deploy VM'}
         </Button>
       </DialogActions>
     </Dialog>

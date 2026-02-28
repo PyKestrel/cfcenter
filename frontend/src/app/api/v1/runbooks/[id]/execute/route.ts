@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { checkPermission, PERMISSIONS } from '@/lib/rbac'
 import { executeRunbook, listExecutions } from '@/lib/runbooks'
+import { proxmoxStepExecutor } from '@/lib/runbooks/executor'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<Params> 
     const { id } = await ctx.params
     const body = await request.json().catch(() => ({}))
 
-    const execution = await executeRunbook(id, body.variables || {})
+    const execution = await executeRunbook(id, body.variables || {}, undefined, proxmoxStepExecutor)
 
     return NextResponse.json({ data: execution })
   } catch (e: any) {

@@ -105,6 +105,12 @@ export const menuData = (t = (key) => key) => [
         icon: 'ri-play-list-add-line',
         href: '/automation/runbooks',
         permissions: ['automation.view']
+      },
+      {
+        label: 'Terraform',
+        icon: 'ri-terminal-box-line',
+        href: '/automation/terraform',
+        permissions: ['automation.view']
       }
     ]
   },
@@ -164,6 +170,12 @@ export const menuData = (t = (key) => key) => [
         icon: 'ri-file-search-line',
         href: '/security/audit',
         permissions: ['admin.audit']
+      },
+      {
+        label: 'CVE Scanner',
+        icon: 'ri-shield-check-line',
+        href: '/security/cve-scanner',
+        requiredFeature: 'cve_scanner'
       }
     ]
   },
