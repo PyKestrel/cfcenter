@@ -149,6 +149,10 @@ async function performUpdate() {
     }
     addLog('Prerequisites OK — Docker socket and repo available')
 
+    // Mark repo as safe (ownership may differ inside Docker container)
+    await spawnWithLogs('git', ['config', '--global', '--add', 'safe.directory', REPO_DIR])
+    addLog('Marked repo as safe directory')
+
     // Step 1: Git fetch + hard reset (handles overwritten local files like install.sh)
     updateState.status = 'pulling'
     updateState.progress = 10
@@ -326,6 +330,13 @@ export async function POST(request: Request) {
 // GET — Get current update state + check if updates are supported
 export async function GET() {
   const prereqs = checkPrerequisites()
+
+  // Mark repo as safe (ownership may differ inside Docker container)
+  try {
+    if (prereqs.ok) {
+      await execAsync(`git config --global --add safe.directory ${REPO_DIR}`)
+    }
+  } catch { /* ignore */ }
 
   // Try to get current git branch and available remote branches
   let currentBranch = 'main'
