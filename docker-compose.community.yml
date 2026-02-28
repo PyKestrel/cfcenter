@@ -26,11 +26,12 @@ services:
       - GUACD_PORT=${GUACD_PORT:-4822}
       # GUI update support (mount Docker socket + repo for in-app updates)
       - CFCENTER_REPO_DIR=/repo
+      - CFCENTER_HOST_REPO_DIR=.
       - CFCENTER_CONTAINER_NAME=cfcenter-frontend
       - CFCENTER_IMAGE_NAME=cfcenter-frontend:dev
     volumes:
       - cfcenter_data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # GUI updates
+      - /var/run/docker.sock:/var/run/docker.sock  # GUI updates
       - .:/repo                                        # Source repo for git pull + rebuild
     networks:
       - cfcenter
