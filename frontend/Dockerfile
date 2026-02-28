@@ -68,11 +68,13 @@ ENV GIT_SHA=${GIT_SHA}
 
 # Install runtime dependencies
 # docker-cli + git are needed for GUI self-update (git pull + docker build from /repo)
-RUN apk add --no-cache sqlite-dev docker-cli git su-exec
+RUN apk add --no-cache sqlite-dev docker-cli git su-exec sudo
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 nextjs && \
+    echo 'nextjs ALL=(root) NOPASSWD: /usr/bin/git, /usr/bin/docker' > /etc/sudoers.d/nextjs && \
+    chmod 0440 /etc/sudoers.d/nextjs
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data

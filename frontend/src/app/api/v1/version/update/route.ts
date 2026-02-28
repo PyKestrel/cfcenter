@@ -150,23 +150,23 @@ async function performUpdate() {
     addLog('Prerequisites OK — Docker socket and repo available')
 
     // Step 1: Git fetch + hard reset
-    // The entrypoint fixes .git ownership and adds safe.directory, so direct git works.
+    // Use sudo because /repo is owned by host user, not nextjs.
+    // Dockerfile grants nextjs passwordless sudo for /usr/bin/git and /usr/bin/docker.
     updateState.status = 'pulling'
     updateState.progress = 10
     const branch = updateState.branch || 'main'
     addLog(`Fetching latest code from origin/${branch}...`)
 
-    await runCommand(`git config --global --add safe.directory ${REPO_DIR}`)
-    const fetchResult = await spawnWithLogs('git', ['fetch', 'origin', branch], REPO_DIR)
+    const fetchResult = await spawnWithLogs('sudo', ['git', 'fetch', 'origin', branch], REPO_DIR)
     if (fetchResult.code !== 0) {
       throw new Error(`Git fetch failed (exit code ${fetchResult.code})`)
     }
-    const resetResult = await spawnWithLogs('git', ['reset', '--hard', `origin/${branch}`], REPO_DIR)
+    const resetResult = await spawnWithLogs('sudo', ['git', 'reset', '--hard', `origin/${branch}`], REPO_DIR)
     if (resetResult.code !== 0) {
       throw new Error(`Git reset failed (exit code ${resetResult.code})`)
     }
-    await runCommand(`git clean -fd || true`)
-    try { fs.chmodSync(path.join(REPO_DIR, 'install.sh'), 0o755) } catch { /* ignore */ }
+    await runCommand(`sudo git clean -fd || true`)
+    await runCommand(`sudo chmod +x ${REPO_DIR}/install.sh || true`)
 
     addLog('Code updated successfully')
 
@@ -183,15 +183,14 @@ async function performUpdate() {
       addLog('Could not read new version — continuing')
     }
 
-    // Step 2: Docker build
-    // The entrypoint grants nextjs Docker socket access, so direct docker commands work.
+    // Step 2: Docker build (via sudo docker)
     updateState.status = 'building'
     updateState.progress = 25
     addLog('Building new Docker image (this may take several minutes)...')
 
     const buildResult = await spawnWithLogs(
-      'docker',
-      ['build', '-t', IMAGE_NAME, './frontend'],
+      'sudo',
+      ['docker', 'build', '-t', IMAGE_NAME, './frontend'],
       REPO_DIR
     )
     if (buildResult.code !== 0) {
@@ -211,7 +210,7 @@ async function performUpdate() {
     let portArgs = ''
     let networkArgs = ''
     try {
-      const inspectOutput = await runCommand(`docker inspect ${CONTAINER_NAME}`)
+      const inspectOutput = await runCommand(`sudo docker inspect ${CONTAINER_NAME}`)
       const inspect = JSON.parse(inspectOutput)
       const container = inspect[0]
 
@@ -257,12 +256,12 @@ async function performUpdate() {
     // Stop current container, start new one
     updateState.progress = 90
     addLog('Stopping current container...')
-    await runCommand(`docker stop ${CONTAINER_NAME}`).catch(() => {})
-    await runCommand(`docker rm ${CONTAINER_NAME}`).catch(() => {})
+    await runCommand(`sudo docker stop ${CONTAINER_NAME}`).catch(() => {})
+    await runCommand(`sudo docker rm ${CONTAINER_NAME}`).catch(() => {})
 
     updateState.progress = 95
     addLog('Starting new container...')
-    const runCmd = `docker run -d --name ${CONTAINER_NAME} ${networkArgs} ${portArgs} ${envArgs} ${volumeArgs} --restart unless-stopped ${IMAGE_NAME}`
+    const runCmd = `sudo docker run -d --name ${CONTAINER_NAME} ${networkArgs} ${portArgs} ${envArgs} ${volumeArgs} --restart unless-stopped ${IMAGE_NAME}`
     const runResult = await spawnWithLogs('sh', ['-c', runCmd])
     if (runResult.code !== 0) {
       throw new Error(`Failed to start new container (exit code ${runResult.code})`)
@@ -327,23 +326,23 @@ export async function POST(request: Request) {
 export async function GET() {
   const prereqs = checkPrerequisites()
 
-  // Read git info directly (entrypoint fixes .git ownership and safe.directory)
+  // Read git info via sudo (repo owned by host user, not nextjs)
   let currentBranch = 'main'
   let availableBranches: string[] = ['main']
   let lastCommit: { hash: string; message: string; date: string } | null = null
   try {
     if (prereqs.ok) {
-      const { stdout: branchOut } = await execAsync('git rev-parse --abbrev-ref HEAD', { cwd: REPO_DIR })
+      const { stdout: branchOut } = await execAsync('sudo git rev-parse --abbrev-ref HEAD', { cwd: REPO_DIR })
       currentBranch = branchOut.trim() || 'main'
 
-      const { stdout: remoteBranches } = await execAsync('git branch -r --no-color', { cwd: REPO_DIR })
+      const { stdout: remoteBranches } = await execAsync('sudo git branch -r --no-color', { cwd: REPO_DIR })
       availableBranches = remoteBranches
         .split('\n')
         .map(b => b.trim().replace('origin/', ''))
         .filter(b => b && !b.includes('HEAD') && !b.includes('->'))
       if (!availableBranches.includes('main')) availableBranches.unshift('main')
 
-      const { stdout: commitOut } = await execAsync('git log -1 --format="%h|||%s|||%ci"', { cwd: REPO_DIR })
+      const { stdout: commitOut } = await execAsync('sudo git log -1 --format="%h|||%s|||%ci"', { cwd: REPO_DIR })
       const parts = commitOut.trim().split('|||')
       if (parts.length === 3) {
         lastCommit = { hash: parts[0], message: parts[1], date: parts[2] }
