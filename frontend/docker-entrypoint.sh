@@ -33,12 +33,12 @@ if [ -S "$DOCKER_SOCK" ]; then
   fi
 fi
 
-# ── /repo bind-mount: let nextjs read and let git work ──
+# ── /repo bind-mount: let nextjs read/write so git reset --hard can overwrite tracked files ──
 REPO="${CFCENTER_REPO_DIR:-/repo}"
 if [ -d "$REPO/.git" ]; then
-  chown -R 1001:1001 "$REPO/.git" 2>/dev/null || true
+  chown -R 1001:1001 "$REPO" 2>/dev/null || true
   git config --global --add safe.directory "$REPO" 2>/dev/null || true
-  echo "[entrypoint] Fixed /repo/.git ownership"
+  echo "[entrypoint] Fixed /repo ownership"
 fi
 
 # Initialize schema + run additive migrations (as nextjs user)
