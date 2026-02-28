@@ -84,6 +84,28 @@ function checkPrerequisites(): { ok: boolean; error?: string } {
   return { ok: true }
 }
 
+// Resolve the HOST path for the /repo bind mount by inspecting our own container.
+// Inside the container REPO_DIR is /repo, but Docker needs the real host path
+// when we spawn helper containers (docker run -v <hostPath>:/repo ...).
+let _hostRepoPath: string | null = null
+async function getHostRepoPath(): Promise<string> {
+  if (_hostRepoPath) return _hostRepoPath
+  try {
+    const { stdout } = await execAsync(
+      `docker inspect ${CONTAINER_NAME} --format '{{range .Mounts}}{{if eq .Destination "/repo"}}{{.Source}}{{end}}{{end}}'`,
+      { timeout: 10000 }
+    )
+    const hostPath = stdout.trim()
+    if (hostPath) {
+      _hostRepoPath = hostPath
+      return hostPath
+    }
+  } catch { /* fallback */ }
+  // Fallback: assume REPO_DIR is already a host path (non-Docker or development)
+  _hostRepoPath = REPO_DIR
+  return REPO_DIR
+}
+
 async function runCommand(cmd: string, cwd?: string): Promise<string> {
   const { stdout, stderr } = await execAsync(cmd, {
     cwd: cwd || REPO_DIR,
@@ -149,36 +171,37 @@ async function performUpdate() {
     }
     addLog('Prerequisites OK — Docker socket and repo available')
 
-    // Mark repo as safe (ownership may differ inside Docker container)
-    await spawnWithLogs('git', ['config', '--global', '--add', 'safe.directory', REPO_DIR])
-    addLog('Marked repo as safe directory')
-
-    // Step 1: Git fetch + hard reset (handles overwritten local files like install.sh)
+    // Step 1: Git fetch + hard reset via helper container (runs as root to avoid permission issues)
     updateState.status = 'pulling'
     updateState.progress = 10
     const branch = updateState.branch || 'main'
     addLog(`Fetching latest code from origin/${branch}...`)
 
-    const fetchResult = await spawnWithLogs('git', ['fetch', 'origin', branch], REPO_DIR)
-    if (fetchResult.code !== 0) {
-      throw new Error(`Git fetch failed (exit code ${fetchResult.code})`)
+    // Run git operations inside a temporary Alpine container with git, mounted as root
+    // This avoids the "dubious ownership" and "Permission denied" errors when the
+    // /repo bind mount is owned by a different user than the nextjs container process.
+    const gitScript = [
+      'set -e',
+      `git config --global --add safe.directory /repo`,
+      `cd /repo`,
+      `git fetch origin ${branch}`,
+      `git reset --hard origin/${branch}`,
+      `git clean -fd || true`,
+      `chmod +x /repo/install.sh 2>/dev/null || true`,
+    ].join(' && ')
+
+    const hostRepo = await getHostRepoPath()
+    addLog(`Host repo path: ${hostRepo}`)
+
+    const gitResult = await spawnWithLogs('docker', [
+      'run', '--rm',
+      '-v', `${hostRepo}:/repo`,
+      'alpine/git:latest',
+      'sh', '-c', gitScript
+    ])
+    if (gitResult.code !== 0) {
+      throw new Error(`Git update failed (exit code ${gitResult.code})`)
     }
-
-    updateState.progress = 15
-    addLog(`Resetting to origin/${branch}...`)
-    const resetResult = await spawnWithLogs('git', ['reset', '--hard', `origin/${branch}`], REPO_DIR)
-    if (resetResult.code !== 0) {
-      throw new Error(`Git reset failed (exit code ${resetResult.code})`)
-    }
-
-    // Clean untracked files
-    await spawnWithLogs('git', ['clean', '-fd'], REPO_DIR).catch(() => {})
-
-    // Restore execute permission on install script
-    try {
-      fs.chmodSync(path.join(REPO_DIR, 'install.sh'), 0o755)
-      addLog('Restored install.sh permissions')
-    } catch { /* may not exist in all setups */ }
 
     addLog('Code updated successfully')
 
@@ -331,39 +354,45 @@ export async function POST(request: Request) {
 export async function GET() {
   const prereqs = checkPrerequisites()
 
-  // Mark repo as safe (ownership may differ inside Docker container)
-  try {
-    if (prereqs.ok) {
-      await execAsync(`git config --global --add safe.directory ${REPO_DIR}`)
-    }
-  } catch { /* ignore */ }
-
-  // Try to get current git branch and available remote branches
+  // Run git read-only queries via helper container (avoids permission issues with bind mount)
   let currentBranch = 'main'
   let availableBranches: string[] = ['main']
-  try {
-    if (prereqs.ok) {
-      const { stdout: branchOut } = await execAsync('git rev-parse --abbrev-ref HEAD', { cwd: REPO_DIR })
-      currentBranch = branchOut.trim() || 'main'
-
-      const { stdout: remoteBranches } = await execAsync('git branch -r --no-color', { cwd: REPO_DIR })
-      availableBranches = remoteBranches
-        .split('\n')
-        .map(b => b.trim().replace('origin/', ''))
-        .filter(b => b && !b.includes('HEAD') && !b.includes('->'))
-      if (!availableBranches.includes('main')) availableBranches.unshift('main')
-    }
-  } catch { /* git not available or not a repo */ }
-
-  // Get last commit info
   let lastCommit: { hash: string; message: string; date: string } | null = null
   try {
     if (prereqs.ok) {
-      const { stdout } = await execAsync('git log -1 --format="%h|||%s|||%ci"', { cwd: REPO_DIR })
-      const [hash, message, date] = stdout.trim().split('|||')
-      lastCommit = { hash, message, date }
+      const gitInfoScript = [
+        'git config --global --add safe.directory /repo',
+        'cd /repo',
+        'echo "BRANCH:$(git rev-parse --abbrev-ref HEAD)"',
+        'echo "REMOTES:$(git branch -r --no-color | tr "\\n" ",")"',
+        'echo "COMMIT:$(git log -1 --format="%h|||%s|||%ci")"',
+      ].join(' && ')
+
+      const hostRepo = await getHostRepoPath()
+      const { stdout } = await execAsync(
+        `docker run --rm -v ${hostRepo}:/repo alpine/git:latest sh -c '${gitInfoScript}'`,
+        { timeout: 15000 }
+      )
+
+      for (const line of stdout.split('\n')) {
+        if (line.startsWith('BRANCH:')) {
+          currentBranch = line.replace('BRANCH:', '').trim() || 'main'
+        } else if (line.startsWith('REMOTES:')) {
+          const raw = line.replace('REMOTES:', '')
+          availableBranches = raw
+            .split(',')
+            .map(b => b.trim().replace('origin/', ''))
+            .filter(b => b && !b.includes('HEAD') && !b.includes('->'))
+          if (!availableBranches.includes('main')) availableBranches.unshift('main')
+        } else if (line.startsWith('COMMIT:')) {
+          const parts = line.replace('COMMIT:', '').trim().split('|||')
+          if (parts.length === 3) {
+            lastCommit = { hash: parts[0], message: parts[1], date: parts[2] }
+          }
+        }
+      }
     }
-  } catch { /* ignore */ }
+  } catch { /* git helper container not available */ }
 
   return NextResponse.json({
     state: updateState,
