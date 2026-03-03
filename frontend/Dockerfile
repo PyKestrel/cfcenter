@@ -68,7 +68,16 @@ ENV GIT_SHA=${GIT_SHA}
 
 # Install runtime dependencies
 # docker-cli + git are needed for GUI self-update (git pull + docker build from /repo)
-RUN apk add --no-cache sqlite-dev docker-cli git su-exec sudo
+# terraform is needed for IaC provisioning
+RUN apk add --no-cache sqlite-dev docker-cli git su-exec sudo curl unzip \
+    && ARCH=$(uname -m) \
+    && case "$ARCH" in x86_64) TF_ARCH=amd64 ;; aarch64) TF_ARCH=arm64 ;; *) TF_ARCH=amd64 ;; esac \
+    && TF_VERSION="1.9.8" \
+    && curl -fsSL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_${TF_ARCH}.zip" -o /tmp/terraform.zip \
+    && unzip /tmp/terraform.zip -d /usr/local/bin/ \
+    && rm /tmp/terraform.zip \
+    && chmod +x /usr/local/bin/terraform \
+    && terraform version
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \

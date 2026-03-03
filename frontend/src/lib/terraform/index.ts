@@ -23,6 +23,7 @@ export interface TerraformWorkspace {
   last_action: string | null
   last_action_at: string | null
   connection_id: string | null
+  credential_id: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -84,6 +85,7 @@ export function initTerraformTables() {
       last_action TEXT,
       last_action_at TEXT,
       connection_id TEXT,
+      credential_id TEXT,
       created_by TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -118,6 +120,7 @@ export function createWorkspace(input: {
   description?: string
   hcl_content?: string
   connection_id?: string
+  credential_id?: string
   created_by?: string
 }): TerraformWorkspace {
   initTerraformTables()
@@ -137,15 +140,16 @@ export function createWorkspace(input: {
     last_action: null,
     last_action_at: null,
     connection_id: input.connection_id || null,
+    credential_id: input.credential_id || null,
     created_by: input.created_by || null,
     created_at: now,
     updated_at: now,
   }
 
   db.prepare(`
-    INSERT INTO terraform_workspaces (id, name, description, status, hcl_content, plan_output, apply_output, state_json, last_action, last_action_at, connection_id, created_by, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, ws.name, ws.description, ws.status, ws.hcl_content, ws.plan_output, ws.apply_output, ws.state_json, ws.last_action, ws.last_action_at, ws.connection_id, ws.created_by, now, now)
+    INSERT INTO terraform_workspaces (id, name, description, status, hcl_content, plan_output, apply_output, state_json, last_action, last_action_at, connection_id, credential_id, created_by, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, ws.name, ws.description, ws.status, ws.hcl_content, ws.plan_output, ws.apply_output, ws.state_json, ws.last_action, ws.last_action_at, ws.connection_id, ws.credential_id, ws.created_by, now, now)
 
   return ws
 }
@@ -162,7 +166,7 @@ export function listWorkspaces(): TerraformWorkspace[] {
   return db.prepare('SELECT * FROM terraform_workspaces ORDER BY updated_at DESC').all() as TerraformWorkspace[]
 }
 
-export function updateWorkspace(id: string, updates: Partial<Pick<TerraformWorkspace, 'name' | 'description' | 'status' | 'hcl_content' | 'plan_output' | 'apply_output' | 'state_json' | 'last_action' | 'last_action_at' | 'connection_id'>>): TerraformWorkspace | null {
+export function updateWorkspace(id: string, updates: Partial<Pick<TerraformWorkspace, 'name' | 'description' | 'status' | 'hcl_content' | 'plan_output' | 'apply_output' | 'state_json' | 'last_action' | 'last_action_at' | 'connection_id' | 'credential_id'>>): TerraformWorkspace | null {
   initTerraformTables()
   const db = getDb()
   const existing = getWorkspace(id)
@@ -634,7 +638,7 @@ export function getTerraformVersion(): string | null {
 export async function runTerraformAction(
   workspaceId: string,
   action: TerraformAction,
-  apiToken?: string,
+  envOverrides?: Record<string, string>,
 ): Promise<TerraformOperation> {
   const ws = getWorkspace(workspaceId)
   if (!ws) throw new Error('Workspace not found')
@@ -660,8 +664,9 @@ export async function runTerraformAction(
   let args: string[]
   const env = { ...process.env } as NodeJS.ProcessEnv
 
-  if (apiToken) {
-    env.TF_VAR_proxmox_api_token = apiToken
+  // Apply env overrides (from stored credentials or manual input)
+  if (envOverrides) {
+    Object.assign(env, envOverrides)
   }
 
   switch (action) {

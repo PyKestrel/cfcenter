@@ -40,13 +40,14 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { name, description, hcl_content, connection_id } = body
+    const { name, description, hcl_content, connection_id, credential_id } = body
 
     const ws = updateWorkspace(id, {
       ...(name !== undefined && { name }),
       ...(description !== undefined && { description }),
       ...(hcl_content !== undefined && { hcl_content }),
       ...(connection_id !== undefined && { connection_id }),
+      ...(credential_id !== undefined && { credential_id }),
     })
 
     if (!ws) {

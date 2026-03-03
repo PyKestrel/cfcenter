@@ -33,7 +33,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, description, hcl_content, connection_id } = body
+    const { name, description, hcl_content, connection_id, credential_id } = body
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       description: description || undefined,
       hcl_content: hcl_content || '',
       connection_id: connection_id || undefined,
+      credential_id: credential_id || undefined,
     })
 
     return NextResponse.json({ data: ws }, { status: 201 })
