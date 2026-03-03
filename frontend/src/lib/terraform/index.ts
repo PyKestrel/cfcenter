@@ -618,9 +618,32 @@ function getWorkspaceDir(workspaceId: string): string {
   return dir
 }
 
-function writeHclToWorkspace(workspaceId: string, hcl: string): void {
+function writeHclToWorkspace(workspaceId: string, hcl: string): boolean {
   const dir = getWorkspaceDir(workspaceId)
-  fs.writeFileSync(path.join(dir, 'main.tf'), hcl, 'utf-8')
+  const mainTf = path.join(dir, 'main.tf')
+
+  // Check if HCL content changed
+  let changed = true
+
+  if (fs.existsSync(mainTf)) {
+    const existing = fs.readFileSync(mainTf, 'utf-8')
+    changed = existing !== hcl
+  }
+
+  fs.writeFileSync(mainTf, hcl, 'utf-8')
+
+  // If HCL changed, remove lock file + .terraform so init re-runs cleanly
+  if (changed) {
+    const lockFile = path.join(dir, '.terraform.lock.hcl')
+
+    if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile)
+
+    const tfDir = path.join(dir, '.terraform')
+
+    if (fs.existsSync(tfDir)) fs.rmSync(tfDir, { recursive: true, force: true })
+  }
+
+  return changed
 }
 
 export function isTerraformInstalled(): boolean {
@@ -655,6 +678,36 @@ export async function runTerraformAction(
   // Write HCL to disk
   writeHclToWorkspace(workspaceId, ws.hcl_content)
 
+  const dir = getWorkspaceDir(workspaceId)
+  const env = { ...process.env } as NodeJS.ProcessEnv
+
+  // Apply env overrides (from stored credentials or manual input)
+  if (envOverrides) {
+    Object.assign(env, envOverrides)
+  }
+
+  // Auto-run 'terraform init' before plan/apply/destroy if not yet initialized
+  const needsInit = ['plan', 'apply', 'destroy'].includes(action)
+  const tfDir = path.join(dir, '.terraform')
+
+  if (needsInit && !fs.existsSync(tfDir)) {
+    const { execSync } = require('child_process')
+
+    try {
+      execSync('terraform init -no-color -input=false', { cwd: dir, env, timeout: 120_000, stdio: 'pipe' })
+    } catch (initErr: any) {
+      // If init fails, record the error and bail
+      const op = createOperation(workspaceId, action)
+      const initOutput = initErr.stdout?.toString() || '' + (initErr.stderr?.toString() || '')
+      const errorMsg = `Auto-init failed:\n${initOutput}\n${initErr.message}`
+
+      updateOperation(op.id, { status: 'failed', output: errorMsg, finished_at: new Date().toISOString(), duration_ms: 0 })
+      updateWorkspace(workspaceId, { status: 'error' })
+
+      return { ...op, status: 'failed' as const, output: errorMsg, finished_at: new Date().toISOString(), duration_ms: 0 }
+    }
+  }
+
   // Create operation record
   const op = createOperation(workspaceId, action)
   operationLogs.set(op.id, [])
@@ -666,17 +719,10 @@ export async function runTerraformAction(
     last_action_at: new Date().toISOString(),
   })
 
-  const dir = getWorkspaceDir(workspaceId)
   const startTime = Date.now()
 
   // Build terraform command args
   let args: string[]
-  const env = { ...process.env } as NodeJS.ProcessEnv
-
-  // Apply env overrides (from stored credentials or manual input)
-  if (envOverrides) {
-    Object.assign(env, envOverrides)
-  }
 
   switch (action) {
     case 'init':
