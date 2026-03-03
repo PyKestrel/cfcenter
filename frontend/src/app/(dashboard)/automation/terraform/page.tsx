@@ -406,7 +406,7 @@ export default function TerraformPage() {
           credentials={credentials}
         />
       )}
-      <GenerateDialog open={generateOpen} onClose={() => setGenerateOpen(false)} templates={resourceTemplates} />
+      <GenerateDialog open={generateOpen} onClose={() => setGenerateOpen(false)} templates={resourceTemplates} credentials={credentials} />
       <CredentialDialog
         open={credDialogOpen}
         onClose={() => { setCredDialogOpen(false); setEditingCred(null) }}
@@ -490,11 +490,12 @@ function CreateWorkspaceDialog({ open, onClose, credentials }: { open: boolean; 
 // Generate from Template Dialog
 // ============================================
 
-function GenerateDialog({ open, onClose, templates }: { open: boolean; onClose: () => void; templates: ResourceTemplate[] }) {
+function GenerateDialog({ open, onClose, templates, credentials }: { open: boolean; onClose: () => void; templates: ResourceTemplate[]; credentials: TerraformCredential[] }) {
   const [selectedType, setSelectedType] = useState('')
   const [vmName, setVmName] = useState('my-vm')
   const [targetNode, setTargetNode] = useState('pve')
   const [endpoint, setEndpoint] = useState('https://pve.example.com:8006')
+  const [credentialId, setCredentialId] = useState('')
   const [loading, setLoading] = useState(false)
   const [generatedHcl, setGeneratedHcl] = useState('')
 
@@ -533,6 +534,7 @@ function GenerateDialog({ open, onClose, templates }: { open: boolean; onClose: 
           name: `${selectedType}-${Date.now().toString(36)}`,
           description: `Generated from ${selectedType} template`,
           hcl_content: generatedHcl,
+          credential_id: credentialId || undefined,
         }),
       })
       globalMutate('/api/v1/terraform/workspaces')
@@ -554,25 +556,26 @@ function GenerateDialog({ open, onClose, templates }: { open: boolean; onClose: 
           <Box sx={{ mt: 1 }}>
             {/* Resource type selection */}
             <Typography variant="subtitle2" sx={{ mb: 1 }}>Select Resource Type</Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 1, mb: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 2, mb: 2 }}>
               {categories.map(cat => (
-                <Box key={cat}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: 10, mb: 0.5, display: 'block' }}>
+                <Box key={cat} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: 10, display: 'block' }}>
                     {cat}
                   </Typography>
                   {templates.filter(t => t.category === cat).map(t => (
                     <Card
                       key={t.id}
                       variant="outlined"
-                      onClick={() => setSelectedType(t.type)}
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); setSelectedType(t.type) }}
                       sx={{
-                        mb: 0.5, cursor: 'pointer',
+                        cursor: 'pointer',
                         borderColor: selectedType === t.type ? 'primary.main' : 'divider',
                         bgcolor: selectedType === t.type ? 'action.selected' : 'transparent',
                         '&:hover': { bgcolor: 'action.hover' },
+                        transition: 'border-color 0.15s, background-color 0.15s',
                       }}
                     >
-                      <CardContent sx={{ py: 1, px: 1.5, '&:last-child': { pb: 1 } }}>
+                      <CardContent sx={{ py: 1.5, px: 1.5, '&:last-child': { pb: 1.5 } }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <i className={t.icon} style={{ fontSize: 16, opacity: 0.6 }} />
                           <Box>
@@ -591,11 +594,36 @@ function GenerateDialog({ open, onClose, templates }: { open: boolean; onClose: 
 
             {/* Parameters */}
             <Typography variant="subtitle2" sx={{ mb: 1 }}>Parameters</Typography>
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
               <TextField size="small" label="VM/Resource Name" value={vmName} onChange={e => setVmName(e.target.value)} sx={{ flex: 1, minWidth: 150 }} />
               <TextField size="small" label="Target Node" value={targetNode} onChange={e => setTargetNode(e.target.value)} sx={{ width: 120 }} />
               <TextField size="small" label="PVE Endpoint" value={endpoint} onChange={e => setEndpoint(e.target.value)} sx={{ flex: 1, minWidth: 200 }} />
             </Box>
+
+            {/* Credential */}
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Credential</Typography>
+            <TextField
+              select
+              size="small"
+              label="Stored Credential"
+              value={credentialId}
+              onChange={e => setCredentialId(e.target.value)}
+              fullWidth
+              helperText={credentialId ? 'This credential will be linked to the new workspace' : 'Optional — you can also set credentials later in the workspace editor'}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {credentials.map(c => (
+                <MenuItem key={c.id} value={c.id}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <i className="ri-key-2-line" style={{ fontSize: 14, opacity: 0.6 }} />
+                    {c.name}
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>({c.provider})</Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+            </TextField>
           </Box>
         ) : (
           <Box sx={{ mt: 1 }}>
