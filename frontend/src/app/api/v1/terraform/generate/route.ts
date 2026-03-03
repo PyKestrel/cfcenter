@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { generateHclFromTemplate, generateManagementHcl } from '@/lib/terraform'
 import { getTemplate, initTemplateTables } from '@/lib/templates'
+import { getCredentialConfig } from '@/lib/terraform/credentials'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -18,7 +19,21 @@ export async function POST(request: NextRequest) {
       target_node,
       connection_endpoint,
       insecure,
+      credential_id,
     } = body
+
+    // Resolve credential config if provided
+    let resolvedEndpoint = connection_endpoint || 'https://pve.example.com:8006'
+    let resolvedInsecure = insecure !== false
+
+    if (credential_id) {
+      const credConfig = getCredentialConfig(credential_id)
+
+      if (credConfig) {
+        if (credConfig.endpoint) resolvedEndpoint = String(credConfig.endpoint)
+        if (credConfig.insecure !== undefined) resolvedInsecure = Boolean(credConfig.insecure)
+      }
+    }
 
     if (template_id) {
       // Generate from VM template
@@ -35,8 +50,8 @@ export async function POST(request: NextRequest) {
         tpl.type as 'qemu' | 'lxc',
         vm_name || tpl.name || 'vm',
         target_node || 'pve',
-        connection_endpoint || 'https://pve.example.com:8006',
-        insecure !== false,
+        resolvedEndpoint,
+        resolvedInsecure,
       )
 
       return NextResponse.json({ data: { hcl, source: 'template', template_name: tpl.name } })
@@ -45,8 +60,8 @@ export async function POST(request: NextRequest) {
     if (resource_type) {
       // Generate management HCL
       const hcl = generateManagementHcl(
-        connection_endpoint || 'https://pve.example.com:8006',
-        insecure !== false,
+        resolvedEndpoint,
+        resolvedInsecure,
         resource_type,
       )
 

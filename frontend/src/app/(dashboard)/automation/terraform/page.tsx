@@ -494,10 +494,24 @@ function GenerateDialog({ open, onClose, templates, credentials }: { open: boole
   const [selectedType, setSelectedType] = useState('')
   const [vmName, setVmName] = useState('my-vm')
   const [targetNode, setTargetNode] = useState('pve')
-  const [endpoint, setEndpoint] = useState('https://pve.example.com:8006')
+  const [endpoint, setEndpoint] = useState('')
   const [credentialId, setCredentialId] = useState('')
   const [loading, setLoading] = useState(false)
   const [generatedHcl, setGeneratedHcl] = useState('')
+
+  // Auto-select first credential when dialog opens
+  useEffect(() => {
+    if (open && credentials.length > 0 && !credentialId) {
+      setCredentialId(credentials[0].id)
+    }
+
+    if (open) {
+      setGeneratedHcl('')
+      setSelectedType('')
+    }
+  }, [open, credentials])
+
+  const selectedCred = credentials.find(c => c.id === credentialId)
 
   const handleGenerate = async () => {
     setLoading(true)
@@ -509,7 +523,8 @@ function GenerateDialog({ open, onClose, templates, credentials }: { open: boole
           resource_type: selectedType,
           vm_name: vmName,
           target_node: targetNode,
-          connection_endpoint: endpoint,
+          credential_id: credentialId || undefined,
+          connection_endpoint: credentialId ? undefined : (endpoint || undefined),
         }),
       })
       const data = await res.json()
@@ -592,16 +607,8 @@ function GenerateDialog({ open, onClose, templates, credentials }: { open: boole
 
             <Divider sx={{ my: 2 }} />
 
-            {/* Parameters */}
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Parameters</Typography>
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
-              <TextField size="small" label="VM/Resource Name" value={vmName} onChange={e => setVmName(e.target.value)} sx={{ flex: 1, minWidth: 150 }} />
-              <TextField size="small" label="Target Node" value={targetNode} onChange={e => setTargetNode(e.target.value)} sx={{ width: 120 }} />
-              <TextField size="small" label="PVE Endpoint" value={endpoint} onChange={e => setEndpoint(e.target.value)} sx={{ flex: 1, minWidth: 200 }} />
-            </Box>
-
             {/* Credential */}
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Credential</Typography>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Provider Credential</Typography>
             <TextField
               select
               size="small"
@@ -609,10 +616,10 @@ function GenerateDialog({ open, onClose, templates, credentials }: { open: boole
               value={credentialId}
               onChange={e => setCredentialId(e.target.value)}
               fullWidth
-              helperText={credentialId ? 'This credential will be linked to the new workspace' : 'Optional — you can also set credentials later in the workspace editor'}
+              sx={{ mb: 1 }}
             >
               <MenuItem value="">
-                <em>None</em>
+                <em>None (manual endpoint)</em>
               </MenuItem>
               {credentials.map(c => (
                 <MenuItem key={c.id} value={c.id}>
@@ -624,6 +631,32 @@ function GenerateDialog({ open, onClose, templates, credentials }: { open: boole
                 </MenuItem>
               ))}
             </TextField>
+
+            {credentialId && selectedCred && (
+              <Alert severity="info" sx={{ mb: 2, '& .MuiAlert-message': { width: '100%' } }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  <Typography variant="body2" fontWeight={600}>
+                    Using credential: {selectedCred.name}
+                  </Typography>
+                  {Object.entries(selectedCred.config_preview).map(([key, val]) => (
+                    <Box key={key} sx={{ display: 'flex', gap: 1 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize', minWidth: 80 }}>{key.replace(/_/g, ' ')}:</Typography>
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: 11 }}>{val}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Alert>
+            )}
+
+            {/* Parameters */}
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Parameters</Typography>
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+              <TextField size="small" label="VM/Resource Name" value={vmName} onChange={e => setVmName(e.target.value)} sx={{ flex: 1, minWidth: 150 }} />
+              <TextField size="small" label="Target Node" value={targetNode} onChange={e => setTargetNode(e.target.value)} sx={{ width: 120 }} />
+              {!credentialId && (
+                <TextField size="small" label="PVE Endpoint" value={endpoint} onChange={e => setEndpoint(e.target.value)} sx={{ flex: 1, minWidth: 200 }} placeholder="https://pve.example.com:8006" />
+              )}
+            </Box>
           </Box>
         ) : (
           <Box sx={{ mt: 1 }}>
