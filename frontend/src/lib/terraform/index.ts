@@ -108,6 +108,15 @@ export function initTerraformTables() {
     CREATE INDEX IF NOT EXISTS idx_tf_ops_started ON terraform_operations(started_at);
   `)
 
+  // Migration: add credential_id column if table existed before it was introduced
+  try {
+    const cols = db.prepare("PRAGMA table_info(terraform_workspaces)").all() as { name: string }[]
+
+    if (!cols.some(c => c.name === 'credential_id')) {
+      db.exec("ALTER TABLE terraform_workspaces ADD COLUMN credential_id TEXT")
+    }
+  } catch { /* ignore — column already exists */ }
+
   tablesCreated = true
 }
 

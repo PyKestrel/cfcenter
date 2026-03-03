@@ -150,6 +150,7 @@ export default function TerraformPage() {
   const [generateOpen, setGenerateOpen] = useState(false)
   const [credDialogOpen, setCredDialogOpen] = useState(false)
   const [editingCred, setEditingCred] = useState<TerraformCredential | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const openEditor = (ws: TerraformWorkspace) => {
     setSelectedWs(ws)
@@ -166,6 +167,10 @@ export default function TerraformPage() {
     if (!confirm('Delete this credential? Workspaces using it will lose access.')) return
     await fetch(`/api/v1/terraform/credentials/${id}`, { method: 'DELETE' })
     globalMutate('/api/v1/terraform/credentials')
+  }
+
+  const handleExport = (ws: TerraformWorkspace) => {
+    window.open(`/api/v1/terraform/workspaces/${ws.id}/export`, '_blank')
   }
 
   // Stats
@@ -228,6 +233,9 @@ export default function TerraformPage() {
             </Button>
             <Button variant="outlined" startIcon={<i className="ri-magic-line" />} onClick={() => setGenerateOpen(true)}>
               Generate from Template
+            </Button>
+            <Button variant="outlined" startIcon={<i className="ri-upload-2-line" />} onClick={() => setImportOpen(true)}>
+              Import
             </Button>
           </Box>
 
@@ -301,6 +309,7 @@ export default function TerraformPage() {
                         </TableCell>
                         <TableCell align="right" onClick={e => e.stopPropagation()}>
                           <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(ws)}><i className="ri-edit-line" /></IconButton></Tooltip>
+                          <Tooltip title="Export"><IconButton size="small" onClick={() => handleExport(ws)}><i className="ri-download-2-line" /></IconButton></Tooltip>
                           <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => handleDelete(ws.id)}><i className="ri-delete-bin-line" /></IconButton></Tooltip>
                         </TableCell>
                       </TableRow>
@@ -404,6 +413,7 @@ export default function TerraformPage() {
         providers={providerSchemas}
         editing={editingCred}
       />
+      <ImportWorkspaceDialog open={importOpen} onClose={() => setImportOpen(false)} />
     </Box>
   )
 }
@@ -1130,6 +1140,174 @@ function CredentialDialog({
           disabled={loading || !name.trim() || !provider}
         >
           {loading ? 'Saving...' : editing ? 'Update' : 'Create'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+// ============================================
+// Import Workspace Dialog
+// ============================================
+
+function ImportWorkspaceDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [jsonText, setJsonText] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [preview, setPreview] = useState<{ name: string; description?: string; hasHcl: boolean; hasState: boolean } | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setJsonText('')
+      setError('')
+      setPreview(null)
+    }
+  }, [open])
+
+  // Parse preview whenever jsonText changes
+  useEffect(() => {
+    if (!jsonText.trim()) {
+      setPreview(null)
+      setError('')
+
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(jsonText)
+
+      if (parsed._format !== 'cfcenter-terraform-workspace') {
+        setError('Invalid format — expected a CFCenter Terraform workspace export file.')
+        setPreview(null)
+
+        return
+      }
+
+      setError('')
+      setPreview({
+        name: parsed.name || '(unnamed)',
+        description: parsed.description || undefined,
+        hasHcl: !!(parsed.hcl_content && parsed.hcl_content.trim()),
+        hasState: !!parsed.state_json,
+      })
+    } catch {
+      setError('Invalid JSON')
+      setPreview(null)
+    }
+  }, [jsonText])
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+
+    if (!file) return
+
+    const reader = new FileReader()
+
+    reader.onload = (ev) => {
+      setJsonText(ev.target?.result as string || '')
+    }
+
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  const handleImport = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const parsed = JSON.parse(jsonText)
+      const res = await fetch('/api/v1/terraform/workspaces/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Import failed')
+
+        return
+      }
+
+      globalMutate('/api/v1/terraform/workspaces')
+      onClose()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <i className="ri-upload-2-line" style={{ fontSize: 20 }} />
+          Import Terraform Workspace
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
+
+          <Typography variant="body2" color="text.secondary">
+            Paste workspace JSON below or upload a <code>.tfworkspace.json</code> file.
+          </Typography>
+
+          <Button variant="outlined" component="label" startIcon={<i className="ri-file-upload-line" />} sx={{ alignSelf: 'flex-start' }}>
+            Upload File
+            <input type="file" hidden accept=".json,.tfworkspace.json" onChange={handleFileUpload} />
+          </Button>
+
+          <TextField
+            multiline
+            rows={12}
+            fullWidth
+            value={jsonText}
+            onChange={e => setJsonText(e.target.value)}
+            placeholder='{\n  "_format": "cfcenter-terraform-workspace",\n  "_version": 1,\n  "name": "my-workspace",\n  ...\n}'
+            sx={{ fontFamily: 'monospace', fontSize: 12 }}
+          />
+
+          {preview && (
+            <Card variant="outlined">
+              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Preview</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">Name</Typography>
+                    <Typography variant="caption" fontWeight={600}>{preview.name}</Typography>
+                  </Box>
+                  {preview.description && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="caption" color="text.secondary">Description</Typography>
+                      <Typography variant="caption">{preview.description}</Typography>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">HCL Content</Typography>
+                    <Chip label={preview.hasHcl ? 'Yes' : 'None'} size="small" color={preview.hasHcl ? 'success' : 'default'} variant="outlined" />
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">Terraform State</Typography>
+                    <Chip label={preview.hasState ? 'Included' : 'None'} size="small" color={preview.hasState ? 'info' : 'default'} variant="outlined" />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="contained"
+          onClick={handleImport}
+          disabled={loading || !preview}
+          startIcon={<i className="ri-upload-2-line" />}
+        >
+          {loading ? 'Importing...' : 'Import Workspace'}
         </Button>
       </DialogActions>
     </Dialog>
