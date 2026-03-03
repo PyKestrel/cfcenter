@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       const credConfig = getCredentialConfig(credential_id)
 
       if (credConfig) {
-        if (credConfig.endpoint) resolvedEndpoint = String(credConfig.endpoint)
+        if (credConfig.endpoint) resolvedEndpoint = String(credConfig.endpoint).trim()
         if (credConfig.insecure !== undefined) resolvedInsecure = Boolean(credConfig.insecure)
       }
     }

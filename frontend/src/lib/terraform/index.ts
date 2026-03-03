@@ -285,7 +285,7 @@ export function generateHclFromTemplate(
 
   // Provider block
   lines.push('provider "proxmox" {')
-  lines.push(`  endpoint = "${connectionEndpoint}"`)
+  lines.push(`  endpoint = "${connectionEndpoint.trim()}"`)
   lines.push('  api_token = var.proxmox_api_token')
   lines.push(`  insecure = ${insecure}`)
   lines.push('}')
@@ -527,7 +527,7 @@ export function generateManagementHcl(
   lines.push('}')
   lines.push('')
   lines.push('provider "proxmox" {')
-  lines.push(`  endpoint = "${connectionEndpoint}"`)
+  lines.push(`  endpoint = "${connectionEndpoint.trim()}"`)
   lines.push('  api_token = var.proxmox_api_token')
   lines.push(`  insecure = ${insecure}`)
   lines.push('}')
