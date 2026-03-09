@@ -78,7 +78,7 @@
       flex: 1; width: 100%; background: #000; position: relative; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
     }
-    #display { position: relative; }
+    #display { position: relative; outline: none; }
     #loading {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       text-align: center; color: #555; z-index: 5;
@@ -189,7 +189,7 @@
     </div>
     <div id="error-bar" onclick="this.classList.remove('visible')"></div>
     <div id="screen">
-      <div id="display"></div>
+      <div id="display" tabindex="-1"></div>
       <div id="loading">
         <div class="spinner"></div>
         <div class="text" id="loading-text">Loading...</div>
@@ -310,6 +310,10 @@
       clipboardOpen = !clipboardOpen;
       clipboardPanel.classList.toggle('open', clipboardOpen);
       btnClipboard.classList.toggle('active', clipboardOpen);
+      // When closing the clipboard panel, refocus the display so keyboard works again
+      if (!clipboardOpen) {
+        setTimeout(function() { display.focus(); }, 50);
+      }
     }
 
     function sendClipboard() {
@@ -425,9 +429,10 @@
               setStatus('connected', 'Connected');
               btnCad.disabled = false;
               btnKeys.disabled = false;
-              // Scale display after initial render
+              // Scale display after initial render and focus for keyboard
               setTimeout(scaleDisplay, 200);
               setTimeout(scaleDisplay, 1000);
+              setTimeout(function() { display.focus(); }, 300);
               break;
             case 4: // DISCONNECTING
               setStatus('', 'Disconnecting...');
@@ -469,17 +474,27 @@
           scaleDisplay();
         };
 
-        // Keyboard input
-        // Check if clipboard textarea is focused — if so, let the browser handle keys normally
-        const keyboard = new Guacamole.Keyboard(document);
+        // Keyboard input — attach to #display (focusable via tabindex) so that
+        // Guacamole's internal preventDefault() only fires when the display has focus.
+        // When the clipboard textarea is focused, keys go to the textarea instead.
+        const displayContainer = display; // #display div with tabindex="-1"
+        const keyboard = new Guacamole.Keyboard(displayContainer);
         keyboard.onkeydown = function(keysym) {
-          if (document.activeElement === $('clipboard-textarea')) return;
           if (guacClient && connected) guacClient.sendKeyEvent(1, keysym);
         };
         keyboard.onkeyup = function(keysym) {
-          if (document.activeElement === $('clipboard-textarea')) return;
           if (guacClient && connected) guacClient.sendKeyEvent(0, keysym);
         };
+
+        // Auto-focus the display container so keyboard works immediately
+        displayContainer.focus();
+
+        // Re-focus display when clicking on the screen area (not clipboard)
+        screen.addEventListener('mousedown', function(e) {
+          if (!e.target.closest('#clipboard-panel')) {
+            displayContainer.focus();
+          }
+        });
 
         // Mouse input — attach to the display element
         const displayElement = guacClient.getDisplay().getElement();
@@ -570,8 +585,9 @@
         case 'esc':             sendKeys([KEYSYM.ESCAPE]); break;
         case 'printscreen':     sendKeys([KEYSYM.PRINT]); break;
       }
-      // Close the menu after sending
+      // Close the menu after sending and refocus display
       toggleKeysMenu(false);
+      setTimeout(function() { display.focus(); }, 50);
     }
 
     // ─── Keys menu toggle ─────────────────────────────────────────────
@@ -603,8 +619,11 @@
       if (guacClient && connected) scaleDisplay();
     });
 
+    // ─── Refocus display after toolbar actions ──────────────────────
+    function refocusDisplay() { setTimeout(function() { display.focus(); }, 50); }
+
     // ─── Event listeners ─────────────────────────────────────────────
-    btnCad.addEventListener('click', sendCtrlAltDel);
+    btnCad.addEventListener('click', function() { sendCtrlAltDel(); refocusDisplay(); });
     btnKeys.addEventListener('click', () => toggleKeysMenu());
     btnStart.addEventListener('click', () => vmAction('start'));
     btnShutdown.addEventListener('click', () => vmAction('shutdown'));
@@ -612,7 +631,7 @@
     btnPause.addEventListener('click', () => vmAction('suspend'));
     btnReconnect.addEventListener('click', connect);
     btnClose.addEventListener('click', () => window.close());
-    btnFullscreen.addEventListener('click', toggleFullscreen);
+    btnFullscreen.addEventListener('click', function() { toggleFullscreen(); refocusDisplay(); });
     btnClipboard.addEventListener('click', toggleClipboardPanel);
     btnNovnc.addEventListener('click', switchToNoVNC);
 
