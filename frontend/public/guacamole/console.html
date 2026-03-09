@@ -470,20 +470,16 @@
         };
 
         // Keyboard input
+        // Check if clipboard textarea is focused — if so, let the browser handle keys normally
         const keyboard = new Guacamole.Keyboard(document);
-        let keyboardEnabled = true;
         keyboard.onkeydown = function(keysym) {
-          if (keyboardEnabled && guacClient && connected) guacClient.sendKeyEvent(1, keysym);
-          return !keyboardEnabled; // return true to suppress Guacamole handling when disabled
+          if (document.activeElement === $('clipboard-textarea')) return;
+          if (guacClient && connected) guacClient.sendKeyEvent(1, keysym);
         };
         keyboard.onkeyup = function(keysym) {
-          if (keyboardEnabled && guacClient && connected) guacClient.sendKeyEvent(0, keysym);
+          if (document.activeElement === $('clipboard-textarea')) return;
+          if (guacClient && connected) guacClient.sendKeyEvent(0, keysym);
         };
-
-        // Disable Guacamole keyboard when clipboard textarea is focused
-        const clipboardTa = $('clipboard-textarea');
-        clipboardTa.addEventListener('focus', () => { keyboardEnabled = false; });
-        clipboardTa.addEventListener('blur', () => { keyboardEnabled = true; });
 
         // Mouse input — attach to the display element
         const displayElement = guacClient.getDisplay().getElement();
