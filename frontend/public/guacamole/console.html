@@ -471,12 +471,19 @@
 
         // Keyboard input
         const keyboard = new Guacamole.Keyboard(document);
+        let keyboardEnabled = true;
         keyboard.onkeydown = function(keysym) {
-          if (guacClient && connected) guacClient.sendKeyEvent(1, keysym);
+          if (keyboardEnabled && guacClient && connected) guacClient.sendKeyEvent(1, keysym);
+          return !keyboardEnabled; // return true to suppress Guacamole handling when disabled
         };
         keyboard.onkeyup = function(keysym) {
-          if (guacClient && connected) guacClient.sendKeyEvent(0, keysym);
+          if (keyboardEnabled && guacClient && connected) guacClient.sendKeyEvent(0, keysym);
         };
+
+        // Disable Guacamole keyboard when clipboard textarea is focused
+        const clipboardTa = $('clipboard-textarea');
+        clipboardTa.addEventListener('focus', () => { keyboardEnabled = false; });
+        clipboardTa.addEventListener('blur', () => { keyboardEnabled = true; });
 
         // Mouse input — attach to the display element
         const displayElement = guacClient.getDisplay().getElement();

@@ -52,6 +52,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'rec
 import { formatBytes } from '@/utils/format'
 import VmFirewallTab from '@/components/VmFirewallTab'
 import { useLicense, Features } from '@/contexts/LicenseContext'
+const VmFileExplorer = dynamic(() => import('@/components/VmFileExplorer'), { ssr: false })
 const AddDiskDialog = dynamic(() => import('@/components/HardwareModals').then(mod => ({ default: mod.AddDiskDialog })), { ssr: false })
 const AddNetworkDialog = dynamic(() => import('@/components/HardwareModals').then(mod => ({ default: mod.AddNetworkDialog })), { ssr: false })
 const EditDiskDialog = dynamic(() => import('@/components/HardwareModals').then(mod => ({ default: mod.EditDiskDialog })), { ssr: false })
@@ -338,6 +339,16 @@ export default function VmDetailTabs(props: any) {
                     </Box>
                   }
                 />
+                {data?.vmType === 'qemu' && (
+                  <Tab
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <i className="ri-folder-open-line" style={{ fontSize: 16 }} />
+                        Files
+                      </Box>
+                    }
+                  />
+                )}
               </Tabs>
 
               {/* ==================== ONGLET 0 - RÉSUMÉ ==================== */}
@@ -3186,6 +3197,17 @@ return (
               {/* ==================== ONGLET FIREWALL (9 si cluster, 8 sinon) ==================== */}
               {((selectedVmIsCluster && detailTab === 9) || (!selectedVmIsCluster && detailTab === 8)) && selection?.type === 'vm' && (
                 <VmFirewallTab
+                  connectionId={parseVmId(selection.id).connId}
+                  node={parseVmId(selection.id).node}
+                  vmType={data.vmType as 'qemu' | 'lxc'}
+                  vmid={parseInt(parseVmId(selection.id).vmid)}
+                  vmName={data.name}
+                />
+              )}
+
+              {/* ==================== ONGLET FILES (10 si cluster, 9 sinon) ==================== */}
+              {((selectedVmIsCluster && detailTab === 10) || (!selectedVmIsCluster && detailTab === 9)) && selection?.type === 'vm' && data?.vmType === 'qemu' && (
+                <VmFileExplorer
                   connectionId={parseVmId(selection.id).connId}
                   node={parseVmId(selection.id).node}
                   vmType={data.vmType as 'qemu' | 'lxc'}
