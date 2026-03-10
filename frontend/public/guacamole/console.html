@@ -319,7 +319,11 @@
     function sendClipboard() {
       if (!guacClient) return;
       const text = $('clipboard-textarea').value;
-      if (text) guacClient.setClipboard(text, 'text/plain');
+      if (!text) return;
+      var stream = guacClient.createClipboardStream('text/plain');
+      var writer = new Guacamole.StringWriter(stream);
+      writer.sendText(text);
+      writer.sendEnd();
     }
 
     function clearClipboard() {
