@@ -342,8 +342,7 @@
         syncBrowserClipboard();
         setTimeout(function() { $('clipboard-textarea').focus(); }, 100);
       } else {
-        // When closing the clipboard panel, refocus the display so keyboard works again
-        setTimeout(function() { display.focus(); }, 50);
+        // Keyboard is on document, no refocus needed
       }
       // Re-scale display after panel open/close changes available width
       setTimeout(scaleDisplay, 50);
@@ -354,10 +353,15 @@
       if (!guacClient || !connected) return;
       const text = $('clipboard-textarea').value;
       if (!text) return;
-      var stream = guacClient.createClipboardStream('text/plain');
-      var writer = new Guacamole.StringWriter(stream);
-      writer.sendText(text);
-      writer.sendEnd();
+      // Use setClipboard if available (original working method), fall back to createClipboardStream
+      if (typeof guacClient.setClipboard === 'function') {
+        guacClient.setClipboard(text, 'text/plain');
+      } else {
+        var stream = guacClient.createClipboardStream('text/plain');
+        var writer = new Guacamole.StringWriter(stream);
+        writer.sendText(text);
+        writer.sendEnd();
+      }
     }
 
     function clearClipboard() {
@@ -662,25 +666,20 @@
           scaleDisplay();
         };
 
-        // Keyboard input — attach to #display (focusable via tabindex) so that
-        // Guacamole's internal preventDefault() only fires when the display has focus.
-        // When the clipboard textarea is focused, keys go to the textarea instead.
-        const displayContainer = display; // #display div with tabindex="-1"
-        const keyboard = new Guacamole.Keyboard(displayContainer);
+        // Keyboard input — attach to document (original working approach).
+        // Guard with activeElement check so typing in clipboard textarea works.
+        const keyboard = new Guacamole.Keyboard(document);
         keyboard.onkeydown = function(keysym) {
+          // Don't send keys to VM when typing in the clipboard textarea
+          var active = document.activeElement;
+          if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return true;
           if (guacClient && connected) guacClient.sendKeyEvent(1, keysym);
         };
         keyboard.onkeyup = function(keysym) {
+          var active = document.activeElement;
+          if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
           if (guacClient && connected) guacClient.sendKeyEvent(0, keysym);
         };
-
-        // Auto-focus the display container so keyboard works immediately
-        displayContainer.focus();
-
-        // Re-focus display when clicking on the screen area
-        screen.addEventListener('mousedown', function() {
-          displayContainer.focus();
-        });
 
         // Mouse input — attach to the display element
         const displayElement = guacClient.getDisplay().getElement();
