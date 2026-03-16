@@ -17,20 +17,23 @@ async function guestExec(
   node: string,
   vmType: string,
   vmid: string,
-  command: string,
-  args: string[] = [],
+  shellCommand: string,
+  isWindows = false,
 ): Promise<{ exitcode: number; outData: string; errData: string }> {
   const basePath = `/nodes/${encodeURIComponent(node)}/${encodeURIComponent(vmType)}/${encodeURIComponent(vmid)}`
 
-  const params = new URLSearchParams({ command })
-
-  for (let i = 0; i < args.length; i++) {
-    params.append(`arg${i}`, args[i])
-  }
+  // Proxmox agent/exec — some PVE versions do NOT support argN params.
+  // Use the shell binary as `command` and pipe the actual command via `input-data` (stdin).
+  // This works on all PVE versions.
+  const shell = isWindows ? 'cmd.exe' : '/bin/sh'
+  const stdinData = isWindows ? `${shellCommand}\r\n` : `${shellCommand}\n`
 
   const execResult = await pveFetch<any>(conn, `${basePath}/agent/exec`, {
     method: 'POST',
-    body: params,
+    body: new URLSearchParams({
+      command: shell,
+      'input-data': stdinData,
+    }),
   })
 
   const pid = execResult?.pid
@@ -98,8 +101,8 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
     let content = ''
 
     if (os === 'windows') {
-      // Windows: PowerShell Get-Clipboard
-      const result = await guestExec(conn, node, type, vmid, 'powershell.exe', ['-Command', 'Get-Clipboard'])
+      // Windows: PowerShell Get-Clipboard via cmd.exe stdin
+      const result = await guestExec(conn, node, type, vmid, 'powershell.exe -Command Get-Clipboard', true)
 
       if (result.exitcode === 0) {
         content = result.outData.replace(/\r\n$/, '')
@@ -109,25 +112,23 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
         }, { status: 400 })
       }
     } else {
-      // Linux: try xclip first, then xsel, then wl-paste (Wayland)
-      // Most VMs with a desktop will have at least one of these
+      // Linux: try clipboard tools as single command strings
       let result = null
       const commands = [
-        { cmd: 'xclip', args: ['-selection', 'clipboard', '-o'] },
-        { cmd: 'xsel', args: ['--clipboard', '--output'] },
-        { cmd: 'wl-paste', args: [] },
+        'xclip -selection clipboard -o',
+        'xsel --clipboard --output',
+        'wl-paste',
       ]
 
-      for (const { cmd, args } of commands) {
+      for (const cmd of commands) {
         try {
-          result = await guestExec(conn, node, type, vmid, cmd, args)
+          result = await guestExec(conn, node, type, vmid, cmd)
 
           if (result.exitcode === 0) {
             content = result.outData
             break
           }
         } catch {
-          // Command not found or not available, try next
           continue
         }
       }
