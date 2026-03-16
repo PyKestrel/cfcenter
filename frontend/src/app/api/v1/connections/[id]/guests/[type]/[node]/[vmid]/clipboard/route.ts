@@ -98,16 +98,37 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
     let content = ''
 
     if (os === 'windows') {
-      // Windows: Use PowerShell -EncodedCommand to avoid arg/stdin issues.
-      // Encode the PS script as Base64 UTF-16LE (what -EncodedCommand expects).
-      const psCmd = 'Get-Clipboard'
-      const utf16 = Buffer.from(psCmd, 'utf16le')
-      const encoded = utf16.toString('base64')
-      const fullCmd = `C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -NoProfile -NonInteractive -EncodedCommand ${encoded}`
-      const result = await guestExec(conn, node, type, vmid, fullCmd)
+      // Windows: pipe Get-Clipboard to powershell.exe via input-data (stdin).
+      // PowerShell runs interactively and shows a banner + prompt, so we
+      // parse the output to extract just the clipboard content.
+      // Output pattern:
+      //   ...banner...
+      //   PS C:\...> Get-Clipboard
+      //   <clipboard content>
+      //   PS C:\...>
+      const result = await guestExec(conn, node, type, vmid, 'powershell.exe', 'Get-Clipboard\r\nexit\r\n')
 
-      if (result.exitcode === 0) {
-        content = result.outData.replace(/\r\n$/, '').replace(/\n$/, '')
+      if (result.exitcode === 0 || result.outData) {
+        const out = result.outData
+
+        // Find the line where Get-Clipboard was echoed, take everything after it
+        // until the next PS prompt
+        const cmdEcho = /(?:^|\n)PS [^\n]*>\s*Get-Clipboard\s*\r?\n/
+        const match = out.match(cmdEcho)
+
+        if (match && match.index !== undefined) {
+          const startIdx = match.index + match[0].length
+          const rest = out.substring(startIdx)
+
+          // Strip trailing PS prompt and whitespace
+          content = rest.replace(/\r?\nPS [^\n]*>[\s\S]*$/, '').replace(/\r?\n$/, '')
+        } else {
+          // Fallback: strip known PS banner lines and prompts
+          content = out
+            .replace(/^[\s\S]*?Copyright \(C\) Microsoft[\s\S]*?\r?\n\r?\n/, '')
+            .replace(/\r?\nPS [^\n]*>[\s\S]*$/, '')
+            .replace(/\r?\n$/, '')
+        }
       } else {
         return NextResponse.json({
           error: `Failed to read clipboard: ${result.errData || result.outData}`,
