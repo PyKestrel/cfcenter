@@ -17,24 +17,20 @@ async function guestExec(
   node: string,
   vmType: string,
   vmid: string,
-  shellCommand: string,
-  isWindows = false,
+  command: string,
+  inputData?: string,
 ): Promise<{ exitcode: number; outData: string; errData: string }> {
   const basePath = `/nodes/${encodeURIComponent(node)}/${encodeURIComponent(vmType)}/${encodeURIComponent(vmid)}`
 
-  // Proxmox agent/exec — some PVE versions do NOT support argN params.
-  // Use the interpreter as `command` and pipe the script via `input-data` (stdin).
-  // PowerShell reads script from stdin cleanly (no banner/echo).
-  // /bin/sh reads script from stdin cleanly.
-  const shell = isWindows ? 'powershell.exe' : '/bin/sh'
-  const stdinData = shellCommand + '\n'
+  // Proxmox agent/exec — pass only `command` (no argN params for PVE compat).
+  // Optionally pass `input-data` for stdin.
+  const bodyParams: Record<string, string> = { command }
+
+  if (inputData) bodyParams['input-data'] = inputData
 
   const execResult = await pveFetch<any>(conn, `${basePath}/agent/exec`, {
     method: 'POST',
-    body: new URLSearchParams({
-      command: shell,
-      'input-data': stdinData,
-    }),
+    body: new URLSearchParams(bodyParams),
   })
 
   const pid = execResult?.pid
@@ -102,11 +98,26 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
     let content = ''
 
     if (os === 'windows') {
-      // Windows: powershell.exe as shell, Get-Clipboard piped via stdin
-      const result = await guestExec(conn, node, type, vmid, 'Get-Clipboard', true)
+      // Windows: use powershell.exe and pipe script via stdin.
+      // We use a marker to identify the clipboard content in the output,
+      // since PowerShell shows its banner when run interactively via stdin.
+      const marker = '___CLIPBOARD_START___'
+      const psScript = `Write-Host '${marker}'\r\nGet-Clipboard\r\nexit\r\n`
+      const result = await guestExec(conn, node, type, vmid, 'powershell.exe', psScript)
 
-      if (result.exitcode === 0) {
-        content = result.outData.replace(/\r\n$/, '')
+      if (result.exitcode === 0 || result.outData) {
+        const out = result.outData
+        const markerIdx = out.indexOf(marker)
+
+        if (markerIdx !== -1) {
+          // Extract everything after the marker line
+          const afterMarker = out.substring(markerIdx + marker.length)
+          // Remove leading newline and trailing prompt/whitespace
+          content = afterMarker.replace(/^\r?\n/, '').replace(/\r?\nPS [^\n]*>?\s*$/, '').replace(/\r?\n$/, '')
+        } else {
+          // Fallback: try to extract content by removing known PS banner lines
+          content = out.replace(/\r\n/g, '\n').replace(/\n$/, '')
+        }
       } else {
         return NextResponse.json({
           error: `Failed to read clipboard: ${result.errData || result.outData}`,
