@@ -310,14 +310,18 @@
       clipboardOpen = !clipboardOpen;
       clipboardPanel.classList.toggle('open', clipboardOpen);
       btnClipboard.classList.toggle('active', clipboardOpen);
-      // When closing the clipboard panel, refocus the display so keyboard works again
-      if (!clipboardOpen) {
+      if (clipboardOpen) {
+        // Sync browser clipboard into textarea when opening panel
+        syncBrowserClipboard();
+        setTimeout(function() { $('clipboard-textarea').focus(); }, 100);
+      } else {
+        // When closing the clipboard panel, refocus the display so keyboard works again
         setTimeout(function() { display.focus(); }, 50);
       }
     }
 
     function sendClipboard() {
-      if (!guacClient) return;
+      if (!guacClient || !connected) return;
       const text = $('clipboard-textarea').value;
       if (!text) return;
       var stream = guacClient.createClipboardStream('text/plain');
@@ -328,6 +332,25 @@
 
     function clearClipboard() {
       $('clipboard-textarea').value = '';
+    }
+
+    // Auto-send clipboard to VM when user types or pastes into textarea (debounced)
+    let clipboardSendTimer = null;
+    $('clipboard-textarea').addEventListener('input', function() {
+      clearTimeout(clipboardSendTimer);
+      clipboardSendTimer = setTimeout(sendClipboard, 200);
+    });
+
+    // Also sync browser clipboard into textarea when panel is opened
+    function syncBrowserClipboard() {
+      if (navigator.clipboard?.readText) {
+        navigator.clipboard.readText().then(function(text) {
+          if (text && text !== $('clipboard-textarea').value) {
+            $('clipboard-textarea').value = text;
+            sendClipboard();
+          }
+        }).catch(function() {});
+      }
     }
 
     // ─── Fullscreen ──────────────────────────────────────────────────
@@ -466,9 +489,22 @@
           const reader = new Guacamole.StringReader(stream);
           reader.ontext = function(text) { data += text; };
           reader.onend = function() {
+            console.log('[clipboard] Received from VM:', data.length, 'chars');
             $('clipboard-textarea').value = data;
+            // Copy to browser clipboard
             if (navigator.clipboard?.writeText) {
-              navigator.clipboard.writeText(data).catch(() => {});
+              navigator.clipboard.writeText(data).catch(function(err) {
+                console.warn('[clipboard] Failed to write to browser clipboard:', err);
+              });
+            }
+            // Flash the clipboard button to indicate new data
+            if (!clipboardOpen) {
+              btnClipboard.style.background = '#22c55e';
+              btnClipboard.style.color = '#000';
+              setTimeout(function() {
+                btnClipboard.style.background = '';
+                btnClipboard.style.color = '';
+              }, 1500);
             }
           };
         };
