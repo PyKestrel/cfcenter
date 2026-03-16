@@ -98,26 +98,16 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
     let content = ''
 
     if (os === 'windows') {
-      // Windows: use powershell.exe and pipe script via stdin.
-      // We use a marker to identify the clipboard content in the output,
-      // since PowerShell shows its banner when run interactively via stdin.
-      const marker = '___CLIPBOARD_START___'
-      const psScript = `Write-Host '${marker}'\r\nGet-Clipboard\r\nexit\r\n`
-      const result = await guestExec(conn, node, type, vmid, 'powershell.exe', psScript)
+      // Windows: Use PowerShell -EncodedCommand to avoid arg/stdin issues.
+      // Encode the PS script as Base64 UTF-16LE (what -EncodedCommand expects).
+      const psCmd = 'Get-Clipboard'
+      const utf16 = Buffer.from(psCmd, 'utf16le')
+      const encoded = utf16.toString('base64')
+      const fullCmd = `C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -NoProfile -NonInteractive -EncodedCommand ${encoded}`
+      const result = await guestExec(conn, node, type, vmid, fullCmd)
 
-      if (result.exitcode === 0 || result.outData) {
-        const out = result.outData
-        const markerIdx = out.indexOf(marker)
-
-        if (markerIdx !== -1) {
-          // Extract everything after the marker line
-          const afterMarker = out.substring(markerIdx + marker.length)
-          // Remove leading newline and trailing prompt/whitespace
-          content = afterMarker.replace(/^\r?\n/, '').replace(/\r?\nPS [^\n]*>?\s*$/, '').replace(/\r?\n$/, '')
-        } else {
-          // Fallback: try to extract content by removing known PS banner lines
-          content = out.replace(/\r\n/g, '\n').replace(/\n$/, '')
-        }
+      if (result.exitcode === 0) {
+        content = result.outData.replace(/\r\n$/, '').replace(/\n$/, '')
       } else {
         return NextResponse.json({
           error: `Failed to read clipboard: ${result.errData || result.outData}`,
