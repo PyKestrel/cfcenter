@@ -333,6 +333,9 @@
     }
 
     // ─── Clipboard ───────────────────────────────────────────────────
+    var clipboardPollTimer = null;
+    var lastVmClipboard = '';
+
     function toggleClipboardPanel() {
       clipboardOpen = !clipboardOpen;
       clipboardPanel.classList.toggle('open', clipboardOpen);
@@ -341,12 +344,61 @@
         // Sync browser clipboard into textarea when opening panel
         syncBrowserClipboard();
         setTimeout(function() { $('clipboard-textarea').focus(); }, 100);
+        // Start polling VM clipboard via guest agent (like noVNC clipboard sync)
+        startClipboardPolling();
       } else {
-        // Keyboard is on document, no refocus needed
+        stopClipboardPolling();
       }
       // Re-scale display after panel open/close changes available width
       setTimeout(scaleDisplay, 50);
       setTimeout(scaleDisplay, 250);
+    }
+
+    function startClipboardPolling() {
+      stopClipboardPolling();
+      // Poll immediately, then every 2 seconds
+      pollVmClipboard();
+      clipboardPollTimer = setInterval(pollVmClipboard, 2000);
+    }
+
+    function stopClipboardPolling() {
+      if (clipboardPollTimer) {
+        clearInterval(clipboardPollTimer);
+        clipboardPollTimer = null;
+      }
+    }
+
+    function pollVmClipboard() {
+      if (!connected) return;
+      var execUrl = '/api/v1/connections/' + encodeURIComponent(connId) +
+        '/guests/qemu/' + encodeURIComponent(node) +
+        '/' + encodeURIComponent(vmid) + '/clipboard';
+
+      fetch(execUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(json) {
+          if (json.data && typeof json.data.content === 'string') {
+            var newContent = json.data.content;
+            // Only update if clipboard changed and user isn't actively editing
+            if (newContent !== lastVmClipboard && document.activeElement !== $('clipboard-textarea')) {
+              lastVmClipboard = newContent;
+              $('clipboard-textarea').value = newContent;
+              if (navigator.clipboard?.writeText && newContent) {
+                navigator.clipboard.writeText(newContent).catch(function() {});
+              }
+              // Flash the clipboard button
+              btnClipboard.style.background = '#22c55e';
+              btnClipboard.style.color = '#000';
+              setTimeout(function() {
+                btnClipboard.style.background = '';
+                btnClipboard.style.color = '';
+              }, 1500);
+            }
+          }
+        })
+        .catch(function() {
+          // Silently ignore polling errors
+        });
     }
 
     function sendClipboard() {
@@ -618,6 +670,7 @@
               break;
             case 5: // DISCONNECTED
               connected = false;
+              stopClipboardPolling();
               setStatus('', 'Disconnected');
               btnCad.disabled = true;
               loading.style.display = 'block';

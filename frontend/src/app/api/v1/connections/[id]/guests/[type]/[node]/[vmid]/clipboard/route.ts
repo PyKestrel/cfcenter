@@ -18,27 +18,27 @@ async function guestExec(
   vmType: string,
   vmid: string,
   command: string,
+  args: string[] = [],
   inputData?: string,
 ): Promise<{ exitcode: number; outData: string; errData: string }> {
   const basePath = `/nodes/${encodeURIComponent(node)}/${encodeURIComponent(vmType)}/${encodeURIComponent(vmid)}`
 
-  // Proxmox agent/exec — pass only `command` (no argN params for PVE compat).
-  // Optionally pass `input-data` for stdin.
-  const bodyParams: Record<string, string> = { command }
-
-  if (inputData) bodyParams['input-data'] = inputData
-
+  // Use same pattern as the working files route: command + argN params
   const execResult = await pveFetch<any>(conn, `${basePath}/agent/exec`, {
     method: 'POST',
-    body: new URLSearchParams(bodyParams),
+    body: new URLSearchParams({
+      command,
+      ...(args.length > 0 ? Object.fromEntries(args.map((a, i) => [`arg${i}`, a])) : {}),
+      ...(inputData ? { 'input-data': inputData } : {}),
+    }),
   })
 
   const pid = execResult?.pid
 
   if (pid === undefined) throw new Error('Failed to start command on guest')
 
-  // Poll for completion (up to 10 seconds)
-  for (let i = 0; i < 20; i++) {
+  // Poll for completion (up to 15 seconds)
+  for (let i = 0; i < 30; i++) {
     await new Promise(r => setTimeout(r, 500))
 
     const status = await pveFetch<any>(conn, `${basePath}/agent/exec-status?pid=${pid}`)
@@ -98,54 +98,28 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
     let content = ''
 
     if (os === 'windows') {
-      // Windows: pipe Get-Clipboard to powershell.exe via input-data (stdin).
-      // PowerShell runs interactively and shows a banner + prompt, so we
-      // parse the output to extract just the clipboard content.
-      // Output pattern:
-      //   ...banner...
-      //   PS C:\...> Get-Clipboard
-      //   <clipboard content>
-      //   PS C:\...>
-      const result = await guestExec(conn, node, type, vmid, 'powershell.exe', 'Get-Clipboard\r\nexit\r\n')
+      // Windows: PowerShell Get-Clipboard via argN params (same pattern as files route)
+      const result = await guestExec(conn, node, type, vmid, 'powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Get-Clipboard'])
 
-      if (result.exitcode === 0 || result.outData) {
-        const out = result.outData
-
-        // Find the line where Get-Clipboard was echoed, take everything after it
-        // until the next PS prompt
-        const cmdEcho = /(?:^|\n)PS [^\n]*>\s*Get-Clipboard\s*\r?\n/
-        const match = out.match(cmdEcho)
-
-        if (match && match.index !== undefined) {
-          const startIdx = match.index + match[0].length
-          const rest = out.substring(startIdx)
-
-          // Strip trailing PS prompt and whitespace
-          content = rest.replace(/\r?\nPS [^\n]*>[\s\S]*$/, '').replace(/\r?\n$/, '')
-        } else {
-          // Fallback: strip known PS banner lines and prompts
-          content = out
-            .replace(/^[\s\S]*?Copyright \(C\) Microsoft[\s\S]*?\r?\n\r?\n/, '')
-            .replace(/\r?\nPS [^\n]*>[\s\S]*$/, '')
-            .replace(/\r?\n$/, '')
-        }
+      if (result.exitcode === 0) {
+        content = result.outData.replace(/\r\n$/, '').replace(/\n$/, '')
       } else {
         return NextResponse.json({
           error: `Failed to read clipboard: ${result.errData || result.outData}`,
         }, { status: 400 })
       }
     } else {
-      // Linux: try clipboard tools as single command strings
+      // Linux: try clipboard tools via argN params
       let result = null
-      const commands = [
-        'xclip -selection clipboard -o',
-        'xsel --clipboard --output',
-        'wl-paste',
+      const commands: { cmd: string; args: string[] }[] = [
+        { cmd: 'xclip', args: ['-selection', 'clipboard', '-o'] },
+        { cmd: 'xsel', args: ['--clipboard', '--output'] },
+        { cmd: 'wl-paste', args: [] },
       ]
 
-      for (const cmd of commands) {
+      for (const { cmd, args } of commands) {
         try {
-          result = await guestExec(conn, node, type, vmid, cmd)
+          result = await guestExec(conn, node, type, vmid, cmd, args)
 
           if (result.exitcode === 0) {
             content = result.outData
