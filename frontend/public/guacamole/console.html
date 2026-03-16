@@ -91,21 +91,42 @@
     #loading .text { font-size: 13px; color: #888; }
     #loading .subtext { font-size: 11px; margin-top: 6px; color: #555; }
 
-    /* Clipboard panel */
-    #clipboard-panel {
-      display: none; position: absolute; bottom: 0; left: 0; right: 0;
-      background: #0f0f0f; border-top: 1px solid #222; z-index: 25; padding: 12px;
-      animation: slideUp 0.2s ease-out;
+    /* Screen wrapper — holds clipboard panel + screen side by side */
+    #screen-wrapper {
+      flex: 1; display: flex; flex-direction: row; overflow: hidden; min-height: 0;
     }
-    #clipboard-panel.open { display: block; }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    /* Clipboard panel — left side, does not overlay display */
+    #clipboard-panel {
+      display: none; flex-direction: column; width: 280px; min-width: 280px;
+      background: #0a0a0a; border-right: 1px solid #1f1f1f; padding: 10px;
+      animation: slideInLeft 0.2s ease-out; overflow: hidden; flex-shrink: 0;
+    }
+    #clipboard-panel.open { display: flex; }
+    @keyframes slideInLeft { from { margin-left: -280px; } to { margin-left: 0; } }
+    #clipboard-panel .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px; flex-shrink: 0;
+    }
+    #clipboard-panel .panel-title {
+      color: #aaa; font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #clipboard-panel .panel-close {
+      background: none; border: none; color: #666; font-size: 16px; cursor: pointer;
+      padding: 2px 6px; border-radius: 4px; line-height: 1;
+    }
+    #clipboard-panel .panel-close:hover { color: #fff; background: #1f1f1f; }
     #clipboard-textarea {
-      width: 100%; height: 80px; background: #1a1a1a; border: 1px solid #2a2a2a;
+      width: 100%; flex: 1; min-height: 60px; background: #111; border: 1px solid #222;
       border-radius: 6px; color: #ccc; font-size: 12px; padding: 8px; resize: none;
       font-family: 'Cascadia Code', 'Fira Code', monospace;
     }
     #clipboard-textarea:focus { outline: none; border-color: #22c55e; }
-    .clipboard-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .clipboard-actions {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; flex-shrink: 0;
+    }
+    .clipboard-actions .tb { flex: 1 1 calc(50% - 2px); justify-content: center; font-size: 10px; padding: 5px 4px; }
 
     /* Guacamole display scaling */
     #display canvas { cursor: none; }
@@ -188,21 +209,27 @@
       </div>
     </div>
     <div id="error-bar" onclick="this.classList.remove('visible')"></div>
-    <div id="screen">
-      <div id="display" tabindex="-1"></div>
-      <div id="loading">
-        <div class="spinner"></div>
-        <div class="text" id="loading-text">Loading...</div>
-        <div class="subtext" id="loading-subtext"></div>
-      </div>
-
-      <!-- Clipboard panel -->
+    <div id="screen-wrapper">
+      <!-- Clipboard panel — left side -->
       <div id="clipboard-panel">
+        <div class="panel-header">
+          <span class="panel-title">Clipboard</span>
+          <button class="panel-close" onclick="toggleClipboardPanel()" title="Close">&times;</button>
+        </div>
         <textarea id="clipboard-textarea" placeholder="Paste text here to send to VM, or copy from VM..."></textarea>
         <div class="clipboard-actions">
-          <button class="tb" onclick="sendClipboard()">Send to VM</button>
+          <button class="tb" onclick="sendClipboard()" title="Send textarea content to VM clipboard">Send to VM</button>
+          <button class="tb" onclick="typeClipboardToVm()" title="Type textarea text into VM as keystrokes">Type into VM</button>
+          <button class="tb" onclick="readVmClipboard()" title="Read clipboard from VM via Guest Agent">Read from VM</button>
           <button class="tb" onclick="clearClipboard()">Clear</button>
-          <button class="tb" style="margin-left:auto" onclick="toggleClipboardPanel()">Close</button>
+        </div>
+      </div>
+      <div id="screen">
+        <div id="display" tabindex="-1"></div>
+        <div id="loading">
+          <div class="spinner"></div>
+          <div class="text" id="loading-text">Loading...</div>
+          <div class="subtext" id="loading-subtext"></div>
         </div>
       </div>
     </div>
@@ -318,6 +345,9 @@
         // When closing the clipboard panel, refocus the display so keyboard works again
         setTimeout(function() { display.focus(); }, 50);
       }
+      // Re-scale display after panel open/close changes available width
+      setTimeout(scaleDisplay, 50);
+      setTimeout(scaleDisplay, 250);
     }
 
     function sendClipboard() {
@@ -352,6 +382,124 @@
         }).catch(function() {});
       }
     }
+
+    // ─── Type text into VM as keystrokes ──────────────────────────────
+    // Converts each character to an X11 keysym and sends key press/release
+    function charToKeysym(ch) {
+      var code = ch.charCodeAt(0);
+      // Standard ASCII maps directly to keysym for 0x20-0x7E
+      if (code >= 0x20 && code <= 0x7E) return code;
+      // Newline → Return
+      if (code === 0x0A || code === 0x0D) return 0xFF0D;
+      // Tab
+      if (code === 0x09) return 0xFF09;
+      // Unicode BMP → keysym = 0x01000000 + codepoint
+      if (code > 0x7E) return 0x01000000 | code;
+      return null;
+    }
+
+    var typingInProgress = false;
+
+    function typeClipboardToVm() {
+      if (!guacClient || !connected) return;
+      var text = $('clipboard-textarea').value;
+      if (!text || typingInProgress) return;
+
+      typingInProgress = true;
+      var i = 0;
+
+      function typeNext() {
+        if (i >= text.length) {
+          typingInProgress = false;
+          return;
+        }
+        var ch = text[i++];
+        var keysym = charToKeysym(ch);
+        if (keysym !== null) {
+          // Check if we need Shift for uppercase or shifted symbols
+          var needsShift = (ch >= 'A' && ch <= 'Z') ||
+            '~!@#$%^&*()_+{}|:"<>?'.indexOf(ch) !== -1;
+          if (needsShift) guacClient.sendKeyEvent(1, 0xFFE1); // Shift down
+          guacClient.sendKeyEvent(1, keysym);
+          guacClient.sendKeyEvent(0, keysym);
+          if (needsShift) guacClient.sendKeyEvent(0, 0xFFE1); // Shift up
+        }
+        // Small delay between keystrokes to avoid overwhelming the VM
+        setTimeout(typeNext, 5);
+      }
+
+      typeNext();
+    }
+
+    // ─── Read VM clipboard via QEMU Guest Agent ───────────────────────
+    function readVmClipboard() {
+      if (!connected) return;
+      // For Linux: try xclip/xsel via guest agent exec
+      // For Windows: try PowerShell Get-Clipboard
+      var apiBase = '/api/v1/connections/' + encodeURIComponent(connId) +
+        '/guests/qemu/' + encodeURIComponent(node) +
+        '/' + encodeURIComponent(vmid) + '/files';
+
+      // We'll use the files API's parent route's exec capability through a dedicated endpoint
+      // For now, use a direct approach: try exec via guest agent
+      var execUrl = '/api/v1/connections/' + encodeURIComponent(connId) +
+        '/guests/qemu/' + encodeURIComponent(node) +
+        '/' + encodeURIComponent(vmid) + '/clipboard';
+
+      fetch(execUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(json) {
+          if (json.data && json.data.content) {
+            $('clipboard-textarea').value = json.data.content;
+            // Also copy to browser clipboard
+            if (navigator.clipboard?.writeText) {
+              navigator.clipboard.writeText(json.data.content).catch(function() {});
+            }
+          } else if (json.error) {
+            console.warn('[clipboard] Read from VM failed:', json.error);
+            alert('Could not read VM clipboard: ' + json.error);
+          }
+        })
+        .catch(function(err) {
+          console.error('[clipboard] Read from VM error:', err);
+          alert('Could not read VM clipboard. Ensure QEMU Guest Agent is running.');
+        });
+    }
+
+    // ─── Intercept Ctrl+V on the display to paste as keystrokes ───────
+    // Since Proxmox VNC proxy doesn't forward clipboard, we type it in directly
+    display.addEventListener('paste', function(e) {
+      if (!guacClient || !connected) return;
+      e.preventDefault();
+      var text = (e.clipboardData || window.clipboardData).getData('text');
+      if (text) {
+        $('clipboard-textarea').value = text;
+        typeClipboardToVm();
+      }
+    });
+
+    // Also listen for Ctrl+V keydown on display to trigger paste event
+    display.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        // Read from browser clipboard and type into VM
+        e.preventDefault();
+        e.stopPropagation();
+        if (navigator.clipboard?.readText) {
+          navigator.clipboard.readText().then(function(text) {
+            if (text) {
+              $('clipboard-textarea').value = text;
+              typeClipboardToVm();
+            }
+          }).catch(function() {
+            // Fallback: show clipboard panel so user can paste manually
+            if (!clipboardOpen) toggleClipboardPanel();
+          });
+        } else {
+          // No Clipboard API: open panel for manual paste
+          if (!clipboardOpen) toggleClipboardPanel();
+        }
+      }
+    }, true); // useCapture=true to fire before Guacamole's handler
 
     // ─── Fullscreen ──────────────────────────────────────────────────
     function toggleFullscreen() {
@@ -529,11 +677,9 @@
         // Auto-focus the display container so keyboard works immediately
         displayContainer.focus();
 
-        // Re-focus display when clicking on the screen area (not clipboard)
-        screen.addEventListener('mousedown', function(e) {
-          if (!e.target.closest('#clipboard-panel')) {
-            displayContainer.focus();
-          }
+        // Re-focus display when clicking on the screen area
+        screen.addEventListener('mousedown', function() {
+          displayContainer.focus();
         });
 
         // Mouse input — attach to the display element
