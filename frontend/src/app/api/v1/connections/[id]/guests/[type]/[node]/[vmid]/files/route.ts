@@ -24,17 +24,21 @@ async function guestExec(
 ): Promise<{ exitcode: number; outData: string; errData: string }> {
   const basePath = `/nodes/${encodeURIComponent(node)}/${encodeURIComponent(type)}/${encodeURIComponent(vmid)}`
 
-  // Start the command
-  const execBody: any = { command }
-  if (args.length > 0) execBody['input-data'] = inputData || undefined
+  // PVE 8+ uses repeated `command` keys as an array: command=exe&command=arg1&command=arg2
+  const params = new URLSearchParams()
+  params.append('command', command)
+
+  for (const arg of args) {
+    params.append('command', arg)
+  }
+
+  if (inputData) {
+    params.append('input-data', inputData)
+  }
 
   const execResult = await pveFetch<any>(conn, `${basePath}/agent/exec`, {
     method: 'POST',
-    body: new URLSearchParams({
-      command,
-      ...(args.length > 0 ? Object.fromEntries(args.map((a, i) => [`arg${i}`, a])) : {}),
-      ...(inputData ? { 'input-data': inputData } : {}),
-    }),
+    body: params,
   })
 
   const pid = execResult?.pid

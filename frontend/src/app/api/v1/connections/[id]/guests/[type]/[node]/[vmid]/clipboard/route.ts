@@ -23,14 +23,20 @@ async function guestExec(
 ): Promise<{ exitcode: number; outData: string; errData: string }> {
   const basePath = `/nodes/${encodeURIComponent(node)}/${encodeURIComponent(vmType)}/${encodeURIComponent(vmid)}`
 
-  // Use same pattern as the working files route: command + argN params
+  // PVE 8+ uses repeated `command` keys as an array: command=exe&command=arg1&command=arg2
+  // This replaces the old argN format which is no longer supported.
+  const params = new URLSearchParams()
+  params.append('command', command)
+  for (const arg of args) {
+    params.append('command', arg)
+  }
+  if (inputData) {
+    params.append('input-data', inputData)
+  }
+
   const execResult = await pveFetch<any>(conn, `${basePath}/agent/exec`, {
     method: 'POST',
-    body: new URLSearchParams({
-      command,
-      ...(args.length > 0 ? Object.fromEntries(args.map((a, i) => [`arg${i}`, a])) : {}),
-      ...(inputData ? { 'input-data': inputData } : {}),
-    }),
+    body: params,
   })
 
   const pid = execResult?.pid
